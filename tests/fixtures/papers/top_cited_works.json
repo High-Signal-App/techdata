@@ -1,0 +1,1802 @@
+[
+  {
+    "title": "Deep Residual Learning for Image Recognition",
+    "global_citations": 220705,
+    "in_corpus_citations": 19503,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2016.90",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Adam: A Method for Stochastic Optimization",
+    "global_citations": 84666,
+    "in_corpus_citations": 10161,
+    "arxiv_id": "1412.6980",
+    "doi": "https://doi.org/10.48550/arxiv.1412.6980",
+    "publication_year": 2014,
+    "primary_topic": "Stochastic Gradient Optimization Techniques"
+  },
+  {
+    "title": "Very Deep Convolutional Networks for Large-Scale Image Recognition",
+    "global_citations": 75505,
+    "in_corpus_citations": 7817,
+    "arxiv_id": "1409.1556",
+    "doi": "https://doi.org/10.48550/arxiv.1409.1556",
+    "publication_year": 2014,
+    "primary_topic": "Advanced Vision and Imaging"
+  },
+  {
+    "title": "Long Short-Term Memory",
+    "global_citations": 97142,
+    "in_corpus_citations": 7733,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1162/neco.1997.9.8.1735",
+    "publication_year": 1997,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "ImageNet: A large-scale hierarchical image database",
+    "global_citations": 61533,
+    "in_corpus_citations": 7406,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2009.5206848",
+    "publication_year": 2009,
+    "primary_topic": "Advanced Image and Video Retrieval Techniques"
+  },
+  {
+    "title": "GAN\uff08Generative Adversarial Nets\uff09",
+    "global_citations": 21795,
+    "in_corpus_citations": 6347,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.3156/jsoft.29.5_177_2",
+    "publication_year": 2017,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "ImageNet classification with deep convolutional neural networks",
+    "global_citations": 75677,
+    "in_corpus_citations": 6136,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/3065386",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Learning Multiple Layers of Features from Tiny Images",
+    "global_citations": 25472,
+    "in_corpus_citations": 5729,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.57702/zp44cu3g",
+    "publication_year": 2024,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "Gradient-based learning applied to document recognition",
+    "global_citations": 57866,
+    "in_corpus_citations": 5707,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/5.726791",
+    "publication_year": 1998,
+    "primary_topic": "Handwritten Text Recognition Techniques"
+  },
+  {
+    "title": "ImageNet Large Scale Visual Recognition Challenge",
+    "global_citations": 40076,
+    "in_corpus_citations": 5379,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/s11263-015-0816-y",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Image and Video Retrieval Techniques"
+  },
+  {
+    "title": "Glove: Global Vectors for Word Representation",
+    "global_citations": 33633,
+    "in_corpus_citations": 5192,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.3115/v1/d14-1162",
+    "publication_year": 2014,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "<i>Quantum Computation and Quantum Information</i>",
+    "global_citations": 22727,
+    "in_corpus_citations": 4528,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1119/1.1463744",
+    "publication_year": 2002,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Microsoft COCO: Common Objects in Context",
+    "global_citations": 41960,
+    "in_corpus_citations": 4506,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/978-3-319-10602-1_48",
+    "publication_year": 2014,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "U-Net: Convolutional Networks for Biomedical Image Segmentation",
+    "global_citations": 88304,
+    "in_corpus_citations": 4237,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/978-3-319-24574-4_28",
+    "publication_year": 2015,
+    "primary_topic": "Cell Image Analysis Techniques"
+  },
+  {
+    "title": "Dropout: a simple way to prevent neural networks from overfitting",
+    "global_citations": 34247,
+    "in_corpus_citations": 3866,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2014,
+    "primary_topic": "Machine Learning and Data Classification"
+  },
+  {
+    "title": "Going deeper with convolutions",
+    "global_citations": 46713,
+    "in_corpus_citations": 3843,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2015.7298594",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift",
+    "global_citations": 15691,
+    "in_corpus_citations": 3658,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.57702/o9raffed",
+    "publication_year": 2024,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "Fully convolutional networks for semantic segmentation",
+    "global_citations": 36774,
+    "in_corpus_citations": 3388,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2015.7298965",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Visualizing Data using t-SNE",
+    "global_citations": 35713,
+    "in_corpus_citations": 3261,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2008,
+    "primary_topic": "Data Visualization and Analytics"
+  },
+  {
+    "title": "Quantum computation and quantum information",
+    "global_citations": 19241,
+    "in_corpus_citations": 3238,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/505482.505499",
+    "publication_year": 2001,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Human-level control through deep reinforcement learning",
+    "global_citations": 29716,
+    "in_corpus_citations": 3146,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1038/nature14236",
+    "publication_year": 2015,
+    "primary_topic": "Neural dynamics and brain function"
+  },
+  {
+    "title": "Densely Connected Convolutional Networks",
+    "global_citations": 44363,
+    "in_corpus_citations": 3141,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2017.243",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "BLEU",
+    "global_citations": 21411,
+    "in_corpus_citations": 3041,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.3115/1073083.1073135",
+    "publication_year": 2001,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Deep learning",
+    "global_citations": 80928,
+    "in_corpus_citations": 3014,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1038/nature14539",
+    "publication_year": 2015,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "Distilling the Knowledge in a Neural Network",
+    "global_citations": 13937,
+    "in_corpus_citations": 2967,
+    "arxiv_id": "1503.02531",
+    "doi": "https://doi.org/10.48550/arxiv.1503.02531",
+    "publication_year": 2015,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks",
+    "global_citations": 18238,
+    "in_corpus_citations": 2965,
+    "arxiv_id": "1506.01497",
+    "doi": "https://doi.org/10.48550/arxiv.1506.01497",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Auto-Encoding Variational Bayes",
+    "global_citations": 15586,
+    "in_corpus_citations": 2958,
+    "arxiv_id": "1312.6114",
+    "doi": "https://doi.org/10.48550/arxiv.1312.6114",
+    "publication_year": 2013,
+    "primary_topic": "Gaussian Processes and Bayesian Inference"
+  },
+  {
+    "title": "Automatic differentiation in PyTorch",
+    "global_citations": 11115,
+    "in_corpus_citations": 2807,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2017,
+    "primary_topic": "Gaussian Processes and Bayesian Inference"
+  },
+  {
+    "title": "Distributed Representations of Words and Phrases and their Compositionality",
+    "global_citations": 18086,
+    "in_corpus_citations": 2742,
+    "arxiv_id": "1310.4546",
+    "doi": "https://doi.org/10.48550/arxiv.1310.4546",
+    "publication_year": 2013,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Rethinking the Inception Architecture for Computer Vision",
+    "global_citations": 30788,
+    "in_corpus_citations": 2713,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2016.308",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Unpaired Image-to-Image Translation Using Cycle-Consistent Adversarial Networks",
+    "global_citations": 21800,
+    "in_corpus_citations": 2686,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2017.244",
+    "publication_year": 2017,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "Quantum entanglement",
+    "global_citations": 9950,
+    "in_corpus_citations": 2665,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/revmodphys.81.865",
+    "publication_year": 2009,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift",
+    "global_citations": 24344,
+    "in_corpus_citations": 2519,
+    "arxiv_id": "1502.03167",
+    "doi": "https://doi.org/10.48550/arxiv.1502.03167",
+    "publication_year": 2015,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Reinforcement Learning: An Introduction",
+    "global_citations": 25776,
+    "in_corpus_citations": 2480,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tnn.2004.842673",
+    "publication_year": 2005,
+    "primary_topic": "Reinforcement Learning in Robotics"
+  },
+  {
+    "title": "HISTORIAE, History of Socio-Cultural Transformation as Linguistic Data Science. A Humanities Use Case",
+    "global_citations": 17300,
+    "in_corpus_citations": 2479,
+    "arxiv_id": "1907.11692",
+    "doi": "https://doi.org/10.4230/lipics.cp.2025.31",
+    "publication_year": 2019,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "Image quality assessment: from error visibility to structural similarity",
+    "global_citations": 55673,
+    "in_corpus_citations": 2476,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tip.2003.819861",
+    "publication_year": 2004,
+    "primary_topic": "Image and Video Quality Assessment"
+  },
+  {
+    "title": "PyTorch: An Imperative Style, High-Performance Deep Learning Library",
+    "global_citations": 16187,
+    "in_corpus_citations": 2442,
+    "arxiv_id": "1912.01703",
+    "doi": "https://doi.org/10.48550/arxiv.1912.01703",
+    "publication_year": 2019,
+    "primary_topic": "Parallel Computing and Optimization Techniques"
+  },
+  {
+    "title": "Efficient Estimation of Word Representations in Vector Space",
+    "global_citations": 11736,
+    "in_corpus_citations": 2439,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2013,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "Rich Feature Hierarchies for Accurate Object Detection and Semantic Segmentation",
+    "global_citations": 31638,
+    "in_corpus_citations": 2436,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2014.81",
+    "publication_year": 2014,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Scikit-learn: Machine Learning in Python",
+    "global_citations": 63662,
+    "in_corpus_citations": 2420,
+    "arxiv_id": "1201.0490",
+    "doi": "https://doi.org/10.48550/arxiv.1201.0490",
+    "publication_year": 2012,
+    "primary_topic": "Computational Physics and Python Applications"
+  },
+  {
+    "title": "AI-Assisted Pipeline for Dynamic Generation of Trustworthy Health Supplement Content at Scale",
+    "global_citations": 45574,
+    "in_corpus_citations": 2323,
+    "arxiv_id": "1810.04805",
+    "doi": "https://doi.org/10.4230/lipics.cosit.2022.18",
+    "publication_year": 2018,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification",
+    "global_citations": 18707,
+    "in_corpus_citations": 2297,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2015.123",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Teleporting an unknown quantum state via dual classical and Einstein-Podolsky-Rosen channels",
+    "global_citations": 13751,
+    "in_corpus_citations": 2203,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physrevlett.70.1895",
+    "publication_year": 1993,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Mask R-CNN",
+    "global_citations": 28640,
+    "in_corpus_citations": 2192,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2017.322",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Learning Phrase Representations using RNN Encoder\u2013Decoder for Statistical Machine Translation",
+    "global_citations": 24277,
+    "in_corpus_citations": 2182,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.3115/v1/d14-1179",
+    "publication_year": 2014,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Elements of Information Theory",
+    "global_citations": 37901,
+    "in_corpus_citations": 2160,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1002/0471200611",
+    "publication_year": 2001,
+    "primary_topic": "Multi-Criteria Decision Making"
+  },
+  {
+    "title": "Sequence to Sequence Learning with Neural Networks",
+    "global_citations": 13340,
+    "in_corpus_citations": 2142,
+    "arxiv_id": "1409.3215",
+    "doi": "https://doi.org/10.48550/arxiv.1409.3215",
+    "publication_year": 2014,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "SSD: Single Shot MultiBox Detector",
+    "global_citations": 30529,
+    "in_corpus_citations": 2067,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2016,
+    "primary_topic": "Advanced Data Storage Technologies"
+  },
+  {
+    "title": "Attention Is All You Need",
+    "global_citations": 6551,
+    "in_corpus_citations": 2065,
+    "arxiv_id": "1706.03762",
+    "doi": "https://doi.org/10.65215/2q58a426",
+    "publication_year": 2025,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications",
+    "global_citations": 9899,
+    "in_corpus_citations": 1974,
+    "arxiv_id": "1704.04861",
+    "doi": "https://doi.org/10.48550/arxiv.1704.04861",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "The Pascal Visual Object Classes (VOC) Challenge",
+    "global_citations": 19439,
+    "in_corpus_citations": 1917,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/s11263-009-0275-4",
+    "publication_year": 2009,
+    "primary_topic": "Advanced Image and Video Retrieval Techniques"
+  },
+  {
+    "title": "Mastering the game of Go with deep neural networks and tree search",
+    "global_citations": 15754,
+    "in_corpus_citations": 1871,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1038/nature16961",
+    "publication_year": 2016,
+    "primary_topic": "Artificial Intelligence in Games"
+  },
+  {
+    "title": "Visualizing and Understanding Convolutional Networks",
+    "global_citations": 15401,
+    "in_corpus_citations": 1865,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/978-3-319-10590-1_53",
+    "publication_year": 2014,
+    "primary_topic": "Cell Image Analysis Techniques"
+  },
+  {
+    "title": "Feature Pyramid Networks for Object Detection",
+    "global_citations": 28480,
+    "in_corpus_citations": 1848,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2017.106",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "UCI Machine Learning Repository",
+    "global_citations": 24320,
+    "in_corpus_citations": 1807,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2007,
+    "primary_topic": "Artificial Intelligence in Healthcare"
+  },
+  {
+    "title": "Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks",
+    "global_citations": 6993,
+    "in_corpus_citations": 1787,
+    "arxiv_id": "1511.06434",
+    "doi": "https://doi.org/10.48550/arxiv.1511.06434",
+    "publication_year": 2015,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "Convex Optimization",
+    "global_citations": 31262,
+    "in_corpus_citations": 1774,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1017/cbo9780511804441",
+    "publication_year": 2004,
+    "primary_topic": "Advanced Optimization Algorithms Research"
+  },
+  {
+    "title": "Quantum cryptography based on Bell\u2019s theorem",
+    "global_citations": 10694,
+    "in_corpus_citations": 1757,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physrevlett.67.661",
+    "publication_year": 1991,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Fast R-CNN",
+    "global_citations": 27780,
+    "in_corpus_citations": 1716,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2015.169",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Latent dirichlet allocation",
+    "global_citations": 27036,
+    "in_corpus_citations": 1706,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.5555/944919.944937",
+    "publication_year": 2003,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Diagnosing Non-Intermittent Anomalies in Reinforcement Learning Policy Executions (Short Paper)",
+    "global_citations": 11299,
+    "in_corpus_citations": 1700,
+    "arxiv_id": "1707.06347",
+    "doi": "https://doi.org/10.4230/oasics.dx.2024.16",
+    "publication_year": 2017,
+    "primary_topic": "Reinforcement Learning in Robotics"
+  },
+  {
+    "title": "Quantum Computation and Quantum Information",
+    "global_citations": 8412,
+    "in_corpus_citations": 1700,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1017/cbo9780511976667",
+    "publication_year": 2012,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "DeepLab: Semantic Image Segmentation with Deep Convolutional Nets, Atrous Convolution, and Fully Connected CRFs",
+    "global_citations": 21981,
+    "in_corpus_citations": 1690,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tpami.2017.2699184",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "A Mathematical Theory of Communication",
+    "global_citations": 80241,
+    "in_corpus_citations": 1664,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1002/j.1538-7305.1948.tb01338.x",
+    "publication_year": 1948,
+    "primary_topic": "graph theory and CDMA systems"
+  },
+  {
+    "title": "\"Why Should I Trust You?\"",
+    "global_citations": 14946,
+    "in_corpus_citations": 1661,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/2939672.2939778",
+    "publication_year": 2016,
+    "primary_topic": "Explainable Artificial Intelligence (XAI)"
+  },
+  {
+    "title": "Entanglement of Formation of an Arbitrary State of Two Qubits",
+    "global_citations": 8287,
+    "in_corpus_citations": 1660,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/physrevlett.80.2245",
+    "publication_year": 1998,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Random Forests",
+    "global_citations": 124577,
+    "in_corpus_citations": 1654,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1023/a:1010933404324",
+    "publication_year": 2001,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "MizAR 60 for Mizar 50",
+    "global_citations": 75900,
+    "in_corpus_citations": 1645,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.4230/lipics.itp.2023.19",
+    "publication_year": 2023,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Understanding the difficulty of training deep feedforward neural networks",
+    "global_citations": 12677,
+    "in_corpus_citations": 1644,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2010,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Perceptual Losses for Real-Time Style Transfer and Super-Resolution",
+    "global_citations": 9980,
+    "in_corpus_citations": 1618,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/978-3-319-46475-6_43",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Image Processing Techniques"
+  },
+  {
+    "title": "Focal Loss for Dense Object Detection",
+    "global_citations": 25428,
+    "in_corpus_citations": 1613,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2017.324",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Detecting Functionality-Specific Vulnerabilities via Retrieving Individual Functionality-Equivalent APIs in Open-Source Repositories",
+    "global_citations": 16129,
+    "in_corpus_citations": 1608,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.4230/lipics.ecoop.2025.6",
+    "publication_year": 2025,
+    "primary_topic": "Advanced Graph Neural Networks"
+  },
+  {
+    "title": "Histograms of Oriented Gradients for Human Detection",
+    "global_citations": 31832,
+    "in_corpus_citations": 1594,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2005.177",
+    "publication_year": 2005,
+    "primary_topic": "Video Surveillance and Tracking Methods"
+  },
+  {
+    "title": "Show, Attend and Tell: Neural Image Caption Generation with Visual Attention",
+    "global_citations": 7512,
+    "in_corpus_citations": 1562,
+    "arxiv_id": "1502.03044",
+    "doi": "https://doi.org/10.48550/arxiv.1502.03044",
+    "publication_year": 2015,
+    "primary_topic": "Multimodal Machine Learning Applications"
+  },
+  {
+    "title": "Adaptive Subgradient Methods for Online Learning and Stochastic Optimization",
+    "global_citations": 8624,
+    "in_corpus_citations": 1551,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2010,
+    "primary_topic": "Stochastic Gradient Optimization Techniques"
+  },
+  {
+    "title": "Deep Learning Face Attributes in the Wild",
+    "global_citations": 7652,
+    "in_corpus_citations": 1550,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2015.425",
+    "publication_year": 2015,
+    "primary_topic": "Face recognition and analysis"
+  },
+  {
+    "title": "Simple statistical gradient-following algorithms for connectionist reinforcement learning",
+    "global_citations": 7453,
+    "in_corpus_citations": 1543,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/bf00992696",
+    "publication_year": 1992,
+    "primary_topic": "Evolutionary Algorithms and Applications"
+  },
+  {
+    "title": "The Cityscapes Dataset for Semantic Urban Scene Understanding",
+    "global_citations": 11856,
+    "in_corpus_citations": 1539,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2016.350",
+    "publication_year": 2016,
+    "primary_topic": "Video Surveillance and Tracking Methods"
+  },
+  {
+    "title": "Distinctive Image Features from Scale-Invariant Keypoints",
+    "global_citations": 55132,
+    "in_corpus_citations": 1531,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1023/b:visi.0000029664.99615.94",
+    "publication_year": 2004,
+    "primary_topic": "Robotics and Sensor-Based Localization"
+  },
+  {
+    "title": "Quantum Computing in the NISQ era and beyond",
+    "global_citations": 8112,
+    "in_corpus_citations": 1531,
+    "arxiv_id": "1801.00862",
+    "doi": "https://doi.org/10.22331/q-2018-08-06-79",
+    "publication_year": 2018,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "MobileNetV2: Inverted Residuals and Linear Bottlenecks",
+    "global_citations": 25156,
+    "in_corpus_citations": 1503,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2018.00474",
+    "publication_year": 2018,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Conditional Generative Adversarial Nets",
+    "global_citations": 8899,
+    "in_corpus_citations": 1497,
+    "arxiv_id": "1411.1784",
+    "doi": "https://doi.org/10.48550/arxiv.1411.1784",
+    "publication_year": 2014,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "A Survey on Transfer Learning",
+    "global_citations": 23004,
+    "in_corpus_citations": 1496,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tkde.2009.191",
+    "publication_year": 2009,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "Computers and Intractability: A Guide to the Theory of NP-Completeness",
+    "global_citations": 44593,
+    "in_corpus_citations": 1462,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 1979,
+    "primary_topic": "Software Engineering Research"
+  },
+  {
+    "title": "Effective Approaches to Attention-based Neural Machine Translation",
+    "global_citations": 8568,
+    "in_corpus_citations": 1450,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.18653/v1/d15-1166",
+    "publication_year": 2015,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks",
+    "global_citations": 53830,
+    "in_corpus_citations": 1448,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tpami.2016.2577031",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Sequence to Sequence Learning with Neural Networks",
+    "global_citations": 3524,
+    "in_corpus_citations": 1438,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2014,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Quantum cryptography",
+    "global_citations": 8328,
+    "in_corpus_citations": 1416,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/revmodphys.74.145",
+    "publication_year": 2002,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Semi-Supervised Classification with Graph Convolutional Networks",
+    "global_citations": 8068,
+    "in_corpus_citations": 1414,
+    "arxiv_id": "1609.02907",
+    "doi": "https://doi.org/10.48550/arxiv.1609.02907",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Graph Neural Networks"
+  },
+  {
+    "title": "Reading digits in natural images with unsupervised feature learning",
+    "global_citations": 4556,
+    "in_corpus_citations": 1407,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.57702/e7wwo0zk",
+    "publication_year": 2024,
+    "primary_topic": "Handwritten Text Recognition Techniques"
+  },
+  {
+    "title": "Identity Mappings in Deep Residual Networks",
+    "global_citations": 10061,
+    "in_corpus_citations": 1406,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/978-3-319-46493-0_38",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium",
+    "global_citations": 4494,
+    "in_corpus_citations": 1393,
+    "arxiv_id": "1706.08500",
+    "doi": "https://doi.org/10.48550/arxiv.1706.08500",
+    "publication_year": 2017,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "Google's Neural Machine Translation System: Bridging the Gap between Human and Machine Translation",
+    "global_citations": 5661,
+    "in_corpus_citations": 1390,
+    "arxiv_id": "1609.08144",
+    "doi": "https://doi.org/10.48550/arxiv.1609.08144",
+    "publication_year": 2016,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Pattern Recognition and Machine Learning",
+    "global_citations": 22082,
+    "in_corpus_citations": 1370,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1117/1.2819119",
+    "publication_year": 2007,
+    "primary_topic": "Statistical Methods and Inference"
+  },
+  {
+    "title": "Deep Learning",
+    "global_citations": 8959,
+    "in_corpus_citations": 1354,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2016,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Aggregated Residual Transformations for Deep Neural Networks",
+    "global_citations": 11814,
+    "in_corpus_citations": 1353,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2017.634",
+    "publication_year": 2017,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "Caffe: Convolutional Architecture for Fast Feature Embedding",
+    "global_citations": 4309,
+    "in_corpus_citations": 1347,
+    "arxiv_id": "1408.5093",
+    "doi": "https://doi.org/10.48550/arxiv.1408.5093",
+    "publication_year": 2014,
+    "primary_topic": "Advanced Image and Video Retrieval Techniques"
+  },
+  {
+    "title": "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal\\n Networks",
+    "global_citations": 6262,
+    "in_corpus_citations": 1337,
+    "arxiv_id": "1506.01497",
+    "doi": "https://doi.org/10.48550/arxiv.1506.01497",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Reducing the Dimensionality of Data with Neural Networks",
+    "global_citations": 20856,
+    "in_corpus_citations": 1332,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1126/science.1127647",
+    "publication_year": 2006,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Are we ready for autonomous driving? The KITTI vision benchmark suite",
+    "global_citations": 14324,
+    "in_corpus_citations": 1329,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2012.6248074",
+    "publication_year": 2012,
+    "primary_topic": "Robotics and Sensor-Based Localization"
+  },
+  {
+    "title": "Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling",
+    "global_citations": 10784,
+    "in_corpus_citations": 1328,
+    "arxiv_id": "1412.3555",
+    "doi": "https://doi.org/10.48550/arxiv.1412.3555",
+    "publication_year": 2014,
+    "primary_topic": "Music and Audio Processing"
+  },
+  {
+    "title": "Maximum Likelihood from Incomplete Data Via the <i>EM</i> Algorithm",
+    "global_citations": 49578,
+    "in_corpus_citations": 1324,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1111/j.2517-6161.1977.tb01600.x",
+    "publication_year": 1977,
+    "primary_topic": "Control Systems and Identification"
+  },
+  {
+    "title": "Rectified Linear Units Improve Restricted Boltzmann Machines",
+    "global_citations": 13238,
+    "in_corpus_citations": 1320,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2010,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "ROUGE: A Package for Automatic Evaluation of Summaries",
+    "global_citations": 8303,
+    "in_corpus_citations": 1307,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2004,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Deep Residual Learning for Image Recognition",
+    "global_citations": 4699,
+    "in_corpus_citations": 1306,
+    "arxiv_id": "1512.03385",
+    "doi": "https://doi.org/10.48550/arxiv.1512.03385",
+    "publication_year": 2015,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Squeeze-and-Excitation Networks",
+    "global_citations": 12452,
+    "in_corpus_citations": 1298,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tpami.2019.2913372",
+    "publication_year": 2019,
+    "primary_topic": "Force Microscopy Techniques and Applications"
+  },
+  {
+    "title": "Playing Atari with Deep Reinforcement Learning",
+    "global_citations": 5121,
+    "in_corpus_citations": 1290,
+    "arxiv_id": "1312.5602",
+    "doi": "https://doi.org/10.48550/arxiv.1312.5602",
+    "publication_year": 2013,
+    "primary_topic": "Reinforcement Learning in Robotics"
+  },
+  {
+    "title": "Fashion-MNIST: a Novel Image Dataset for Benchmarking Machine Learning Algorithms",
+    "global_citations": 6068,
+    "in_corpus_citations": 1281,
+    "arxiv_id": "1708.07747",
+    "doi": "https://doi.org/10.48550/arxiv.1708.07747",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network",
+    "global_citations": 12269,
+    "in_corpus_citations": 1267,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2017.19",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Image Processing Techniques"
+  },
+  {
+    "title": "Representation Learning: A Review and New Perspectives",
+    "global_citations": 12918,
+    "in_corpus_citations": 1256,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tpami.2013.50",
+    "publication_year": 2013,
+    "primary_topic": "Face and Expression Recognition"
+  },
+  {
+    "title": "Mixed-state entanglement and quantum error correction",
+    "global_citations": 5382,
+    "in_corpus_citations": 1237,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/physreva.54.3824",
+    "publication_year": 1996,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "Grad-CAM: Visual Explanations from Deep Networks via Gradient-Based Localization",
+    "global_citations": 21228,
+    "in_corpus_citations": 1230,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2017.74",
+    "publication_year": 2017,
+    "primary_topic": "Multimodal Machine Learning Applications"
+  },
+  {
+    "title": "Pyramid Scene Parsing Network",
+    "global_citations": 15406,
+    "in_corpus_citations": 1227,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2017.660",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Image and Video Retrieval Techniques"
+  },
+  {
+    "title": "Gaussian Processes for Machine Learning",
+    "global_citations": 10487,
+    "in_corpus_citations": 1225,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.7551/mitpress/3206.001.0001",
+    "publication_year": 2005,
+    "primary_topic": "Gaussian Processes and Bayesian Inference"
+  },
+  {
+    "title": "Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks",
+    "global_citations": 5772,
+    "in_corpus_citations": 1222,
+    "arxiv_id": "1703.03400",
+    "doi": "https://doi.org/10.48550/arxiv.1703.03400",
+    "publication_year": 2017,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "TensorFlow: a system for large-scale machine learning",
+    "global_citations": 6353,
+    "in_corpus_citations": 1194,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.5555/3026877.3026899",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "LIBSVM",
+    "global_citations": 41303,
+    "in_corpus_citations": 1186,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/1961189.1961199",
+    "publication_year": 2011,
+    "primary_topic": "Face and Expression Recognition"
+  },
+  {
+    "title": "node2vec",
+    "global_citations": 10847,
+    "in_corpus_citations": 1182,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/2939672.2939754",
+    "publication_year": 2016,
+    "primary_topic": "Bioinformatics and Genomic Networks"
+  },
+  {
+    "title": "Non-local Neural Networks",
+    "global_citations": 11160,
+    "in_corpus_citations": 1181,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2018.00813",
+    "publication_year": 2018,
+    "primary_topic": "Human Pose and Action Recognition"
+  },
+  {
+    "title": "Recursive Deep Models for Semantic Compositionality Over a Sentiment Treebank",
+    "global_citations": 6739,
+    "in_corpus_citations": 1172,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.18653/v1/d13-1170",
+    "publication_year": 2013,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "Calibrating Noise to Sensitivity in Private Data Analysis",
+    "global_citations": 6986,
+    "in_corpus_citations": 1163,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/11681878_14",
+    "publication_year": 2006,
+    "primary_topic": "Privacy-Preserving Technologies in Data"
+  },
+  {
+    "title": "Separability Criterion for Density Matrices",
+    "global_citations": 5222,
+    "in_corpus_citations": 1160,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/physrevlett.77.1413",
+    "publication_year": 1996,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "A One-Way Quantum Computer",
+    "global_citations": 4515,
+    "in_corpus_citations": 1150,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physrevlett.86.5188",
+    "publication_year": 2001,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "Prototypical Networks for Few-shot Learning",
+    "global_citations": 5192,
+    "in_corpus_citations": 1147,
+    "arxiv_id": "1703.05175",
+    "doi": "https://doi.org/10.48550/arxiv.1703.05175",
+    "publication_year": 2017,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "Learning Spatiotemporal Features with 3D Convolutional Networks",
+    "global_citations": 9651,
+    "in_corpus_citations": 1144,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/iccv.2015.510",
+    "publication_year": 2015,
+    "primary_topic": "Human Pose and Action Recognition"
+  },
+  {
+    "title": "Regression Shrinkage and Selection Via the Lasso",
+    "global_citations": 51496,
+    "in_corpus_citations": 1135,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1111/j.2517-6161.1996.tb02080.x",
+    "publication_year": 1996,
+    "primary_topic": "Statistical Methods and Inference"
+  },
+  {
+    "title": "The quantum internet",
+    "global_citations": 5808,
+    "in_corpus_citations": 1135,
+    "arxiv_id": "0806.4195",
+    "doi": "https://doi.org/10.1038/nature07127",
+    "publication_year": 2008,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Can Quantum-Mechanical Description of Physical Reality Be Considered Complete?",
+    "global_citations": 16648,
+    "in_corpus_citations": 1125,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physrev.47.777",
+    "publication_year": 1935,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "A variational eigenvalue solver on a photonic quantum processor",
+    "global_citations": 4516,
+    "in_corpus_citations": 1123,
+    "arxiv_id": "1304.3061",
+    "doi": "https://doi.org/10.1038/ncomms5213",
+    "publication_year": 2014,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "A fast quantum mechanical algorithm for database search",
+    "global_citations": 8549,
+    "in_corpus_citations": 1115,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/237814.237866",
+    "publication_year": 1996,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "Enriching Word Vectors with Subword Information",
+    "global_citations": 9747,
+    "in_corpus_citations": 1110,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1162/tacl_a_00051",
+    "publication_year": 2017,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "DeepFool: A Simple and Accurate Method to Fool Deep Neural Networks",
+    "global_citations": 5298,
+    "in_corpus_citations": 1105,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2016.282",
+    "publication_year": 2016,
+    "primary_topic": "Adversarial Robustness in Machine Learning"
+  },
+  {
+    "title": "Matrix Analysis",
+    "global_citations": 22393,
+    "in_corpus_citations": 1097,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 1985,
+    "primary_topic": "Matrix Theory and Algorithms"
+  },
+  {
+    "title": "Learning representations by back-propagating errors",
+    "global_citations": 30610,
+    "in_corpus_citations": 1096,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1038/323533a0",
+    "publication_year": 1986,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Deep Inside Convolutional Networks: Visualising Image Classification\\n Models and Saliency Maps",
+    "global_citations": 4919,
+    "in_corpus_citations": 1094,
+    "arxiv_id": "1312.6034",
+    "doi": "https://doi.org/10.48550/arxiv.1312.6034",
+    "publication_year": 2013,
+    "primary_topic": "Visual Attention and Saliency Detection"
+  },
+  {
+    "title": "Caffe",
+    "global_citations": 11189,
+    "in_corpus_citations": 1092,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/2647868.2654889",
+    "publication_year": 2014,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Simulating physics with computers",
+    "global_citations": 7478,
+    "in_corpus_citations": 1089,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/bf02650179",
+    "publication_year": 1982,
+    "primary_topic": "Computational Physics and Python Applications"
+  },
+  {
+    "title": "SQuAD: 100,000+ Questions for Machine Comprehension of Text",
+    "global_citations": 6292,
+    "in_corpus_citations": 1084,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.18653/v1/d16-1264",
+    "publication_year": 2016,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "Learning Deep Features for Discriminative Localization",
+    "global_citations": 10758,
+    "in_corpus_citations": 1079,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2016.319",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Inductive Representation Learning on Large Graphs",
+    "global_citations": 4543,
+    "in_corpus_citations": 1078,
+    "arxiv_id": "1706.02216",
+    "doi": "https://doi.org/10.48550/arxiv.1706.02216",
+    "publication_year": 2017,
+    "primary_topic": "Bioinformatics and Genomic Networks"
+  },
+  {
+    "title": "ADADELTA: An Adaptive Learning Rate Method",
+    "global_citations": 5526,
+    "in_corpus_citations": 1074,
+    "arxiv_id": "1212.5701",
+    "doi": "https://doi.org/10.48550/arxiv.1212.5701",
+    "publication_year": 2012,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Communication-Efficient Learning of Deep Networks from Decentralized Data",
+    "global_citations": 5177,
+    "in_corpus_citations": 1072,
+    "arxiv_id": "1602.05629",
+    "doi": "https://doi.org/10.48550/arxiv.1602.05629",
+    "publication_year": 2016,
+    "primary_topic": "Privacy-Preserving Technologies in Data"
+  },
+  {
+    "title": "Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers",
+    "global_citations": 13430,
+    "in_corpus_citations": 1068,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1561/9781601984616",
+    "publication_year": 2010,
+    "primary_topic": "Sparse and Compressive Sensing Techniques"
+  },
+  {
+    "title": "Quantum supremacy using a programmable superconducting processor",
+    "global_citations": 6935,
+    "in_corpus_citations": 1067,
+    "arxiv_id": "1910.11333",
+    "doi": "https://doi.org/10.1038/s41586-019-1666-5",
+    "publication_year": 2019,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "Mastering the game of Go without human knowledge",
+    "global_citations": 9161,
+    "in_corpus_citations": 1063,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1038/nature24270",
+    "publication_year": 2017,
+    "primary_topic": "Artificial Intelligence in Games"
+  },
+  {
+    "title": "WordNet",
+    "global_citations": 14080,
+    "in_corpus_citations": 1062,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/219717.219748",
+    "publication_year": 1995,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Gaussian quantum information",
+    "global_citations": 3639,
+    "in_corpus_citations": 1060,
+    "arxiv_id": "1110.3234",
+    "doi": "https://doi.org/10.1103/revmodphys.84.621",
+    "publication_year": 2012,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Advances in quantum metrology",
+    "global_citations": 3843,
+    "in_corpus_citations": 1055,
+    "arxiv_id": "1102.2318",
+    "doi": "https://doi.org/10.1038/nphoton.2011.35",
+    "publication_year": 2011,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Momentum Contrast for Unsupervised Visual Representation Learning",
+    "global_citations": 11963,
+    "in_corpus_citations": 1052,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr42600.2020.00975",
+    "publication_year": 2020,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
+    "global_citations": 14596,
+    "in_corpus_citations": 1050,
+    "arxiv_id": "1409.0473",
+    "doi": "https://doi.org/10.48550/arxiv.1409.0473",
+    "publication_year": 2014,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Representation Learning with Contrastive Predictive Coding",
+    "global_citations": 3768,
+    "in_corpus_citations": 1043,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2018,
+    "primary_topic": "Multimodal Machine Learning Applications"
+  },
+  {
+    "title": "Dropout as a Bayesian Approximation: Representing Model Uncertainty in\\n Deep Learning",
+    "global_citations": 4152,
+    "in_corpus_citations": 1038,
+    "arxiv_id": "1506.02142",
+    "doi": "https://doi.org/10.48550/arxiv.1506.02142",
+    "publication_year": 2015,
+    "primary_topic": "Gaussian Processes and Bayesian Inference"
+  },
+  {
+    "title": "A scheme for efficient quantum computation with linear optics",
+    "global_citations": 5852,
+    "in_corpus_citations": 1032,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1038/35051009",
+    "publication_year": 2001,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Convolutional Neural Networks for Sentence Classification",
+    "global_citations": 13743,
+    "in_corpus_citations": 1031,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.3115/v1/d14-1181",
+    "publication_year": 2014,
+    "primary_topic": "Topic Modeling"
+  },
+  {
+    "title": "Quantum Discord: A Measure of the Quantumness of Correlations",
+    "global_citations": 3639,
+    "in_corpus_citations": 1030,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/physrevlett.88.017901",
+    "publication_year": 2001,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Continuous control with deep reinforcement learning",
+    "global_citations": 5372,
+    "in_corpus_citations": 1023,
+    "arxiv_id": "1509.02971",
+    "doi": "https://doi.org/10.48550/arxiv.1509.02971",
+    "publication_year": 2015,
+    "primary_topic": "Reinforcement Learning in Robotics"
+  },
+  {
+    "title": "Domain-Adversarial Training of Neural Networks",
+    "global_citations": 7584,
+    "in_corpus_citations": 1018,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/978-3-319-58347-1_10",
+    "publication_year": 2017,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "Librispeech: An ASR corpus based on public domain audio books",
+    "global_citations": 5962,
+    "in_corpus_citations": 1017,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/icassp.2015.7178964",
+    "publication_year": 2015,
+    "primary_topic": "Speech Recognition and Synthesis"
+  },
+  {
+    "title": "Conditional Random Fields: Probabilistic Models for Segmenting and Labeling Sequence Data",
+    "global_citations": 12996,
+    "in_corpus_citations": 1016,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2001,
+    "primary_topic": "Natural Language Processing Techniques"
+  },
+  {
+    "title": "Deep Neural Networks for Acoustic Modeling in Speech Recognition: The Shared Views of Four Research Groups",
+    "global_citations": 10281,
+    "in_corpus_citations": 1016,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/msp.2012.2205597",
+    "publication_year": 2012,
+    "primary_topic": "Speech Recognition and Synthesis"
+  },
+  {
+    "title": "TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems",
+    "global_citations": 9772,
+    "in_corpus_citations": 1014,
+    "arxiv_id": "1603.04467",
+    "doi": "https://doi.org/10.48550/arxiv.1603.04467",
+    "publication_year": 2016,
+    "primary_topic": "Parallel Computing and Optimization Techniques"
+  },
+  {
+    "title": "Connectionist temporal classification",
+    "global_citations": 5437,
+    "in_corpus_citations": 1012,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/1143844.1143891",
+    "publication_year": 2006,
+    "primary_topic": "Speech Recognition and Synthesis"
+  },
+  {
+    "title": "Matrix Factorization Techniques for Recommender Systems",
+    "global_citations": 11625,
+    "in_corpus_citations": 1005,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/mc.2009.263",
+    "publication_year": 2009,
+    "primary_topic": "Recommender Systems and Techniques"
+  },
+  {
+    "title": "Computable measure of entanglement",
+    "global_citations": 4932,
+    "in_corpus_citations": 1003,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/physreva.65.032314",
+    "publication_year": 2002,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Policy Gradient Methods for Reinforcement Learning with Function Approximation",
+    "global_citations": 4964,
+    "in_corpus_citations": 1001,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 1999,
+    "primary_topic": "Reinforcement Learning in Robotics"
+  },
+  {
+    "title": "Wasserstein Generative Adversarial Networks",
+    "global_citations": 5031,
+    "in_corpus_citations": 997,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2017,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "Speech recognition with deep recurrent neural networks",
+    "global_citations": 8817,
+    "in_corpus_citations": 986,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/icassp.2013.6638947",
+    "publication_year": 2013,
+    "primary_topic": "Speech Recognition and Synthesis"
+  },
+  {
+    "title": "Communication via one- and two-particle operators on Einstein-Podolsky-Rosen states",
+    "global_citations": 5515,
+    "in_corpus_citations": 982,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physrevlett.69.2881",
+    "publication_year": 1992,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Show and tell: A neural image caption generator",
+    "global_citations": 6328,
+    "in_corpus_citations": 974,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2015.7298935",
+    "publication_year": 2015,
+    "primary_topic": "Multimodal Machine Learning Applications"
+  },
+  {
+    "title": "A Fast Learning Algorithm for Deep Belief Nets",
+    "global_citations": 16361,
+    "in_corpus_citations": 970,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1162/neco.2006.18.7.1527",
+    "publication_year": 2006,
+    "primary_topic": "Domain Adaptation and Few-Shot Learning"
+  },
+  {
+    "title": "Deep Learning On Graphs (Graphsip Summer School)",
+    "global_citations": 5085,
+    "in_corpus_citations": 967,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.5281/zenodo.1318390",
+    "publication_year": 2016,
+    "primary_topic": "Advanced Graph Neural Networks"
+  },
+  {
+    "title": "On the Einstein Podolsky Rosen paradox",
+    "global_citations": 12184,
+    "in_corpus_citations": 962,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physicsphysiquefizika.1.195",
+    "publication_year": 1964,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Object Detection with Discriminatively Trained Part-Based Models",
+    "global_citations": 10044,
+    "in_corpus_citations": 950,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tpami.2009.167",
+    "publication_year": 2009,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "The security of practical quantum key distribution",
+    "global_citations": 3646,
+    "in_corpus_citations": 941,
+    "arxiv_id": "0802.4155",
+    "doi": "https://doi.org/10.1103/revmodphys.81.1301",
+    "publication_year": 2009,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "WaveNet: A Generative Model for Raw Audio",
+    "global_citations": 2472,
+    "in_corpus_citations": 939,
+    "arxiv_id": null,
+    "doi": null,
+    "publication_year": 2016,
+    "primary_topic": "Music and Audio Processing"
+  },
+  {
+    "title": "Quantum states with Einstein-Podolsky-Rosen correlations admitting a hidden-variable model",
+    "global_citations": 4083,
+    "in_corpus_citations": 938,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physreva.40.4277",
+    "publication_year": 1989,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Separability of mixed states: necessary and sufficient conditions",
+    "global_citations": 3618,
+    "in_corpus_citations": 921,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1016/s0375-9601(96)00706-2",
+    "publication_year": 1996,
+    "primary_topic": "Cold Atom Physics and Bose-Einstein Condensates"
+  },
+  {
+    "title": "The Pascal Visual Object Classes Challenge: A Retrospective",
+    "global_citations": 7271,
+    "in_corpus_citations": 901,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/s11263-014-0733-5",
+    "publication_year": 2014,
+    "primary_topic": "Advanced Image and Video Retrieval Techniques"
+  },
+  {
+    "title": "Quantum information with continuous variables",
+    "global_citations": 3809,
+    "in_corpus_citations": 891,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/revmodphys.77.513",
+    "publication_year": 2005,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Improving neural networks by preventing co-adaptation of feature detectors",
+    "global_citations": 6651,
+    "in_corpus_citations": 890,
+    "arxiv_id": "1207.0580",
+    "doi": "https://doi.org/10.48550/arxiv.1207.0580",
+    "publication_year": 2012,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Long-term recurrent convolutional networks for visual recognition and description",
+    "global_citations": 5261,
+    "in_corpus_citations": 885,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2015.7298878",
+    "publication_year": 2015,
+    "primary_topic": "Multimodal Machine Learning Applications"
+  },
+  {
+    "title": "The Theory of Open Quantum Systems",
+    "global_citations": 6076,
+    "in_corpus_citations": 884,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1093/acprof:oso/9780199213900.001.0001",
+    "publication_year": 2007,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Deep visual-semantic alignments for generating image descriptions",
+    "global_citations": 4965,
+    "in_corpus_citations": 879,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2015.7298932",
+    "publication_year": 2015,
+    "primary_topic": "Multimodal Machine Learning Applications"
+  },
+  {
+    "title": "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour",
+    "global_citations": 2619,
+    "in_corpus_citations": 875,
+    "arxiv_id": "1706.02677",
+    "doi": "https://doi.org/10.48550/arxiv.1706.02677",
+    "publication_year": 2017,
+    "primary_topic": "Advanced Neural Network Applications"
+  },
+  {
+    "title": "Theory of open quantum systems",
+    "global_citations": 6166,
+    "in_corpus_citations": 875,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1063/1.1474579",
+    "publication_year": 2002,
+    "primary_topic": "Spectroscopy and Quantum Chemical Studies"
+  },
+  {
+    "title": "Unsupervised Representation Learning with Deep Convolutional Generative\\n Adversarial Networks",
+    "global_citations": 7658,
+    "in_corpus_citations": 869,
+    "arxiv_id": "1511.06434",
+    "doi": "https://doi.org/10.48550/arxiv.1511.06434",
+    "publication_year": 2015,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "The Graph Neural Network Model",
+    "global_citations": 9194,
+    "in_corpus_citations": 865,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/tnn.2008.2005605",
+    "publication_year": 2008,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Three qubits can be entangled in two inequivalent ways",
+    "global_citations": 3423,
+    "in_corpus_citations": 865,
+    "arxiv_id": "quant-ph",
+    "doi": "https://doi.org/10.1103/physreva.62.062314",
+    "publication_year": 2000,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Backpropagation Applied to Handwritten Zip Code Recognition",
+    "global_citations": 11837,
+    "in_corpus_citations": 863,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1162/neco.1989.1.4.541",
+    "publication_year": 1989,
+    "primary_topic": "Handwritten Text Recognition Techniques"
+  },
+  {
+    "title": "Charge-insensitive qubit design derived from the Cooper pair box",
+    "global_citations": 3333,
+    "in_corpus_citations": 861,
+    "arxiv_id": "cond-mat",
+    "doi": "https://doi.org/10.1103/physreva.76.042319",
+    "publication_year": 2007,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "On the generators of quantum dynamical semigroups",
+    "global_citations": 7508,
+    "in_corpus_citations": 858,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/bf01608499",
+    "publication_year": 1976,
+    "primary_topic": "Quantum Mechanics and Applications"
+  },
+  {
+    "title": "Entanglement detection",
+    "global_citations": 2396,
+    "in_corpus_citations": 856,
+    "arxiv_id": "0811.2803",
+    "doi": "https://doi.org/10.1016/j.physrep.2009.02.004",
+    "publication_year": 2009,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Quantum detection and estimation theory",
+    "global_citations": 3843,
+    "in_corpus_citations": 855,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1007/bf01007479",
+    "publication_year": 1969,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Strong coupling of a single photon to a superconducting qubit using circuit quantum electrodynamics",
+    "global_citations": 3760,
+    "in_corpus_citations": 853,
+    "arxiv_id": "cond-mat",
+    "doi": "https://doi.org/10.1038/nature02851",
+    "publication_year": 2004,
+    "primary_topic": "Quantum Information and Cryptography"
+  },
+  {
+    "title": "Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets",
+    "global_citations": 3010,
+    "in_corpus_citations": 850,
+    "arxiv_id": "1704.05018",
+    "doi": "https://doi.org/10.1038/nature23879",
+    "publication_year": 2017,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "DeepFace: Closing the Gap to Human-Level Performance in Face Verification",
+    "global_citations": 6580,
+    "in_corpus_citations": 849,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1109/cvpr.2014.220",
+    "publication_year": 2014,
+    "primary_topic": "Face recognition and analysis"
+  },
+  {
+    "title": "Extracting and composing robust features with denoising autoencoders",
+    "global_citations": 7323,
+    "in_corpus_citations": 837,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1145/1390156.1390294",
+    "publication_year": 2008,
+    "primary_topic": "Generative Adversarial Networks and Image Synthesis"
+  },
+  {
+    "title": "Scheme for reducing decoherence in quantum computer memory",
+    "global_citations": 4505,
+    "in_corpus_citations": 831,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physreva.52.r2493",
+    "publication_year": 1995,
+    "primary_topic": "Quantum Computing Algorithms and Architecture"
+  },
+  {
+    "title": "Deep learning in neural networks: An overview",
+    "global_citations": 17962,
+    "in_corpus_citations": 831,
+    "arxiv_id": "1404.7828",
+    "doi": "https://doi.org/10.1016/j.neunet.2014.09.003",
+    "publication_year": 2014,
+    "primary_topic": "Neural Networks and Applications"
+  },
+  {
+    "title": "Proposed Experiment to Test Local Hidden-Variable Theories",
+    "global_citations": 7568,
+    "in_corpus_citations": 830,
+    "arxiv_id": null,
+    "doi": "https://doi.org/10.1103/physrevlett.23.880",
+    "publication_year": 1969,
+    "primary_topic": "Quantum Mechanics and Applications"
+  }
+]

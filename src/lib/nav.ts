@@ -8,7 +8,11 @@ export type NavKey =
   | "nomad-notes"
   | "podcasts-claims"
   | "podcasts-episodes"
-  | "podcasts-people";
+  | "podcasts-people"
+  | "papers-papers"
+  | "papers-paths"
+  | "papers-cited"
+  | "papers-authors";
 
 /** Collections sidebar. Counts are shown only where they are known without a request. */
 export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
@@ -37,9 +41,19 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
       ],
     },
     {
+      title: "research papers",
+      items: [
+        item("papers-papers", "papers", "/papers/"),
+        item("papers-paths", "reading paths", "/papers/paths/"),
+        item("papers-cited", "cited works", "/papers/cited/"),
+        item("papers-authors", "authors", "/papers/authors/"),
+      ],
+    },
+    {
       title: "sources",
       items: [
         { label: "nomad atlas", href: "https://nomad.significanthobbies.com/", external: true },
+        { label: "research papers", href: "https://papers.highsignal.app/", external: true },
         { label: "high signal podcasts", href: "https://podcasts.highsignal.app/", external: true },
       ],
     },

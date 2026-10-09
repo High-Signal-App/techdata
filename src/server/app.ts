@@ -5,16 +5,18 @@
 import { Hono } from "hono";
 import { nomadProvenance, nomadSummary } from "../adapters/nomad/meta";
 import { type Dataset, explorable, type Place, queryPlaces, readPlacesQuery } from "../adapters/nomad/places";
+import { createPapersAdapter, type PapersAdapter } from "../adapters/papers";
 import { createPodcastsAdapter, type PodcastsAdapter, UpstreamError } from "../adapters/podcasts";
 import type { CollectionSummary, SearchHit } from "../adapters/types";
 import { searchPlaces } from "../lib/nomad-search";
 
-export type Env = { PODCASTS_API_BASE?: string };
+export type Env = { PODCASTS_API_BASE?: string; RESEARCH_PAPERS_BASE?: string };
 
 export type AppDeps = {
   /** Loads the Nomad Atlas snapshot (bundled JSON in the Worker; injectable in tests). */
   nomad: () => Promise<Dataset>;
   podcasts?: (env: Env) => PodcastsAdapter;
+  papers?: (env: Env) => PapersAdapter;
 };
 
 const clamp = (raw: string | undefined, def: number, min: number, max: number) => {
@@ -25,6 +27,18 @@ const clamp = (raw: string | undefined, def: number, min: number, max: number) =
 export function createApp(deps: AppDeps) {
   const app = new Hono<{ Bindings: Env }>().basePath("/api");
   const podcastsFor = deps.podcasts ?? ((env: Env) => createPodcastsAdapter({ base: env?.PODCASTS_API_BASE }));
+  const paperAdapters = new Map<string, PapersAdapter>();
+  const papersFor =
+    deps.papers ??
+    ((env: Env) => {
+      const base = env?.RESEARCH_PAPERS_BASE ?? "https://papers.highsignal.app";
+      let adapter = paperAdapters.get(base);
+      if (!adapter) {
+        adapter = createPapersAdapter({ base });
+        paperAdapters.set(base, adapter);
+      }
+      return adapter;
+    });
   let placesCache: Promise<Place[]> | null = null;
   const places = () => {
     placesCache ??= deps.nomad().then((d) => explorable(d.cities));
@@ -53,6 +67,11 @@ export function createApp(deps: AppDeps) {
       collections.push(await podcastsFor(c.env).summary());
     } catch {
       collections.push({ id: "podcasts", error: "The Podcasts API did not answer." });
+    }
+    try {
+      collections.push(await papersFor(c.env).summary());
+    } catch {
+      collections.push({ id: "papers", error: "The Research Papers public exports did not answer." });
     }
     return c.json({ collections });
   });
@@ -91,6 +110,20 @@ export function createApp(deps: AppDeps) {
     c.json(await podcastsFor(c.env).claim(c.req.param("id"), c.req.query("context") === "1")),
   );
 
+  /* Research Papers: public GET exports only. */
+  app.get("/papers/papers", async (c) => c.json(await papersFor(c.env).papers(new URL(c.req.url).searchParams)));
+  app.get("/papers/papers/:id", async (c) => {
+    const result = await papersFor(c.env).paper(c.req.param("id"));
+    return result ? c.json(result) : c.json({ error: "not_found" }, 404);
+  });
+  app.get("/papers/paths", async (c) => c.json(await papersFor(c.env).paths()));
+  app.get("/papers/paths/:id", async (c) => {
+    const result = await papersFor(c.env).path(c.req.param("id"));
+    return result ? c.json(result) : c.json({ error: "not_found" }, 404);
+  });
+  app.get("/papers/cited-works", async (c) => c.json(await papersFor(c.env).citedWorks()));
+  app.get("/papers/authors", async (c) => c.json(await papersFor(c.env).authors()));
+
   /* ⌘K: one call per collection so a slow source never blocks the others. */
   app.get("/search", async (c) => {
     const q = (c.req.query("q") ?? "").trim().slice(0, 120);
@@ -103,6 +136,13 @@ export function createApp(deps: AppDeps) {
         hits = hits.concat(await podcastsFor(c.env).search(q));
       } catch {
         // A failed source returns nothing rather than failing the palette.
+      }
+    }
+    if (!collection || collection === "papers") {
+      try {
+        hits = hits.concat(await papersFor(c.env).search(q));
+      } catch {
+        /* Failed exports do not block other collections. */
       }
     }
     return c.json({ hits });

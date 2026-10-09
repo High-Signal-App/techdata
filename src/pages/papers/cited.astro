@@ -1,0 +1,14 @@
+---
+import { CitedView } from "../../components/papers/PublicTables";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="cited works · research papers"
+  heading="cited works"
+  description="Most-cited external works from the public corpus export; aggregate counts only. Research Papers (High Signal), CC-BY 4.0."
+  nav="papers-cited"
+  breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "cited works" }]}
+>
+  <CitedView client:load />
+</Console>

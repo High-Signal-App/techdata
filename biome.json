@@ -48,6 +48,12 @@
           }
         }
       }
+    },
+    {
+      "includes": ["tests/fixtures/papers/*.json"],
+      "formatter": {
+        "enabled": false
+      }
     }
   ],
   "css": {

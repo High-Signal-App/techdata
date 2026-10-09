@@ -1,0 +1,14 @@
+---
+import { PathsView } from "../../components/papers/PublicTables";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="reading paths · research papers"
+  heading="reading paths"
+  description="Attributed reading paths, in published order, with their source and trust notes. Research Papers (High Signal), CC-BY 4.0."
+  nav="papers-paths"
+  breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "reading paths" }]}
+>
+  <PathsView client:load />
+</Console>

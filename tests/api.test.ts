@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Dataset } from "../src/adapters/nomad/places";
+import { createPapersAdapter } from "../src/adapters/papers";
 import { createPodcastsAdapter } from "../src/adapters/podcasts";
 import { createApp } from "../src/server/app";
 
@@ -35,6 +36,7 @@ const upstream = async (url: string) => {
 
 const app = createApp({
   nomad: async () => dataset,
+  papers: () => createPapersAdapter({ fetch: async () => new Response(null, { status: 404 }) }),
   podcasts: () => createPodcastsAdapter({ base: "https://api.example/api", fetch: upstream }),
 });
 const get = async (path: string) => {
@@ -43,10 +45,10 @@ const get = async (path: string) => {
 };
 
 describe("api", () => {
-  it("lists both collections with provenance", async () => {
+  it("lists collections with provenance", async () => {
     const { body } = await get("/api/collections");
     const list = body.collections as { id: string; counts: Record<string, number> }[];
-    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts"]);
+    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "papers"]);
     expect(list[0]?.counts.places).toBe(1374);
     expect(list[1]?.counts.claims).toBe(10);
   });

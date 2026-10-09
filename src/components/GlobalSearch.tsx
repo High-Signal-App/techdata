@@ -8,6 +8,7 @@ import type { SearchHit } from "../adapters/types";
  * split into palette groups.
  */
 const GROUPS: { id: string; label: string; collection: string; kind: string }[] = [
+  { id: "papers", label: "papers · research papers", collection: "papers", kind: "papers" },
   { id: "places", label: "places · nomad atlas", collection: "nomad", kind: "places" },
   { id: "countries", label: "countries · nomad atlas", collection: "nomad", kind: "countries" },
   { id: "people", label: "people · podcasts", collection: "podcasts", kind: "people" },
@@ -45,8 +46,8 @@ export default function GlobalSearch() {
   return (
     <SearchPalette
       sources={sources}
-      placeholder="Search places, countries, people and claims…"
-      emptyHint="Search Nomad Atlas places and High Signal Podcasts people and claims."
+      placeholder="Search places, countries, people, claims and papers…"
+      emptyHint="Search Nomad Atlas places and High Signal Podcasts people and claims, and Research Papers."
       onSelect={(r) => {
         if (!r.href) return;
         const target = new URL(r.href, location.href);
