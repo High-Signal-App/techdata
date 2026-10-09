@@ -1,6 +1,6 @@
 # techdata — PROJECT STATUS
 
-Last updated: 2026-10-09
+Last updated: 2026-10-10
 
 ## Why / What
 
@@ -40,6 +40,8 @@ provenance on every record.
 
 ## Features (shipped)
 
+- PH Catalog (implemented locally; build/rendered browser verification blocked by sandbox): sample: 2,000 of 574,752 products; browser DuckDB-WASM Parquet queries, category/website facets, URL state, sorting, paging, product detail and filtered CSV/JSON exports with provenance. Static collection summary; client search available, global palette wiring deferred. Typecheck, Biome and 53 Vitest tests pass; `pnpm run check` stops at Cloudflare build `listen EPERM` on port 9229. Browser engine/rendering are unverified offline; Node WASM Parquet ingestion requires an unavailable extension, so SQL builders/contracts are unit-tested and the real sample schema/count were checked with local DuckDB.
+
 - Collections overview with counts and provenance.
 - Nomad Atlas places: all Atlas filters, presets, profiles, sorts, table/cards, details, compare-3, exports, data notes; old Atlas links translate.
 - Podcasts: claims search, episodes, people, claim detail with quote, speaker attribution, timestamp links and transcript window.
@@ -49,5 +51,5 @@ provenance on every record.
 ## Todo / Planned / Deferred / Blocked
 
 1. Blocked on owner: domain, Cloudflare Access, deploy approval, `UI_LIBRARY_TOKEN` CI secret.
-2. Planned: Research Papers adapter; PH Catalog query.
+2. Planned: Research Papers adapter; PH full-export hosting, jsDelivr/CSP deploy decision and DuckDB-WASM vs D1 benchmark.
 3. Deferred: fate of the five public sites; collector location.

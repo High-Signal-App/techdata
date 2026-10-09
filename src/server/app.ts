@@ -5,6 +5,7 @@
 import { Hono } from "hono";
 import { nomadProvenance, nomadSummary } from "../adapters/nomad/meta";
 import { type Dataset, explorable, type Place, queryPlaces, readPlacesQuery } from "../adapters/nomad/places";
+import { phAdapter } from "../adapters/ph";
 import { createPodcastsAdapter, type PodcastsAdapter, UpstreamError } from "../adapters/podcasts";
 import { createRedditAdapter, type RedditAdapter, UpstreamError as RedditUpstreamError } from "../adapters/reddit";
 import type { CollectionSummary, SearchHit } from "../adapters/types";
@@ -80,8 +81,11 @@ export function createApp(deps: AppDeps) {
     } catch {
       collections.push({ id: "reddit", error: "The Reddit Snapshot API did not answer." });
     }
+    collections.push(await phAdapter.summary());
     return c.json({ collections });
   });
+
+  app.get("/ph/summary", async (c) => c.json(await phAdapter.summary()));
 
   /* Nomad Atlas: the same query string the places view writes. */
   app.get("/nomad/places", async (c) => {

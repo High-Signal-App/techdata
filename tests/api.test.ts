@@ -49,9 +49,15 @@ describe("api", () => {
   it("lists all collections with provenance", async () => {
     const { body } = await get("/api/collections");
     const list = body.collections as { id: string; counts: Record<string, number> }[];
-    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit"]);
+    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit", "ph"]);
     expect(list[0]?.counts.places).toBe(1374);
     expect(list[1]?.counts.claims).toBe(10);
+    expect(list[3]?.counts["sample products"]).toBe(2000);
+    expect((await get("/api/ph/summary")).body.provenance).toMatchObject({
+      source: "Product Hunt",
+      revision: "catalog-handoff-v1",
+      collectedAt: null,
+    });
   });
 
   it("serves Nomad places with the view's query string", async () => {

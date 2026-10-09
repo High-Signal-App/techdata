@@ -17,7 +17,9 @@ Collectors stay in their own repos; techdata only reads until parity is proven.
 
 | Reddit Insights | Reddit, via `High-Signal-App/research-subreddit` | Public Snapshot API `reddit-insights.highsignal.app/api/snapshots` (GET only) | Capture windows and revision on every snapshot; 24-hour serving leases |
 
-Next: Research Papers, PH Catalog (see "What's next").
+| PH Catalog | Product Hunt public pages, via `Significant-Hobbies/ph-catalog` | Browser DuckDB-WASM over configurable Parquet (local sample) | Catalogue handoff v1, published 2026-08-31; sample: 2,000 of 574,752 products |
+
+Next: Research Papers (see "What's next").
 
 ## Nomad Atlas parity
 
@@ -90,6 +92,25 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 - `REDDIT_INSIGHTS_API_BASE` can override the public origin (no configuration
   change required). No writes, archive access or collector changes.
 
+## PH Catalog coverage (read-only)
+
+- `/ph/`: sample: 2,000 of 574,752 products. Browser-only DuckDB-WASM queries
+  names/taglines/descriptions with case/accent-insensitive search, category and
+  website facets with counts, sorting, URL state, paging and slug-selected detail.
+- CSV/JSON exports include all filtered rows and provenance; JSON carries source,
+  collectedAt (not recorded), fetchedAt, release revision, sample label and filters.
+- `PUBLIC_PH_PARQUET_URL` is a build-time override (default `/data/ph/sample.parquet`).
+  The full private release export is not bundled. R2 hosting remains a later step.
+- `GET /api/ph/summary` and `/api/collections` expose static sample provenance;
+  product queries stay in the browser.
+- Pinned DuckDB-WASM 1.32.0 bundles load lazily from jsDelivr in the browser;
+  no large WASM assets are shipped to Cloudflare. CDN/CSP choice needs deploy review.
+- Only the DuckDB-WASM path is implemented; the DuckDB-WASM vs D1 benchmark is open.
+  Client `searchPh()` is available for a later shared index; the palette is unchanged.
+- No per-row server API, writes, votes or launch dates. Attribution: Product Hunt
+  (public product pages), catalogue by ph-catalog. Per-record collection dates are
+  absent; the release publication date is not used as a collection date.
+
 ## Architecture
 
 - Astro 7 + React islands, prerendered pages, on one Cloudflare Worker
@@ -123,5 +144,5 @@ Deploy is manual and owner-approved only (`.github/workflows/deploy.yml`,
 
 1. Owner decisions: domain, Cloudflare Access policy, deploy approval.
 2. Research Papers adapter (paths, paper detail, citation graph).
-3. PH Catalog hosted query (Parquet in R2; DuckDB-WASM vs D1 benchmark).
+3. PH Catalog full-export hosting (Parquet in R2; DuckDB-WASM vs D1 benchmark).
 4. Parity sign-off per collection, then decide the public sites' fate.
