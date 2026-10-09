@@ -12,8 +12,10 @@ import {
   type ReadingPath,
 } from "../src/adapters/papers";
 import { createPodcastsAdapter } from "../src/adapters/podcasts";
+import { createRedditAdapter } from "../src/adapters/reddit";
 import { paperColumns, paperDetailItems, paperExport } from "../src/components/papers/PapersView";
 import { createApp } from "../src/server/app";
+import redditCatalog from "./fixtures/reddit/catalog.json";
 
 // Byte-for-byte public responses, papers.highsignal.app, 2026-10-09; CC-BY 4.0.
 const fixture = (name: string) => readFileSync(new URL(`./fixtures/papers/${name}`, import.meta.url), "utf8");
@@ -221,6 +223,7 @@ describe("papers public export adapter", () => {
     const a = createPapersAdapter({ fetch, now, base: "https://fixtures.example" });
     const app = createApp({
       nomad: async () => ({ cities: [], count: 0 }),
+      reddit: () => createRedditAdapter({ fetch: async () => Response.json(redditCatalog) }),
       podcasts: () => createPodcastsAdapter({ fetch: async () => Response.json({}) }),
       papers: (env) => {
         expect(env.RESEARCH_PAPERS_BASE).toBe("https://fixtures.example");

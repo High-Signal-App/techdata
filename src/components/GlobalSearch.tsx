@@ -14,6 +14,7 @@ const GROUPS: { id: string; label: string; collection: string; kind: string }[] 
   { id: "countries", label: "countries · nomad atlas", collection: "nomad", kind: "countries" },
   { id: "people", label: "people · podcasts", collection: "podcasts", kind: "people" },
   { id: "claims", label: "claims · podcasts", collection: "podcasts", kind: "claims" },
+  { id: "papers", label: "papers · research papers", collection: "papers", kind: "papers" },
 ];
 
 export default function GlobalSearch() {
@@ -47,8 +48,8 @@ export default function GlobalSearch() {
   return (
     <SearchPalette
       sources={sources}
-      placeholder="Search places, people, claims and subreddits…"
-      emptyHint="Search Nomad Atlas, Podcasts and Reddit communities or recently loaded threads."
+      placeholder="Search places, people, claims, subreddits and papers…"
+      emptyHint="Search Nomad Atlas, Podcasts and Reddit communities or recently loaded threads, and Research Papers."
       onSelect={(r) => {
         if (!r.href) return;
         const target = new URL(r.href, location.href);
