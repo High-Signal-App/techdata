@@ -1,0 +1,318 @@
+import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
+import {
+  ActiveFilters,
+  FacetFilter,
+  FilterBar,
+  FilterSearch,
+  RangeFilter,
+  useUrlFilters,
+} from "@saas-maker/ui/blocks/filter-bar";
+import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
+import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
+import type { ExportColumn } from "@saas-maker/ui/lib/export";
+import { type FilterDef, facetCounts, filterRows, rangeBounds } from "@saas-maker/ui/lib/filters";
+import * as React from "react";
+import { ATTRIBUTION, type Catalog, type Comment, type Post, type Snapshot, snapshotHref } from "../../adapters/reddit";
+import type { Provenance } from "../../adapters/types";
+import { useUrlParam } from "../../lib/url-state";
+import { CaptureProvenance, Freshness, ReadError, useApi, useSort } from "./shared";
+
+const defs: FilterDef<Post>[] = [
+  { kind: "facet", id: "label", label: "post label", value: (p) => p.flair || "not recorded" },
+  { kind: "range", id: "score", label: "recorded score", value: (p) => p.score },
+];
+const columns: DataColumn<Post>[] = [
+  {
+    id: "title",
+    header: "thread",
+    value: (p) => p.title,
+    hideable: false,
+    minWidth: "18rem",
+    cell: (p) => <span className="block max-w-[34rem] truncate font-medium">{p.title}</span>,
+  },
+  { id: "score", header: "recorded score", value: (p) => p.score, align: "right" },
+  { id: "commentCount", header: "reported replies", value: (p) => p.commentCount, align: "right" },
+  { id: "flair", header: "post label", value: (p) => p.flair ?? "not recorded" },
+  {
+    id: "createdUtc",
+    header: "created (UTC)",
+    value: (p) => p.createdUtc,
+    cell: (p) => new Date(p.createdUtc * 1000).toISOString(),
+  },
+];
+const postFields: (keyof Post)[] = [
+  "id",
+  "title",
+  "body",
+  "permalink",
+  "createdUtc",
+  "retrievedAt",
+  "score",
+  "upvoteRatio",
+  "commentCount",
+  "flair",
+  "nsfw",
+  "spoiler",
+  "removalState",
+];
+const commentFields: (keyof Comment)[] = [
+  "id",
+  "postId",
+  "parentId",
+  "body",
+  "createdUtc",
+  "retrievedAt",
+  "score",
+  "depth",
+  "isSubmitter",
+  "removalState",
+];
+export function exportColumns<T extends Post | Comment>(fields: (keyof T)[], s: Snapshot): ExportColumn<T>[] {
+  return [
+    ...fields.map((id) => ({ id: String(id), value: (row: T) => row[id] })),
+    ...Object.entries({
+      subreddit: s.subreddit,
+      date: s.date,
+      revision: s.source.revision,
+      capturedAt: s.capturedAt,
+      source: "Reddit, via Reddit Insights capture runs",
+      windowStart: s.window.start,
+      windowEnd: s.window.end,
+      coverageStatus: s.coverage.status,
+    }).map(([id, value]) => ({ id, value: () => value })),
+  ];
+}
+function Picker({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger size="sm" className="h-8 w-auto max-w-full" aria-label={label}>
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((v) => (
+          <SelectItem value={v} key={v}>
+            {v}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+export default function PostsView() {
+  const [catalog] = useApi<Catalog>("catalog");
+  const [subreddit, setSubreddit] = useUrlParam("subreddit");
+  const [date, setDate] = useUrlParam("date");
+  const [version, setVersion] = useUrlParam("v");
+  const [postId, setPostId] = useUrlParam("post");
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  const entries = catalog.status === "ready" ? catalog.value.data.entries : [];
+  const community = subreddit ?? entries[0]?.subreddit;
+  const dates = [...new Set(entries.filter((e) => e.subreddit === community).map((e) => e.date))].sort().reverse();
+  const day = date ?? dates[0];
+  const [state, retry] = useApi<Snapshot>(
+    mounted && community && day
+      ? `snapshots/${day}/${encodeURIComponent(community)}${version ? `?v=${encodeURIComponent(version)}` : ""}`
+      : null,
+  );
+  const [filters, setFilters] = useUrlFilters(defs);
+  const sort = useSort("score");
+  // Persist the resolved identity so a copied detail URL never drifts to another revision.
+  React.useEffect(() => {
+    if (
+      state.status !== "ready" ||
+      state.value.data.subreddit.toLowerCase() !== community?.toLowerCase() ||
+      state.value.data.date !== day
+    )
+      return;
+    if (!subreddit) setSubreddit(state.value.data.subreddit);
+    if (!date) setDate(state.value.data.date);
+    if (!version) setVersion(state.value.data.source.revision.slice(0, 12));
+  }, [state, subreddit, date, version, setSubreddit, setDate, setVersion, community, day]);
+  const snapshot = state.status === "ready" ? state.value.data : null;
+  const all = snapshot?.posts ?? [];
+  const search = (p: Post) => `${p.title} ${p.body}`;
+  const rows = filterRows(all, defs, filters, { search });
+  const bounds = rangeBounds(all, (p) => p.score);
+  const post = all.find((p) => p.id === postId);
+  const meta =
+    state.status === "ready"
+      ? {
+          collection: "reddit",
+          ...state.value.provenance,
+          attribution: ATTRIBUTION,
+          window: state.value.data.window,
+          coverage: state.value.data.coverage,
+          filters,
+        }
+      : undefined;
+  return (
+    <div className="flex flex-col gap-4">
+      <FilterBar>
+        <Picker
+          label="subreddit"
+          value={community ?? ""}
+          options={[...new Set([...(community ? [community] : []), ...entries.map((e) => e.subreddit)])].sort()}
+          onChange={(v) => {
+            setSubreddit(v);
+            setDate(null);
+            setVersion(null);
+            setPostId(null);
+          }}
+        />
+        <Picker
+          label="collection date"
+          value={day ?? ""}
+          options={[...new Set([...(day ? [day] : []), ...dates])]}
+          onChange={(v) => {
+            setDate(v);
+            setVersion(null);
+            setPostId(null);
+          }}
+        />
+        <FilterSearch
+          value={filters.q ?? ""}
+          onChange={(q) => setFilters({ ...filters, q })}
+          placeholder="Search captured threads…"
+        />
+        <FacetFilter
+          label="post label"
+          options={facetCounts(all, defs, filters, "label", { search })}
+          selected={filters.facets.label ?? []}
+          onChange={(v) => setFilters({ ...filters, facets: { ...filters.facets, label: v } })}
+        />
+        {bounds && (
+          <RangeFilter
+            label="recorded score"
+            bounds={bounds}
+            step={1}
+            value={filters.ranges.score}
+            onChange={(v) => setFilters({ ...filters, ranges: { ...filters.ranges, score: v ?? {} } })}
+          />
+        )}
+      </FilterBar>
+      <ActiveFilters defs={defs} state={filters} onChange={setFilters} />
+      {catalog.status === "error" && <ReadError error={catalog.error} retry={() => location.reload()} />}
+      {state.status === "error" && <ReadError error={state.error} retry={retry} />}
+      {snapshot && (
+        <>
+          <Freshness snapshot={snapshot} />
+          <p className="text-sm text-muted-foreground">{snapshot.coverage.note}</p>
+        </>
+      )}
+      <RecordLayout>
+        <DataTable
+          label="Captured threads"
+          data={rows}
+          columns={columns}
+          getRowId={(p) => p.id}
+          status={!community || !day ? catalog.status : state.status}
+          {...sort}
+          onRetry={retry}
+          onRowClick={(p) => setPostId(p.id)}
+          selectedId={postId}
+          empty="No captured threads match."
+          toolbar={(view) => (
+            <>
+              <span className="text-sm text-muted-foreground">{rows.length} threads</span>
+              {snapshot && (
+                <>
+                  <ExportMenu
+                    label="export posts"
+                    rows={view.rows}
+                    columns={exportColumns(postFields, snapshot)}
+                    filename={`reddit-${snapshot.subreddit}-${snapshot.date}-posts`}
+                    meta={meta}
+                  />
+                  <ExportMenu
+                    label="export comments"
+                    rows={snapshot.comments}
+                    columns={exportColumns(commentFields, snapshot)}
+                    filename={`reddit-${snapshot.subreddit}-${snapshot.date}-comments`}
+                    meta={{
+                      ...meta,
+                      filters: { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision },
+                      scope: "all retained comments in the selected snapshot",
+                    }}
+                  />
+                </>
+              )}
+            </>
+          )}
+        />
+        <RecordDetail
+          open={!!postId}
+          onOpenChange={(v) => !v && setPostId(null)}
+          title={post?.title ?? "thread"}
+          subtitle={community ? `r/${community}` : undefined}
+        >
+          {state.status === "error" && <ReadError error={state.error} retry={retry} />}
+          {snapshot && post && state.status === "ready" && (
+            <PostDetail post={post} snapshot={snapshot} provenance={state.value.provenance} />
+          )}
+          {snapshot && postId && !post && <p>This post is not present in this captured revision.</p>}
+        </RecordDetail>
+      </RecordLayout>
+      {state.status === "ready" && <CaptureProvenance info={state.value.provenance} />}
+    </div>
+  );
+}
+function PostDetail({ post, snapshot, provenance }: { post: Post; snapshot: Snapshot; provenance: Provenance }) {
+  const comments = snapshot.comments.filter((c) => c.postId === post.id);
+  return (
+    <>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{post.body || "body not recorded"}</p>
+      <KeyValueList
+        items={[
+          { label: "recorded score", value: post.score },
+          { label: "reported replies", value: post.commentCount },
+          { label: "retained comments", value: comments.length },
+          { label: "post label", value: post.flair ?? "not recorded" },
+          { label: "created (UTC)", value: new Date(post.createdUtc * 1000).toISOString() },
+          { label: "removal state", value: post.removalState ?? "not recorded" },
+          { label: "attribution", value: "Reddit; authors omitted by the capture API" },
+        ]}
+      />
+      <a
+        href={`https://www.reddit.com${post.permalink}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm underline underline-offset-4"
+      >
+        Reddit permalink
+      </a>
+      <a href={snapshotHref(snapshot, post.id)} className="text-sm underline underline-offset-4">
+        link to this captured revision
+      </a>
+      <Freshness snapshot={snapshot} />
+      <section>
+        <h3 className="ui-case text-xs font-medium text-muted-foreground">retained comments</h3>
+        <p className="my-2 text-sm text-muted-foreground">{snapshot.coverage.note}</p>
+        <ul className="flex flex-col gap-4">
+          {comments.map((c) => (
+            <li key={c.id} className="border-l border-border pl-3 text-sm">
+              <p className="leading-relaxed whitespace-pre-wrap break-words">{c.body}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                recorded score {c.score} · depth {c.depth} · parent {c.parentId} ·{" "}
+                {new Date(c.createdUtc * 1000).toISOString()}
+              </p>
+            </li>
+          ))}
+        </ul>
+        {!comments.length && <p className="text-sm">No retained comments in this snapshot.</p>}
+      </section>
+      <CaptureProvenance info={provenance} />
+    </>
+  );
+}

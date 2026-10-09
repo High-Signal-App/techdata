@@ -8,6 +8,8 @@ import type { SearchHit } from "../adapters/types";
  * split into palette groups.
  */
 const GROUPS: { id: string; label: string; collection: string; kind: string }[] = [
+  { id: "reddit-communities", label: "subreddits · reddit insights", collection: "reddit", kind: "communities" },
+  { id: "reddit-posts", label: "loaded threads · reddit insights", collection: "reddit", kind: "posts" },
   { id: "places", label: "places · nomad atlas", collection: "nomad", kind: "places" },
   { id: "countries", label: "countries · nomad atlas", collection: "nomad", kind: "countries" },
   { id: "people", label: "people · podcasts", collection: "podcasts", kind: "people" },
@@ -45,8 +47,8 @@ export default function GlobalSearch() {
   return (
     <SearchPalette
       sources={sources}
-      placeholder="Search places, countries, people and claims…"
-      emptyHint="Search Nomad Atlas places and High Signal Podcasts people and claims."
+      placeholder="Search places, people, claims and subreddits…"
+      emptyHint="Search Nomad Atlas, Podcasts and Reddit communities or recently loaded threads."
       onSelect={(r) => {
         if (!r.href) return;
         const target = new URL(r.href, location.href);

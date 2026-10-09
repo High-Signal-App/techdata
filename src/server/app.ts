@@ -6,15 +6,17 @@ import { Hono } from "hono";
 import { nomadProvenance, nomadSummary } from "../adapters/nomad/meta";
 import { type Dataset, explorable, type Place, queryPlaces, readPlacesQuery } from "../adapters/nomad/places";
 import { createPodcastsAdapter, type PodcastsAdapter, UpstreamError } from "../adapters/podcasts";
+import { createRedditAdapter, type RedditAdapter, UpstreamError as RedditUpstreamError } from "../adapters/reddit";
 import type { CollectionSummary, SearchHit } from "../adapters/types";
 import { searchPlaces } from "../lib/nomad-search";
 
-export type Env = { PODCASTS_API_BASE?: string };
+export type Env = { PODCASTS_API_BASE?: string; REDDIT_INSIGHTS_API_BASE?: string };
 
 export type AppDeps = {
   /** Loads the Nomad Atlas snapshot (bundled JSON in the Worker; injectable in tests). */
   nomad: () => Promise<Dataset>;
   podcasts?: (env: Env) => PodcastsAdapter;
+  reddit?: (env: Env) => RedditAdapter;
 };
 
 const clamp = (raw: string | undefined, def: number, min: number, max: number) => {
@@ -25,6 +27,18 @@ const clamp = (raw: string | undefined, def: number, min: number, max: number) =
 export function createApp(deps: AppDeps) {
   const app = new Hono<{ Bindings: Env }>().basePath("/api");
   const podcastsFor = deps.podcasts ?? ((env: Env) => createPodcastsAdapter({ base: env?.PODCASTS_API_BASE }));
+  const redditAdapters = new Map<string, RedditAdapter>();
+  const redditFor =
+    deps.reddit ??
+    ((env: Env) => {
+      const base = env?.REDDIT_INSIGHTS_API_BASE ?? "https://reddit-insights.highsignal.app";
+      let adapter = redditAdapters.get(base);
+      if (!adapter) {
+        adapter = createRedditAdapter({ base });
+        redditAdapters.set(base, adapter);
+      }
+      return adapter;
+    });
   let placesCache: Promise<Place[]> | null = null;
   const places = () => {
     placesCache ??= deps.nomad().then((d) => explorable(d.cities));
@@ -38,6 +52,13 @@ export function createApp(deps: AppDeps) {
   });
 
   app.onError((err, c) => {
+    if (err instanceof RedditUpstreamError) {
+      c.header("cache-control", "no-store");
+      return c.json(
+        { error: err.state, status: err.status, provenance: err.provenance },
+        err.status === 404 ? 404 : err.status === 410 ? 410 : err.status === 400 ? 400 : 502,
+      );
+    }
     if (err instanceof UpstreamError) {
       return c.json({ error: "upstream", status: err.status }, err.status === 404 ? 404 : 502);
     }
@@ -53,6 +74,11 @@ export function createApp(deps: AppDeps) {
       collections.push(await podcastsFor(c.env).summary());
     } catch {
       collections.push({ id: "podcasts", error: "The Podcasts API did not answer." });
+    }
+    try {
+      collections.push(await redditFor(c.env).summary());
+    } catch {
+      collections.push({ id: "reddit", error: "The Reddit Snapshot API did not answer." });
     }
     return c.json({ collections });
   });
@@ -91,6 +117,15 @@ export function createApp(deps: AppDeps) {
     c.json(await podcastsFor(c.env).claim(c.req.param("id"), c.req.query("context") === "1")),
   );
 
+  app.get("/reddit/catalog", async (c) => {
+    c.header("cache-control", "no-store");
+    return c.json(await redditFor(c.env).catalog());
+  });
+  app.get("/reddit/snapshots/:date/:subreddit", async (c) => {
+    c.header("cache-control", "no-store");
+    return c.json(await redditFor(c.env).snapshot(c.req.param("subreddit"), c.req.param("date"), c.req.query("v")));
+  });
+
   /* ⌘K: one call per collection so a slow source never blocks the others. */
   app.get("/search", async (c) => {
     const q = (c.req.query("q") ?? "").trim().slice(0, 120);
@@ -103,6 +138,13 @@ export function createApp(deps: AppDeps) {
         hits = hits.concat(await podcastsFor(c.env).search(q));
       } catch {
         // A failed source returns nothing rather than failing the palette.
+      }
+    }
+    if (!collection || collection === "reddit") {
+      try {
+        hits = hits.concat(await redditFor(c.env).search(q));
+      } catch {
+        /* Unavailable sources do not block search. */
       }
     }
     return c.json({ hits });

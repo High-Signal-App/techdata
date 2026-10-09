@@ -1,0 +1,7 @@
+---
+import PostsView from "../../../components/reddit/PostsView";
+import Console from "../../../layouts/Console.astro";
+---
+<Console title="threads · reddit insights" heading="threads" description="Recorded scores and retained discussion in a selected capture. Comments are filtered; authors are omitted." nav="reddit-posts" breadcrumbs={[{ label: "reddit insights", href: "/reddit/" }, { label: "threads" }]}>
+  <PostsView client:load />
+</Console>
