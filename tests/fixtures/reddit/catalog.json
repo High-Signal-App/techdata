@@ -1,0 +1,236 @@
+{
+  "schema": "reddit-insights.catalog.v1",
+  "generatedAt": "2026-10-09T00:51:35.695Z",
+  "entries": [
+    {
+      "subreddit": "Accounting",
+      "date": "2026-10-09",
+      "source": {
+        "run": "37864029255",
+        "attempt": "1",
+        "revision": "7b30b0b1e86f418612fc6ad76a71a535f7ac5eda90d393719ccf52c32fb28312"
+      },
+      "capturedAt": "2026-10-09T00:50:55.321Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 106,
+        "comments": 844,
+        "commentsSeen": 1240,
+        "commentsDropped": 396,
+        "reportedReplies": 1279,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "AI_Agents",
+      "date": "2026-10-09",
+      "source": {
+        "run": "37864029255",
+        "attempt": "1",
+        "revision": "7b30b0b1e86f418612fc6ad76a71a535f7ac5eda90d393719ccf52c32fb28312"
+      },
+      "capturedAt": "2026-10-09T00:50:55.321Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 65,
+        "comments": 324,
+        "commentsSeen": 604,
+        "commentsDropped": 280,
+        "reportedReplies": 647,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "LocalLLaMA",
+      "date": "2026-10-09",
+      "source": {
+        "run": "37864029255",
+        "attempt": "1",
+        "revision": "7b30b0b1e86f418612fc6ad76a71a535f7ac5eda90d393719ccf52c32fb28312"
+      },
+      "capturedAt": "2026-10-09T00:50:55.321Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 67,
+        "comments": 1069,
+        "commentsSeen": 1514,
+        "commentsDropped": 445,
+        "reportedReplies": 1610,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "MachineLearning",
+      "date": "2026-10-09",
+      "source": {
+        "run": "37864029255",
+        "attempt": "1",
+        "revision": "7b30b0b1e86f418612fc6ad76a71a535f7ac5eda90d393719ccf52c32fb28312"
+      },
+      "capturedAt": "2026-10-09T00:50:55.321Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 14,
+        "comments": 48,
+        "commentsSeen": 59,
+        "commentsDropped": 11,
+        "reportedReplies": 72,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "SaaS",
+      "date": "2026-10-09",
+      "source": {
+        "run": "37864029255",
+        "attempt": "1",
+        "revision": "7b30b0b1e86f418612fc6ad76a71a535f7ac5eda90d393719ccf52c32fb28312"
+      },
+      "capturedAt": "2026-10-09T00:50:55.321Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 110,
+        "comments": 426,
+        "commentsSeen": 792,
+        "commentsDropped": 366,
+        "reportedReplies": 884,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "Accounting",
+      "date": "2026-10-08",
+      "source": {
+        "run": "37707004916",
+        "attempt": "1",
+        "revision": "83b628a1d8a62de1848298199529275856ceca4a059ed4446411294d9769af61"
+      },
+      "capturedAt": "2026-10-08T00:48:19.334Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 90,
+        "comments": 829,
+        "commentsSeen": 1118,
+        "commentsDropped": 289,
+        "reportedReplies": 1165,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "AI_Agents",
+      "date": "2026-10-08",
+      "source": {
+        "run": "37707004916",
+        "attempt": "1",
+        "revision": "83b628a1d8a62de1848298199529275856ceca4a059ed4446411294d9769af61"
+      },
+      "capturedAt": "2026-10-08T00:48:19.334Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 42,
+        "comments": 270,
+        "commentsSeen": 508,
+        "commentsDropped": 238,
+        "reportedReplies": 551,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "LocalLLaMA",
+      "date": "2026-10-08",
+      "source": {
+        "run": "37707004916",
+        "attempt": "1",
+        "revision": "83b628a1d8a62de1848298199529275856ceca4a059ed4446411294d9769af61"
+      },
+      "capturedAt": "2026-10-08T00:48:19.334Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 64,
+        "comments": 1046,
+        "commentsSeen": 1569,
+        "commentsDropped": 523,
+        "reportedReplies": 1660,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "MachineLearning",
+      "date": "2026-10-08",
+      "source": {
+        "run": "37707004916",
+        "attempt": "1",
+        "revision": "83b628a1d8a62de1848298199529275856ceca4a059ed4446411294d9769af61"
+      },
+      "capturedAt": "2026-10-08T00:48:19.334Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 9,
+        "comments": 57,
+        "commentsSeen": 73,
+        "commentsDropped": 16,
+        "reportedReplies": 88,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    },
+    {
+      "subreddit": "SaaS",
+      "date": "2026-10-08",
+      "source": {
+        "run": "37707004916",
+        "attempt": "1",
+        "revision": "83b628a1d8a62de1848298199529275856ceca4a059ed4446411294d9769af61"
+      },
+      "capturedAt": "2026-10-08T00:48:19.334Z",
+      "coverage": {
+        "status": "complete",
+        "posts": 100,
+        "comments": 423,
+        "commentsSeen": 673,
+        "commentsDropped": 250,
+        "reportedReplies": 741,
+        "listingCapped": false,
+        "commentFailures": 0,
+        "unresolvedMore": 0,
+        "note": "Captured posts in the collection window; retained comments are filtered and may be incomplete. Scores are recorded values, not current Reddit values."
+      },
+      "expiresAt": "2026-10-10T00:51:35.695Z"
+    }
+  ]
+}

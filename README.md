@@ -15,7 +15,9 @@ Collectors stay in their own repos; techdata only reads until parity is proven.
 | Nomad Atlas places | Nomads.com, via `Significant-Hobbies/nomad-data-adventure` | Bundled `public/data/nomad/cities.json` (byte-identical, sha256-checked) and Atlas's `model.js` copied unchanged | Snapshot collected 2026-09-07, published 2026-09-13 (`517cbeb`) |
 | High Signal Podcasts | `Significant-Hobbies/on-record` | Public API `api.podcasts.highsignal.app/api` (read-only) | Live; every response records when it was read |
 
-Next: Reddit Insights, Research Papers, PH Catalog (see "What's next").
+| Reddit Insights | Reddit, via `High-Signal-App/research-subreddit` | Public Snapshot API `reddit-insights.highsignal.app/api/snapshots` (GET only) | Capture windows and revision on every snapshot; 24-hour serving leases |
+
+Next: Research Papers, PH Catalog (see "What's next").
 
 ## Nomad Atlas parity
 
@@ -67,6 +69,27 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 - Unverified speakers are labelled, never named or listed as people (the API
   enforces this; tests check techdata never upgrades them).
 
+## Reddit Insights coverage (read-only)
+
+- **Subreddits** (`/reddit/`): communities from the live catalog, latest recorded
+  post/retained-comment counts, coverage and available dates; facets with counts.
+- **Threads** (`/reddit/posts/`): chosen community and collection date, searchable
+  post table, real post-label facet, recorded score range, score/reply sorting.
+  URL state includes the 12-character revision; thread details show body, source
+  permalink, reported replies, retained comments and exact UTC collection window.
+- Posts and retained-comments CSV/JSON exports carry subreddit, date, full
+  revision, captured-at and source on each row. JSON also keeps provenance,
+  coverage, window, attribution and applied filters. Posts export the filtered
+  view; comments export all retained comments in the selected snapshot.
+- Author/profile fields are omitted. Labels use the API's `flair`; no inferred
+  topics. Coverage is always shown: retained comments are filtered and scores
+  and reply totals are recorded values, never current Reddit values.
+- Not-archived, removed revision, expired and unavailable states remain distinct.
+  Snapshot reads use no-store and pinned `?v=` requests; global search only searches
+  community names plus bounded, already loaded latest snapshots still catalogued.
+- `REDDIT_INSIGHTS_API_BASE` can override the public origin (no configuration
+  change required). No writes, archive access or collector changes.
+
 ## Architecture
 
 - Astro 7 + React islands, prerendered pages, on one Cloudflare Worker
@@ -76,7 +99,8 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
   adapter keeps its own record shape.
 - `GET /api/collections`, `/api/search?q=&collection=`, `/api/nomad/places`
   (same query string as the view), `/api/nomad/places/:slug`, and
-  `/api/podcasts/{stats,episodes,episodes/:id,people,people/:slug,claims,claims/:id}`.
+  `/api/podcasts/{stats,episodes,episodes/:id,people,people/:slug,claims,claims/:id}`,
+  `/api/reddit/catalog` and `/api/reddit/snapshots/:date/:subreddit?v=`.
 - UI: `ConsolePage`, `DataTable`, `FilterBar`/`useUrlFilters`, `SearchPalette`,
   `RecordDetail`, `ExportMenu` from `@saas-maker/*` v0.1.11 (git dependency).
 
@@ -98,7 +122,6 @@ Deploy is manual and owner-approved only (`.github/workflows/deploy.yml`,
 ## What's next
 
 1. Owner decisions: domain, Cloudflare Access policy, deploy approval.
-2. Reddit Insights adapter (R2 snapshots, pinned revisions, redaction).
-3. Research Papers adapter (paths, paper detail, citation graph).
-4. PH Catalog hosted query (Parquet in R2; DuckDB-WASM vs D1 benchmark).
-5. Parity sign-off per collection, then decide the public sites' fate.
+2. Research Papers adapter (paths, paper detail, citation graph).
+3. PH Catalog hosted query (Parquet in R2; DuckDB-WASM vs D1 benchmark).
+4. Parity sign-off per collection, then decide the public sites' fate.
