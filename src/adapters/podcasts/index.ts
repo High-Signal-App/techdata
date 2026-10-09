@@ -272,16 +272,6 @@ export function speakerLabel(c: Pick<Claim, "attributionStatus" | "personName">)
   return c.attributionStatus === "verified_speaker" && c.personName ? c.personName : "unverified speaker";
 }
 
-/** 754.2 → "12:34", 3723 → "1:02:03". */
-export function formatTimestamp(seconds: number | null | undefined): string | null {
-  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return null;
-  const s = Math.floor(seconds);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = String(s % 60).padStart(2, "0");
-  return h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
-}
-
 /** Human label for how the transcript was obtained (drives whether timestamps exist). */
 export function transcriptLabel(kind: string | null | undefined): string {
   switch (kind) {

@@ -199,7 +199,6 @@ function EpisodeDetail({ id }: { id: string }) {
   return (
     <>
       <KeyValueList
-        className="grid-cols-[7.5rem_minmax(0,1fr)]"
         items={[
           { label: "show", value: source.showName },
           { label: "published", value: formatDate(source.publishedAt) },

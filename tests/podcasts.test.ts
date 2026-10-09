@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createPodcastsAdapter, formatTimestamp, speakerLabel, UpstreamError } from "../src/adapters/podcasts";
+import { createPodcastsAdapter, speakerLabel, UpstreamError } from "../src/adapters/podcasts";
 
 function recorder(body: unknown = {}, status = 200) {
   const calls: string[] = [];
@@ -49,11 +49,5 @@ describe("podcasts adapter", () => {
     expect(speakerLabel({ attributionStatus: "speaker_unverified", personName: "Someone" })).toBe("unverified speaker");
     expect(speakerLabel({ attributionStatus: "verified_speaker", personName: "Ben Gilbert" })).toBe("Ben Gilbert");
     expect(speakerLabel({ attributionStatus: "verified_speaker", personName: null })).toBe("unverified speaker");
-  });
-
-  it("formats timestamps", () => {
-    expect(formatTimestamp(854.24)).toBe("14:14");
-    expect(formatTimestamp(3723)).toBe("1:02:03");
-    expect(formatTimestamp(null)).toBeNull();
   });
 });

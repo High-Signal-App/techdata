@@ -157,7 +157,6 @@ function PersonDetail({ slug }: { slug: string }) {
   return (
     <>
       <KeyValueList
-        className="grid-cols-[7.5rem_minmax(0,1fr)]"
         items={[
           { label: "title", value: person.title },
           { label: "organisation", value: person.org },

@@ -64,18 +64,11 @@ if (typeof window !== "undefined") {
 const usd = (n: number | null) => (n == null ? "—" : `$${Math.round(n).toLocaleString("en-US")}`);
 const s1 = (n: number | null) => (n == null ? "—" : n.toFixed(1));
 const PAGE = 48;
+const LIMIT_NOTICE = `Compare up to ${MAX_COMPARE} places. Remove one to add another.`;
 const MORE_IDS = new Set<string>([...LIFESTYLE_FILTERS, ...WEATHER_FILTERS]);
 
-function columnsFor(profile: ProfileId, shortlist: string[], toggle: (slug: string) => void): DataColumn<Place>[] {
+function columnsFor(profile: ProfileId): DataColumn<Place>[] {
   return [
-    {
-      id: "compare",
-      header: "compare",
-      value: (p) => shortlist.includes(p.slug),
-      sortable: false,
-      hideable: false,
-      cell: (p) => <CompareToggle place={p} selected={shortlist.includes(p.slug)} onToggle={toggle} />,
-    },
     {
       id: "name",
       header: "place",
@@ -241,15 +234,12 @@ export default function PlacesExplorer() {
     (slug: string) => {
       setNotice(null);
       if (shortlist.includes(slug)) return setCompareParam(shortlist.filter((s) => s !== slug).join(",") || null);
-      if (shortlist.length >= MAX_COMPARE) return setNotice("Compare up to 3 places. Remove one to add another.");
+      if (shortlist.length >= MAX_COMPARE) return setNotice(LIMIT_NOTICE);
       setCompareParam([...shortlist, slug].join(","));
     },
     [shortlist, setCompareParam],
   );
-  const columns = React.useMemo(
-    () => columnsFor(profile, shortlist, toggleCompare),
-    [profile, shortlist, toggleCompare],
-  );
+  const columns = React.useMemo(() => columnsFor(profile), [profile]);
 
   const setSort = (s: PlaceSort) => setSortParam(s.id === DEFAULT_SORT.id && s.desc ? null : writeSort(s));
   const tableSort: DataSort = [sort];
@@ -391,6 +381,16 @@ export default function PlacesExplorer() {
               onRetry={load}
               onRowClick={(p) => setOpenSlug(p.slug)}
               selectedId={openSlug}
+              selection={{
+                selected: shortlist,
+                onChange: (ids) => {
+                  setNotice(null);
+                  setCompareParam(ids.join(",") || null);
+                },
+                max: MAX_COMPARE,
+                onLimit: () => setNotice(LIMIT_NOTICE),
+                rowLabel: (p) => p.name,
+              }}
               sort={tableSort}
               onSortChange={(s) => setSort(s[0] ?? DEFAULT_SORT)}
               empty={<EmptyState onReset={() => setFilters(emptyFilters())} />}
@@ -656,7 +656,7 @@ function PlaceCard({
         <MiniStat label="walkable" value={s1(p.walkability_score_0_to_5)} />
       </dl>
       <div className="flex items-center justify-between gap-2">
-        <CompareToggle place={p} selected={compared} onToggle={onToggle} withLabel />
+        <CompareToggle place={p} selected={compared} onToggle={onToggle} />
         <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={onOpen}>
           details
         </Button>

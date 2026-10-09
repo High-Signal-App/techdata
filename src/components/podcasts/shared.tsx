@@ -1,4 +1,5 @@
-import { KeyValueList } from "@saas-maker/ui/blocks/record-detail";
+import { type QuoteItem, QuoteList, QuoteSpeakerLabel, QuoteTimestamp } from "@saas-maker/ui/blocks/quote-list";
+import { KeyValueList, Provenance } from "@saas-maker/ui/blocks/record-detail";
 import { Skeleton } from "@saas-maker/ui/components/skeleton";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import { ArrowUpRightIcon } from "lucide-react";
@@ -8,7 +9,6 @@ import {
   type ClaimReference,
   type Envelope,
   type Evidence,
-  formatTimestamp,
   PODCASTS_SITE,
   speakerLabel,
   type TranscriptContext,
@@ -53,94 +53,21 @@ export function ExternalLink({ href, children }: { href: string; children: React
   );
 }
 
-/** Timestamp as a deep link when the API has one (caption transcripts only). */
-export function Timestamp({ claim }: { claim: Pick<Claim, "timestampS" | "deepLinkUrl"> }) {
-  const t = formatTimestamp(claim.timestampS);
-  if (!t) return null;
-  return claim.deepLinkUrl ? (
-    <a
-      href={claim.deepLinkUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="font-mono tabular-nums underline-offset-4 hover:underline"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {t}
-    </a>
-  ) : (
-    <span className="font-mono tabular-nums">{t}</span>
-  );
-}
-
-export function Speaker({ claim }: { claim: Claim }) {
-  const verified = claim.attributionStatus === "verified_speaker" && claim.personName;
-  if (!verified) return <span className="text-muted-foreground italic">unverified speaker</span>;
-  return claim.personSlug ? (
-    <a
-      href={`/podcasts/people/?person=${encodeURIComponent(claim.personSlug)}`}
-      className="text-foreground underline-offset-4 hover:underline"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {claim.personName}
-    </a>
-  ) : (
-    <span className="text-foreground">{claim.personName}</span>
-  );
-}
-
-/** One claim as a row: the quote first, then who said it, where and when. */
-export function ClaimRow({ claim, selected, onOpen }: { claim: Claim; selected?: boolean; onOpen?: () => void }) {
-  const body = (
-    <>
-      <p className="td-quote max-w-[75ch] text-[0.9375rem] leading-relaxed text-foreground">{claim.assertion}</p>
-      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-        <Speaker claim={claim} />
-        <span aria-hidden>·</span>
-        <span>{claim.showName}</span>
-        {claim.saidOn && (
-          <>
-            <span aria-hidden>·</span>
-            <time dateTime={claim.saidOn}>{formatDate(claim.saidOn)}</time>
-          </>
-        )}
-        {claim.timestampS != null && (
-          <>
-            <span aria-hidden>·</span>
-            <Timestamp claim={claim} />
-          </>
-        )}
-        <span aria-hidden>·</span>
-        <span className="ui-case">{claim.claimType}</span>
-      </p>
-    </>
-  );
-  return (
-    <li
-      data-selected={selected || undefined}
-      className="border-b border-hairline last:border-b-0 data-[selected]:bg-brand-soft/50"
-    >
-      {onOpen ? (
-        // biome-ignore lint/a11y/useSemanticElements: a row holding links cannot be a <button>
-        <div
-          role="button"
-          tabIndex={0}
-          aria-current={selected || undefined}
-          onClick={onOpen}
-          onKeyDown={(e) => {
-            if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
-              e.preventDefault();
-              onOpen();
-            }
-          }}
-          className="cursor-pointer px-4 py-3 outline-none transition-colors hover:bg-accent/60 focus-visible:bg-accent"
-        >
-          {body}
-        </div>
-      ) : (
-        <div className="px-4 py-3">{body}</div>
-      )}
-    </li>
-  );
+/** A claim as a library quote row; speaker names only when the API verified them. */
+export function toQuote(c: Claim): QuoteItem {
+  return {
+    id: c.id,
+    quote: c.assertion,
+    speaker: {
+      name: c.personName,
+      verified: c.attributionStatus === "verified_speaker",
+      href: c.personSlug ? `/podcasts/people/?person=${encodeURIComponent(c.personSlug)}` : undefined,
+    },
+    source: { label: c.showName },
+    date: c.saidOn,
+    timestamp: c.timestampS == null ? null : { seconds: c.timestampS, href: c.deepLinkUrl },
+    type: c.claimType,
+  };
 }
 
 export function ClaimList({
@@ -158,82 +85,34 @@ export function ClaimList({
   empty?: React.ReactNode;
   onRetry?: () => void;
 }) {
-  if (status === "loading")
-    return (
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4" aria-busy>
-        {Array.from({ length: 6 }, (_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
-          <div key={i} className="flex flex-col gap-2">
-            <Skeleton className="h-4 w-11/12" />
-            <Skeleton className="h-3 w-1/3" />
-          </div>
-        ))}
-      </div>
-    );
-  if (status === "error")
-    return (
-      <div className="rounded-lg border border-border bg-card px-4 py-16 text-center text-sm">
-        The Podcasts API did not answer.{" "}
-        {onRetry && (
-          <button type="button" className="underline underline-offset-4" onClick={onRetry}>
-            Try again
-          </button>
-        )}
-      </div>
-    );
-  if (!claims.length)
-    return (
-      <div className="rounded-lg border border-border bg-card px-4 py-16 text-center text-sm text-muted-foreground">
-        {empty ?? "No published claims match."}
-      </div>
-    );
+  const byId = new Map(claims.map((c) => [c.id, c]));
   return (
-    <ul className="rounded-lg border border-border bg-card">
-      {claims.map((c) => (
-        <ClaimRow key={c.id} claim={c} selected={selectedId === c.id} onOpen={onOpen ? () => onOpen(c) : undefined} />
-      ))}
-    </ul>
+    <QuoteList
+      label="Claims"
+      items={claims.map(toQuote)}
+      status={status}
+      selectedId={selectedId}
+      onOpen={onOpen ? (q) => onOpen(byId.get(q.id) as Claim) : undefined}
+      empty={empty ?? "No published claims match."}
+      error="The Podcasts API did not answer."
+      onRetry={onRetry}
+    />
   );
 }
 
-/**
- * Source block for data read live from the Podcasts API. The library's
- * Provenance has no "via" or "read at" rows, so this mirrors its look.
- */
+/** Provenance for a live Podcasts API read: from the site, via the API, read at fetch time. */
 export function LiveProvenance({ info, page }: { info: ProvenanceInfo; page?: string }) {
-  let host = info.sourceUrl;
-  let apiHost = info.viaUrl;
-  try {
-    host = new URL(page ?? info.sourceUrl).host;
-    apiHost = new URL(info.viaUrl).host;
-  } catch {
-    // keep raw strings
-  }
   return (
-    <section aria-label="Provenance" className="rounded-lg bg-surface p-4 text-sm">
-      <h3 className="ui-case text-xs font-medium text-muted-foreground">source</h3>
-      <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
-        <dt className="text-muted-foreground">from</dt>
-        <dd className="min-w-0 truncate">
-          <ExternalLink href={page ?? info.sourceUrl}>{host}</ExternalLink>
-        </dd>
-        <dt className="text-muted-foreground">via</dt>
-        <dd className="min-w-0 truncate">
-          {info.source} {info.via} · <span className="font-mono text-xs">{apiHost}</span>
-        </dd>
-        {info.fetchedAt && (
-          <>
-            <dt className="text-muted-foreground">read</dt>
-            <dd>
-              <time dateTime={info.fetchedAt}>
-                {new Date(info.fetchedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
-              </time>
-            </dd>
-          </>
-        )}
-      </dl>
-      {info.note && <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{info.note}</p>}
-    </section>
+    <Provenance
+      info={{
+        source: info.source,
+        url: page ?? info.sourceUrl,
+        via: `${info.source} ${info.via}`,
+        viaUrl: info.viaUrl,
+        readAt: info.fetchedAt,
+        note: info.note,
+      }}
+    />
   );
 }
 
@@ -268,19 +147,21 @@ export function ClaimDetail({ id }: { id: string }) {
   const { claim, evidence, references, context } = state.value.data;
   return (
     <>
-      <blockquote className="td-quote border-l-2 border-border pl-4 text-[0.9375rem] leading-relaxed">
+      <blockquote className="border-l-2 border-border pl-4 text-[0.9375rem] leading-relaxed text-pretty">
         “{claim.quote}”
       </blockquote>
       <KeyValueList
-        className="grid-cols-[7.5rem_minmax(0,1fr)]"
         items={[
-          { label: "speaker", value: <Speaker claim={claim} /> },
+          { label: "speaker", value: <QuoteSpeakerLabel speaker={toQuote(claim).speaker} /> },
           {
             label: "attribution",
             value: claim.attributionStatus === "verified_speaker" ? "verified speaker" : "speaker not verified",
           },
           { label: "said on", value: formatDate(claim.saidOn) },
-          { label: "timestamp", value: claim.timestampS != null ? <Timestamp claim={claim} /> : "not timed" },
+          {
+            label: "timestamp",
+            value: claim.timestampS != null ? <QuoteTimestamp timestamp={toQuote(claim).timestamp} /> : "not timed",
+          },
           { label: "type", value: claim.claimType },
           { label: "stance", value: claim.stance },
           { label: "show", value: claim.showName },
@@ -312,7 +193,9 @@ export function ClaimDetail({ id }: { id: string }) {
             {evidence.map((e) => (
               <li key={e.id} className="leading-relaxed">
                 <span className="ui-case mr-2 text-xs text-muted-foreground">{e.role}</span>“{e.quote}”{" "}
-                <Timestamp claim={e} />
+                <QuoteTimestamp
+                  timestamp={e.timestampS == null ? null : { seconds: e.timestampS, href: e.deepLinkUrl }}
+                />
               </li>
             ))}
           </ul>

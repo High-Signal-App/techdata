@@ -24,16 +24,15 @@ export function compareHref(slugs: string[], profile: ProfileId = "nomad") {
   return `/nomad/compare/?${p}`;
 }
 
+/** Compare toggle for place cards; the table picks rows with DataTable selection. */
 export function CompareToggle({
   place,
   selected,
   onToggle,
-  withLabel = false,
 }: {
   place: Place;
   selected: boolean;
   onToggle: (slug: string) => void;
-  withLabel?: boolean;
 }) {
   return (
     <button
@@ -51,9 +50,9 @@ export function CompareToggle({
         aria-hidden
         className="inline-flex size-4 items-center justify-center rounded-[4px] border border-input bg-background [[aria-pressed=true]_&]:border-foreground [[aria-pressed=true]_&]:bg-foreground [[aria-pressed=true]_&]:text-background"
       >
-        {selected ? <CheckIcon className="size-3" /> : withLabel ? <PlusIcon className="size-3" /> : null}
+        {selected ? <CheckIcon className="size-3" /> : <PlusIcon className="size-3" />}
       </span>
-      {withLabel && (selected ? "in compare" : "compare")}
+      {selected ? "in compare" : "compare"}
     </button>
   );
 }
