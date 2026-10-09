@@ -20,6 +20,7 @@
   "dependencies": {
     "@astrojs/cloudflare": "14.3.4",
     "@astrojs/react": "7.0.0",
+    "@duckdb/duckdb-wasm": "1.32.0",
     "@saas-maker/motion": "github:sass-maker/ui-library#v0.1.11&path:/packages/motion",
     "@saas-maker/templates": "github:sass-maker/ui-library#v0.1.11&path:/packages/templates",
     "@saas-maker/ui": "github:sass-maker/ui-library#v0.1.11&path:/packages/ui",

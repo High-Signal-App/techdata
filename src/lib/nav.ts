@@ -4,6 +4,7 @@ import { NOMAD_SNAPSHOT } from "../adapters/nomad/meta";
 export type NavKey =
   | "reddit-communities"
   | "reddit-posts"
+  | "ph-products"
   | "overview"
   | "nomad-places"
   | "nomad-compare"
@@ -42,6 +43,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
       title: "reddit insights",
       items: [item("reddit-communities", "subreddits", "/reddit/"), item("reddit-posts", "threads", "/reddit/posts/")],
     },
+    { title: "PH Catalog", items: [item("ph-products", "products (sample)", "/ph/")] },
     {
       title: "sources",
       items: [

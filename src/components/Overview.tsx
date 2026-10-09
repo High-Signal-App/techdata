@@ -7,6 +7,7 @@ import { formatDate } from "../lib/url-state";
 type Row = CollectionSummary | { id: string; error: string };
 
 const VIEWS: Record<string, { label: string; href: string }[]> = {
+  ph: [{ label: "products (sample)", href: "/ph/" }],
   reddit: [
     { label: "subreddits", href: "/reddit/" },
     { label: "threads", href: "/reddit/posts/" },
@@ -24,6 +25,7 @@ const VIEWS: Record<string, { label: string; href: string }[]> = {
 };
 
 const NAMES: Record<string, string> = {
+  ph: "PH Catalog",
   reddit: "Reddit Insights",
   nomad: "Nomad Atlas",
   podcasts: "High Signal Podcasts",
