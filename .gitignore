@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env*
+.dev.vars*
+.wrangler/
+.astro/
+.agents/
+.claude/
+.DS_Store
+*.log
+*.db
+*.db-journal
+/screenshots/

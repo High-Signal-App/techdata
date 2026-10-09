@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      # @saas-maker/* install from the private sass-maker/ui-library repo.
+      # Needs a read-only token in UI_LIBRARY_TOKEN (owner adds it; not set yet).
+      - name: Allow private ui-library install
+        env:
+          UI_LIBRARY_TOKEN: ${{ secrets.UI_LIBRARY_TOKEN }}
+        run: |
+          if [ -n "$UI_LIBRARY_TOKEN" ]; then
+            git config --global url."https://x-access-token:${UI_LIBRARY_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run test
+      - run: pnpm run build
