@@ -1,0 +1,62 @@
+{
+  "_note": "Proposed saas-maker catalog/projects.json entry for techdata. Not applied: another agent owns saas-maker today. Apply it there, then run pnpm catalog:sync and refresh site-health dossiers.",
+  "id": "techdata",
+  "name": "techdata",
+  "classification": {
+    "category": "data",
+    "futureForm": "private-tool",
+    "kind": "product",
+    "family": "high-signal",
+    "tier": "secondary",
+    "attention": "active"
+  },
+  "lifecycle": {
+    "status": "active",
+    "resumeCondition": null,
+    "portfolioStatus": "active",
+    "priority": "P2"
+  },
+  "sharing": {
+    "shareable": false,
+    "readyToBeShared": false,
+    "evidence": {
+      "verifiedAt": "2026-10-09",
+      "reason": "Private data workbench; first slice verified locally (astro preview on workerd) only. Not deployed.",
+      "qualifications": []
+    }
+  },
+  "ownerNotes": {
+    "notes": "Owner decision 2026-10-09 (Significant-Hobbies/ph-catalog#14): consolidated data workbench named techdata, private repo High-Signal-App/techdata, first real product on the SaaS Maker UI library. Collectors stay in their repos; techdata only reads until parity. Open: domain, fate of the five public sites, where collectors live."
+  },
+  "purpose": "One private entry point to browse, search and export the owner's data collections (Nomad Atlas, High Signal Podcasts; later Reddit Insights, Research Papers, PH Catalog) with source provenance.",
+  "repositories": {
+    "localPath": "techdata",
+    "sourcePath": "techdata",
+    "url": "https://github.com/High-Signal-App/techdata",
+    "visibility": "private"
+  },
+  "deployment": {
+    "status": "not-deployed",
+    "deployed": false,
+    "authModel": "private-cloudflare-access-planned",
+    "kind": "worker",
+    "cfProject": "techdata",
+    "domains": [],
+    "inRegistry": false
+  },
+  "presentation": {
+    "directory": {
+      "description": "A private data workbench: Nomad Atlas places and High Signal Podcasts claims in one console with ⌘K search, filters, comparison and provenance-carrying exports.",
+      "form": "Private data workbench",
+      "platforms": ["Web"],
+      "technologies": ["Astro", "React", "Cloudflare Workers", "Hono", "SaaS Maker UI"]
+    }
+  },
+  "systems": {
+    "clarity": { "absent": "Private tool with no public surface; Clarity not wired." },
+    "footerSurfaces": [],
+    "actionsPolicy": { "absent": "CI on push; deploy is workflow_dispatch only and not yet approved." }
+  },
+  "dependsOn": ["nomad-data-adventure", "on-record", "ui-library"],
+  "publicSurfaceException": "No public web surface (private, noindex, planned behind Cloudflare Access): checklist phases 3 and 6 and the Clarity line of 7 are skipped."
+}
