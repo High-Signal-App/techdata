@@ -2,6 +2,9 @@ import type { ConsolePageProps } from "@saas-maker/templates/console-page";
 import { NOMAD_SNAPSHOT } from "../adapters/nomad/meta";
 
 export type NavKey =
+  | "reddit-communities"
+  | "reddit-posts"
+  | "ph-products"
   | "overview"
   | "nomad-places"
   | "nomad-compare"
@@ -41,6 +44,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
       ],
     },
     {
+<<<<<<< HEAD
       title: "research papers",
       items: [
         item("papers-papers", "papers", "/papers/"),
@@ -49,9 +53,17 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
         item("papers-authors", "authors", "/papers/authors/"),
       ],
     },
+||||||| a225c94
+=======
+      title: "reddit insights",
+      items: [item("reddit-communities", "subreddits", "/reddit/"), item("reddit-posts", "threads", "/reddit/posts/")],
+    },
+    { title: "PH Catalog", items: [item("ph-products", "products (sample)", "/ph/")] },
+>>>>>>> origin/main
     {
       title: "sources",
       items: [
+        { label: "reddit insights", href: "https://reddit-insights.highsignal.app/", external: true },
         { label: "nomad atlas", href: "https://nomad.significanthobbies.com/", external: true },
         { label: "research papers", href: "https://papers.highsignal.app/", external: true },
         { label: "high signal podcasts", href: "https://podcasts.highsignal.app/", external: true },

@@ -16,7 +16,17 @@ Collectors stay in their own repos; techdata only reads until parity is proven.
 | Research Papers | `High-Signal-App/research-papers` | Public GET JSON exports at `papers.highsignal.app` (CC-BY 4.0) | Response Date/Last-Modified or read time; collection date not recorded |
 | High Signal Podcasts | `Significant-Hobbies/on-record` | Public API `api.podcasts.highsignal.app/api` (read-only) | Live; every response records when it was read |
 
+<<<<<<< HEAD
 Next: Reddit Insights, PH Catalog (see "What's next").
+||||||| a225c94
+Next: Reddit Insights, Research Papers, PH Catalog (see "What's next").
+=======
+| Reddit Insights | Reddit, via `High-Signal-App/research-subreddit` | Public Snapshot API `reddit-insights.highsignal.app/api/snapshots` (GET only) | Capture windows and revision on every snapshot; 24-hour serving leases |
+
+| PH Catalog | Product Hunt public pages, via `Significant-Hobbies/ph-catalog` | Browser DuckDB-WASM over configurable Parquet (local sample) | Catalogue handoff v1, published 2026-08-31; sample: 2,000 of 574,752 products |
+
+Next: Research Papers (see "What's next").
+>>>>>>> origin/main
 
 ## Nomad Atlas parity
 
@@ -68,6 +78,7 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 - Unverified speakers are labelled, never named or listed as people (the API
   enforces this; tests check techdata never upgrades them).
 
+<<<<<<< HEAD
 ## Research Papers coverage (read-only)
 
 - **Papers** (`/papers/`): merged public top, hot, sleepers and OpenReview
@@ -102,6 +113,48 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 - API: `/api/papers/papers` (view filter params, `sort=field:asc|desc`,
   `limit`, `offset`), `/api/papers/papers/:id`, `/api/papers/paths`,
   `/api/papers/paths/:id`, `/api/papers/cited-works`, `/api/papers/authors`.
+||||||| a225c94
+=======
+## Reddit Insights coverage (read-only)
+
+- **Subreddits** (`/reddit/`): communities from the live catalog, latest recorded
+  post/retained-comment counts, coverage and available dates; facets with counts.
+- **Threads** (`/reddit/posts/`): chosen community and collection date, searchable
+  post table, real post-label facet, recorded score range, score/reply sorting.
+  URL state includes the 12-character revision; thread details show body, source
+  permalink, reported replies, retained comments and exact UTC collection window.
+- Posts and retained-comments CSV/JSON exports carry subreddit, date, full
+  revision, captured-at and source on each row. JSON also keeps provenance,
+  coverage, window, attribution and applied filters. Posts export the filtered
+  view; comments export all retained comments in the selected snapshot.
+- Author/profile fields are omitted. Labels use the API's `flair`; no inferred
+  topics. Coverage is always shown: retained comments are filtered and scores
+  and reply totals are recorded values, never current Reddit values.
+- Not-archived, removed revision, expired and unavailable states remain distinct.
+  Snapshot reads use no-store and pinned `?v=` requests; global search only searches
+  community names plus bounded, already loaded latest snapshots still catalogued.
+- `REDDIT_INSIGHTS_API_BASE` can override the public origin (no configuration
+  change required). No writes, archive access or collector changes.
+
+## PH Catalog coverage (read-only)
+
+- `/ph/`: sample: 2,000 of 574,752 products. Browser-only DuckDB-WASM queries
+  names/taglines/descriptions with case/accent-insensitive search, category and
+  website facets with counts, sorting, URL state, paging and slug-selected detail.
+- CSV/JSON exports include all filtered rows and provenance; JSON carries source,
+  collectedAt (not recorded), fetchedAt, release revision, sample label and filters.
+- `PUBLIC_PH_PARQUET_URL` is a build-time override (default `/data/ph/sample.parquet`).
+  The full private release export is not bundled. R2 hosting remains a later step.
+- `GET /api/ph/summary` and `/api/collections` expose static sample provenance;
+  product queries stay in the browser.
+- Pinned DuckDB-WASM 1.32.0 bundles load lazily from jsDelivr in the browser;
+  no large WASM assets are shipped to Cloudflare. CDN/CSP choice needs deploy review.
+- Only the DuckDB-WASM path is implemented; the DuckDB-WASM vs D1 benchmark is open.
+  Client `searchPh()` is available for a later shared index; the palette is unchanged.
+- No per-row server API, writes, votes or launch dates. Attribution: Product Hunt
+  (public product pages), catalogue by ph-catalog. Per-record collection dates are
+  absent; the release publication date is not used as a collection date.
+>>>>>>> origin/main
 
 ## Architecture
 
@@ -112,7 +165,8 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
   adapter keeps its own record shape.
 - `GET /api/collections`, `/api/search?q=&collection=`, `/api/nomad/places`
   (same query string as the view), `/api/nomad/places/:slug`, and
-  `/api/podcasts/{stats,episodes,episodes/:id,people,people/:slug,claims,claims/:id}`.
+  `/api/podcasts/{stats,episodes,episodes/:id,people,people/:slug,claims,claims/:id}`,
+  `/api/reddit/catalog` and `/api/reddit/snapshots/:date/:subreddit?v=`.
 - UI: `ConsolePage`, `DataTable`, `FilterBar`/`useUrlFilters`, `SearchPalette`,
   `RecordDetail`, `ExportMenu` from `@saas-maker/*` v0.1.11 (git dependency).
 
@@ -134,7 +188,18 @@ Deploy is manual and owner-approved only (`.github/workflows/deploy.yml`,
 ## What's next
 
 1. Owner decisions: domain, Cloudflare Access policy, deploy approval.
+<<<<<<< HEAD
 2. Reddit Insights adapter (R2 snapshots, pinned revisions, redaction).
 3. Research Papers public edge-list gap (operator-only data; requires separate parity decision).
 4. PH Catalog hosted query (Parquet in R2; DuckDB-WASM vs D1 benchmark).
 5. Parity sign-off per collection, then decide the public sites' fate.
+||||||| a225c94
+2. Reddit Insights adapter (R2 snapshots, pinned revisions, redaction).
+3. Research Papers adapter (paths, paper detail, citation graph).
+4. PH Catalog hosted query (Parquet in R2; DuckDB-WASM vs D1 benchmark).
+5. Parity sign-off per collection, then decide the public sites' fate.
+=======
+2. Research Papers adapter (paths, paper detail, citation graph).
+3. PH Catalog full-export hosting (Parquet in R2; DuckDB-WASM vs D1 benchmark).
+4. Parity sign-off per collection, then decide the public sites' fate.
+>>>>>>> origin/main

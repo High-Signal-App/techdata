@@ -1,0 +1,47 @@
+[
+  {
+    "slug": "0up",
+    "name": "0up",
+    "tagline": "Free, open-source, encrypted file sharing service",
+    "description": "0up is a zero-knowledge, open-source, encrypted file sharing service. Files are encrypted browser-side before being uploaded. A shareable link contains the decryption key and is never sent to the server - keeping shared files secure. Oh, and it's fast AF 🚀.",
+    "website_url": "https://0up.io",
+    "categories": ["File storage and sharing apps", "Safety and Privacy platforms"],
+    "producthunt_url": "https://www.producthunt.com/products/0up"
+  },
+  {
+    "slug": "1-1",
+    "name": "1/1",
+    "tagline": "A tiny Life Grid App",
+    "description": "An iOS app that can colorize dates on a daily or monthly basis",
+    "website_url": "https://apps.apple.com/app/id6474681491",
+    "categories": ["Time tracking apps"],
+    "producthunt_url": "https://www.producthunt.com/products/1-1"
+  },
+  {
+    "slug": "1062-lgbtq-icons",
+    "name": "1062 LGBTQ Icons",
+    "tagline": "Beautiful LGBTQ flag colored icons for your projects",
+    "description": "A large collection of essential LGBTQ flag colored icons. This well-designed set allows you to highlight the LGBTQ community in your projects. This set contains the most popular icons used. The icons are sorted by 15 categories!",
+    "website_url": "https://gumroad.com/l/lgbtqicons",
+    "categories": ["Icon sets"],
+    "producthunt_url": "https://www.producthunt.com/products/1062-lgbtq-icons"
+  },
+  {
+    "slug": "10mb",
+    "name": "10MB",
+    "tagline": "Host your beautiful website for free",
+    "description": "10mb.site - The easiest way to upload and share your HTML, CSS, and JavaScript files online.",
+    "website_url": "https://www.10mb.site",
+    "categories": ["File storage and sharing apps", "No-code Platforms", "Web hosting services"],
+    "producthunt_url": "https://www.producthunt.com/products/10mb"
+  },
+  {
+    "slug": "10xprofit-io",
+    "name": "10XProfit.io",
+    "tagline": "40+ Amazon Seller Tools in ONE Platform",
+    "description": "Master Amazon FBA, Private Label, Wholesale & Dropshipping with our all-in-one platform. 40+ tools, complete courses, and marketplace training. Start your $100K Amazon business today.",
+    "website_url": "https://10xprofit.io",
+    "categories": ["SEO tools", "Keyword research tools"],
+    "producthunt_url": "https://www.producthunt.com/products/10xprofit-io"
+  }
+]

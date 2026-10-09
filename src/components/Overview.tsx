@@ -7,6 +7,11 @@ import { formatDate } from "../lib/url-state";
 type Row = CollectionSummary | { id: string; error: string };
 
 const VIEWS: Record<string, { label: string; href: string }[]> = {
+  ph: [{ label: "products (sample)", href: "/ph/" }],
+  reddit: [
+    { label: "subreddits", href: "/reddit/" },
+    { label: "threads", href: "/reddit/posts/" },
+  ],
   nomad: [
     { label: "places", href: "/nomad/" },
     { label: "compare", href: "/nomad/compare/" },
@@ -26,9 +31,18 @@ const VIEWS: Record<string, { label: string; href: string }[]> = {
 };
 
 const NAMES: Record<string, string> = {
+<<<<<<< HEAD
   nomad: "Nomad Atlas",
   podcasts: "High Signal Podcasts",
   papers: "Research Papers",
+||||||| a225c94
+const NAMES: Record<string, string> = { nomad: "Nomad Atlas", podcasts: "High Signal Podcasts" };
+=======
+  ph: "PH Catalog",
+  reddit: "Reddit Insights",
+  nomad: "Nomad Atlas",
+  podcasts: "High Signal Podcasts",
+>>>>>>> origin/main
 };
 
 /** One row per collection: what it holds, where it comes from, how fresh it is. */
