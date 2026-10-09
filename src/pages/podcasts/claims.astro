@@ -1,0 +1,14 @@
+---
+import ClaimsView from "../../components/podcasts/ClaimsView";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="claims · podcasts"
+  heading="claims"
+  description="Published claims with the verbatim quote, the verified speaker, the episode and, for captioned episodes, the timestamp. Read live from the High Signal Podcasts public API."
+  nav="podcasts-claims"
+  breadcrumbs={[{ label: "podcasts", href: "/podcasts/claims/" }, { label: "claims" }]}
+>
+  <ClaimsView client:load />
+</Console>

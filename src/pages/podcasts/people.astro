@@ -1,0 +1,14 @@
+---
+import PeopleView from "../../components/podcasts/PeopleView";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="people · podcasts"
+  heading="people"
+  description="Verified speakers with published claims, most claims first. Unverified speakers are labelled on their claims and never listed here."
+  nav="podcasts-people"
+  breadcrumbs={[{ label: "podcasts", href: "/podcasts/claims/" }, { label: "people" }]}
+>
+  <PeopleView client:load />
+</Console>

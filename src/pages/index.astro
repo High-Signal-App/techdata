@@ -1,0 +1,14 @@
+---
+import Overview from "../components/Overview";
+import Console from "../layouts/Console.astro";
+---
+
+<Console
+  title="overview"
+  heading="collections"
+  description="Each collection keeps its own shape and its own collector. techdata reads them, with the source and collection date on every record."
+  nav="overview"
+  breadcrumbs={[{ label: "overview" }]}
+>
+  <Overview client:load />
+</Console>

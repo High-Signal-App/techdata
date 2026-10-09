@@ -1,0 +1,24 @@
+---
+import { Button } from "@saas-maker/ui/components/button";
+import { NOMAD_SNAPSHOT } from "../../adapters/nomad/meta";
+import PlacesExplorer from "../../components/nomad/PlacesExplorer";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="places · nomad atlas"
+  heading="places"
+  description={`Cost of living, internet and everyday-life scores for ${NOMAD_SNAPSHOT.explorable.toLocaleString("en-US")} places in ${NOMAD_SNAPSHOT.countries} countries and territories, from the Nomads.com snapshot Nomad Atlas saved on 7 Sep 2026.`}
+  nav="nomad-places"
+  breadcrumbs={[{ label: "nomad atlas", href: "/nomad/" }, { label: "places" }]}
+>
+  <Fragment slot="actions">
+    <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+      <a href="/nomad/notes/">data notes</a>
+    </Button>
+    <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+      <a href={NOMAD_SNAPSHOT.file} download="nomad-atlas-cities.json">original json</a>
+    </Button>
+  </Fragment>
+  <PlacesExplorer client:load />
+</Console>

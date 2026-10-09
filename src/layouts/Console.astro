@@ -1,0 +1,50 @@
+---
+import { ConsolePage } from "@saas-maker/templates/console-page";
+import GlobalSearch from "../components/GlobalSearch";
+import { consoleNav, type NavKey } from "../lib/nav";
+import "../styles/app.css";
+
+interface Props {
+  /** Document title (without the app name). */
+  title: string;
+  heading: string;
+  description?: string;
+  nav: NavKey;
+  breadcrumbs: { label: string; href?: string }[];
+}
+
+const { title, heading, description, nav, breadcrumbs } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" data-theme="base" data-mode="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light" />
+    <title>{title} · techdata</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >Skip to content</a
+    >
+    <ConsolePage
+      brand={{ name: "techdata", href: "/" }}
+      nav={consoleNav(nav)}
+      breadcrumbs={[{ label: "techdata", href: "/" }, ...breadcrumbs]}
+      title={heading}
+      description={description}
+      search={{ label: "Search collections…" }}
+      sidebarFooter="Private workbench. Read-only: each collection keeps its own collector."
+    >
+      <slot name="actions" slot="actions" />
+      <slot />
+    </ConsolePage>
+    <GlobalSearch client:idle />
+  </body>
+</html>

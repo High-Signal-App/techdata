@@ -1,0 +1,11 @@
+/* SaaS Maker UI theme plus the class sources Tailwind must scan.
+   The library's own `@source "../../../templates/src"` does not resolve under
+   pnpm's isolated layout, so the templates package is listed here. */
+@import "@saas-maker/ui/styles.css";
+@source "../../node_modules/@saas-maker/templates/src";
+@source "../";
+
+/* Long text inside claims wraps; numbers stay aligned. */
+.td-quote {
+  text-wrap: pretty;
+}

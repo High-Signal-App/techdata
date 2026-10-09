@@ -1,0 +1,14 @@
+---
+import ComparePlaces from "../../components/nomad/ComparePlaces";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="compare · nomad atlas"
+  heading="compare places"
+  description="Up to three places side by side across the 22 metrics Nomad Atlas compares. All values come from the saved Nomads.com snapshot; scores are out of 5."
+  nav="nomad-compare"
+  breadcrumbs={[{ label: "nomad atlas", href: "/nomad/" }, { label: "compare" }]}
+>
+  <ComparePlaces client:load />
+</Console>

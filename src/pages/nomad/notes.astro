@@ -1,0 +1,75 @@
+---
+import { KeyValueList, Provenance } from "@saas-maker/ui/blocks/record-detail";
+import { NOMAD_SNAPSHOT, nomadProvenanceInfo } from "../../adapters/nomad/meta";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="data notes · nomad atlas"
+  heading="data notes"
+  description="What the Nomad Atlas numbers are, and what they are not."
+  nav="nomad-notes"
+  breadcrumbs={[{ label: "nomad atlas", href: "/nomad/" }, { label: "data notes" }]}
+>
+  <div class="grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <article class="flex max-w-2xl flex-col gap-6 text-[0.9375rem] leading-relaxed">
+      <p>
+        This collection uses {NOMAD_SNAPSHOT.records.toLocaleString("en-US")} city records collected from
+        <a class="underline underline-offset-4" href="https://nomads.com/" target="_blank" rel="noopener noreferrer">Nomads.com</a>
+        and published by Nomad Atlas. Credit for the source data belongs to Nomads.com.
+      </p>
+      <section>
+        <h2 class="font-display text-xl">a snapshot, not a live feed</h2>
+        <p class="mt-2 text-muted-foreground">
+          Costs, visa flags and conditions may have changed. Temperature, humidity and air quality describe conditions at
+          collection; they are not annual climate averages.
+        </p>
+      </section>
+      <section>
+        <h2 class="font-display text-xl">different ways of living</h2>
+        <p class="mt-2 text-muted-foreground">
+          Nomad, expat, local and family estimates are distinct fields supplied by the source. Rent and coworking are
+          separate measurements; they are not added to or subtracted from those estimates.
+        </p>
+      </section>
+      <section>
+        <h2 class="font-display text-xl">real places only</h2>
+        <p class="mt-2 text-muted-foreground">
+          The original download includes nine novelty entries in the source's “Space” region. They are preserved in the
+          original JSON and excluded from the views, leaving {NOMAD_SNAPSHOT.explorable.toLocaleString("en-US")} places.
+        </p>
+      </section>
+      <section>
+        <h2 class="font-display text-xl">missing data stays missing</h2>
+        <p class="mt-2 text-muted-foreground">
+          Unknown values show as “Not available”. Filters exclude a missing value only for the measurement you filter on.
+          Unusual cost estimates (under $100 or over $30,000) are kept as published and flagged.
+        </p>
+      </section>
+      <section>
+        <h2 class="font-display text-xl">scores are a starting point</h2>
+        <p class="mt-2 text-muted-foreground">
+          Safety and inclusion ratings are source assessments, not guarantees. A reported remote work visa is a discovery
+          signal; check the destination's current requirements before making plans.
+        </p>
+      </section>
+      <p>
+        <a class="underline underline-offset-4" href={NOMAD_SNAPSHOT.file} download="nomad-atlas-cities.json">Download the original JSON</a>
+        <span class="text-muted-foreground"> · byte-identical to Nomad Atlas's cities.json</span>
+      </p>
+    </article>
+    <aside class="flex flex-col gap-4">
+      <Provenance info={nomadProvenanceInfo} />
+      <KeyValueList
+        items={[
+          { label: "records", value: NOMAD_SNAPSHOT.records.toLocaleString("en-US") },
+          { label: "places shown", value: NOMAD_SNAPSHOT.explorable.toLocaleString("en-US") },
+          { label: "countries & territories", value: String(NOMAD_SNAPSHOT.countries) },
+          { label: "metrics compared", value: String(NOMAD_SNAPSHOT.metrics) },
+          { label: "published", value: `13 Sep 2026 (${NOMAD_SNAPSHOT.sourceCommit})` },
+        ]}
+      />
+      <p class="break-all font-mono text-xs text-muted-foreground">sha256 {NOMAD_SNAPSHOT.sha256}</p>
+    </aside>
+  </div>
+</Console>

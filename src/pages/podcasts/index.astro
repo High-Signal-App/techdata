@@ -1,0 +1,14 @@
+---
+import EpisodesView from "../../components/podcasts/EpisodesView";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="episodes · podcasts"
+  heading="episodes"
+  description="Podcast episodes with at least one published claim, newest first. Read live from the High Signal Podcasts public API."
+  nav="podcasts-episodes"
+  breadcrumbs={[{ label: "podcasts", href: "/podcasts/claims/" }, { label: "episodes" }]}
+>
+  <EpisodesView client:load />
+</Console>
