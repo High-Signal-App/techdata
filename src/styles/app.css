@@ -1,3 +1,3 @@
 /* SaaS Maker UI theme plus every class the ui and templates packages use;
    this app's own files are scanned automatically. */
-@import "@saas-maker/templates/styles.css";
+/* ConsolePage imports its own scoped console.css (one Tailwind entry per page). */
