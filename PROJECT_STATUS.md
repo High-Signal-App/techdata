@@ -25,7 +25,7 @@ provenance on every record.
 
 ### Internal
 
-- `sass-maker/ui-library` v0.1.7 (git dependency).
+- `sass-maker/ui-library` v0.1.11 (git dependency).
 - `Significant-Hobbies/nomad-data-adventure`, `Significant-Hobbies/on-record` (read-only sources).
 
 ## Timeline

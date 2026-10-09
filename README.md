@@ -78,7 +78,7 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
   (same query string as the view), `/api/nomad/places/:slug`, and
   `/api/podcasts/{stats,episodes,episodes/:id,people,people/:slug,claims,claims/:id}`.
 - UI: `ConsolePage`, `DataTable`, `FilterBar`/`useUrlFilters`, `SearchPalette`,
-  `RecordDetail`, `ExportMenu` from `@saas-maker/*` v0.1.7 (git dependency).
+  `RecordDetail`, `ExportMenu` from `@saas-maker/*` v0.1.11 (git dependency).
 
 ## Run
 
