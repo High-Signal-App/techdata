@@ -2,6 +2,8 @@ import { fold } from "../adapters/nomad/model.js";
 import { costOf, type Place } from "../adapters/nomad/places";
 import type { SearchHit } from "../adapters/types";
 
+export { fold };
+
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 
 /** Places whose name or country contains the query (accent-insensitive), name matches first, then countries. */

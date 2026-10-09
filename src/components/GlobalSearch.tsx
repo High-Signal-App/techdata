@@ -1,55 +1,82 @@
 import { SearchPalette, type SearchResult, type SearchSource } from "@saas-maker/ui/blocks/search-palette";
 import * as React from "react";
-import type { SearchHit } from "../adapters/types";
+import { COLLECTIONS, groupResults, mergeResults, type SearchHit, type SearchResponse } from "../search";
 
-/**
- * ⌘K across every collection. Each collection is one request to /api/search
- * (so a slow source never holds back the others); the kinds it returns are
- * split into palette groups.
- */
-const GROUPS: { id: string; label: string; collection: string; kind: string }[] = [
-  { id: "reddit-communities", label: "subreddits · reddit insights", collection: "reddit", kind: "communities" },
-  { id: "reddit-posts", label: "loaded threads · reddit insights", collection: "reddit", kind: "posts" },
-  { id: "places", label: "places · nomad atlas", collection: "nomad", kind: "places" },
-  { id: "countries", label: "countries · nomad atlas", collection: "nomad", kind: "countries" },
-  { id: "people", label: "people · podcasts", collection: "podcasts", kind: "people" },
-  { id: "claims", label: "claims · podcasts", collection: "podcasts", kind: "claims" },
-  { id: "papers", label: "papers · research papers", collection: "papers", kind: "papers" },
-];
+type QueryResult = {
+  server: Promise<SearchHit[]>;
+  ph: SearchHit[];
+  phState: "loading" | "ready" | "unavailable";
+};
 
+/** Collection groups share one server request; PH loads only on an open-palette query. */
 export default function GlobalSearch() {
-  const cache = React.useRef(new Map<string, Promise<SearchHit[]>>());
-  const hits = React.useCallback((collection: string, q: string) => {
-    const key = `${collection}\u0000${q}`;
-    let p = cache.current.get(key);
-    if (!p) {
-      p = fetch(`/api/search?collection=${collection}&q=${encodeURIComponent(q)}`)
-        .then((r) => (r.ok ? (r.json() as Promise<{ hits: SearchHit[] }>) : { hits: [] }))
-        .then((d) => d.hits)
-        .catch(() => []);
-      cache.current.set(key, p);
+  const cache = React.useRef(new Map<string, QueryResult>());
+  const open = React.useRef(false);
+  const [revision, refresh] = React.useReducer((n: number) => n + 1, 0);
+  const results = React.useCallback((q: string) => {
+    let result = cache.current.get(q);
+    if (!result) {
+      result = {
+        server: fetch(`/api/search?q=${encodeURIComponent(q)}`)
+          .then((r) => (r.ok ? (r.json() as Promise<SearchResponse>) : { hits: [], collections: [], provenance: {} }))
+          .then((d) => d.hits)
+          .catch(() => []),
+        ph: [],
+        phState: "loading",
+      };
+      cache.current.set(q, result);
+      const current = result;
+      void import("../adapters/ph/query")
+        .then(({ searchPh }) => searchPh(q, 8))
+        .then((hits) => {
+          current.ph = hits;
+          current.phState = "ready";
+        })
+        .catch(() => {
+          current.phState = "unavailable";
+        })
+        .finally(() => {
+          if (open.current && cache.current.get(q) === current) refresh();
+        });
     }
-    return p;
+    return result;
   }, []);
 
-  const sources = React.useMemo<SearchSource[]>(
-    () =>
-      GROUPS.map((g) => ({
-        id: g.id,
-        label: g.label,
-        search: async (q: string): Promise<SearchResult[]> =>
-          (await hits(g.collection, q))
-            .filter((h) => h.kind === g.kind)
-            .map((h) => ({ id: h.id, title: h.title, subtitle: h.subtitle, meta: h.meta, href: h.href })),
-      })),
-    [hits],
-  );
+  const sources = React.useMemo<SearchSource[]>(() => {
+    // PH completion refreshes palette sources; cached server promises prevent another request.
+    void revision;
+    return COLLECTIONS.map((collection) => ({
+      id: collection.id,
+      label: collection.label,
+      search: async (q: string): Promise<SearchResult[]> => {
+        if (!open.current || !q.trim()) return [];
+        const result = results(q);
+        if (collection.id === "ph" && result.phState !== "ready") {
+          return [
+            { id: "ph-status", title: result.phState === "loading" ? "Loading PH Catalog…" : "PH catalog unavailable" },
+          ];
+        }
+        const merged = mergeResults(await result.server, result.ph, q);
+        return (groupResults(merged).find((g) => g.id === collection.id)?.hits ?? []).map((h) => ({
+          id: `${h.kind}:${h.id}`,
+          title: h.title,
+          subtitle: [h.kind === "posts" ? "loaded threads" : h.kind, h.subtitle].filter(Boolean).join(" · "),
+          meta: h.meta,
+          href: h.href,
+        }));
+      },
+    }));
+  }, [results, revision]);
 
   return (
     <SearchPalette
       sources={sources}
-      placeholder="Search places, people, claims, subreddits and papers…"
-      emptyHint="Search Nomad Atlas, Podcasts and Reddit communities or recently loaded threads, and Research Papers."
+      onOpenChange={(value) => {
+        open.current = value;
+        if (!value) cache.current.clear();
+      }}
+      placeholder="Search Nomad, Podcasts, Reddit, Papers and PH Catalog…"
+      emptyHint="Search Nomad Atlas, High Signal Podcasts, Reddit communities or loaded threads, Research Papers and PH Catalog."
       onSelect={(r) => {
         if (!r.href) return;
         const target = new URL(r.href, location.href);

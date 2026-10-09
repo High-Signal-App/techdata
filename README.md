@@ -103,7 +103,7 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 - Pinned DuckDB-WASM 1.32.0 bundles load lazily from jsDelivr in the browser;
   no large WASM assets are shipped to Cloudflare. CDN/CSP choice needs deploy review.
 - Only the DuckDB-WASM path is implemented; the DuckDB-WASM vs D1 benchmark is open.
-  Client `searchPh()` is available for a later shared index; the palette is unchanged.
+  The shared ⌘K index lazily merges client `searchPh()` hits with server results.
 - No per-row server API, writes, votes or launch dates. Attribution: Product Hunt
   (public product pages), catalogue by ph-catalog. Per-record collection dates are
   absent; the release publication date is not used as a collection date.
@@ -150,7 +150,15 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 - One adapter per collection under `src/adapters/`; no shared record schema.
   The contract (`types.ts`) is summary, search hits and provenance; each
   adapter keeps its own record shape.
-- `GET /api/collections`, `/api/search?q=&collection=`, `/api/nomad/places`
+- `GET /api/search?q=&limit=` fans out to server adapters in parallel (5-second
+  deadline each) and returns `{hits, collections: [{id, ok, ms, count, error?}],
+  provenance}`. Source summaries need no extra upstream reads; record views carry
+  dates/revisions. Optional `collection` and `kind` filters remain supported.
+  Timeouts retain request-local partial hits when supported.
+  Failures return other hits with `no-store`; successful reads stay private/short-lived.
+  `src/search/index.ts` ranks and caps hits; ⌘K shares one request per query and
+  lazily merges browser-only PH hits into stable collection groups.
+- `GET /api/collections`, `/api/nomad/places`
   (same query string as the view), `/api/nomad/places/:slug`, and
   `/api/podcasts/{stats,episodes,episodes/:id,people,people/:slug,claims,claims/:id}`,
   `/api/reddit/catalog` and `/api/reddit/snapshots/:date/:subreddit?v=`.

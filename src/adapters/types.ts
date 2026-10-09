@@ -42,9 +42,14 @@ export type SearchHit = {
 
 export type Page<T> = { rows: T[]; total: number; limit: number; offset: number };
 
+export type SearchOptions = {
+  /** Request-local progress for a caller that may stop waiting before search completes. */
+  onPartial?: (hits: readonly SearchHit[]) => void;
+};
+
 export interface CollectionAdapter {
   id: string;
   summary(): Promise<CollectionSummary>;
   /** Small, fast hits for the ⌘K palette. */
-  search(query: string, limit?: number): Promise<SearchHit[]>;
+  search(query: string, limit?: number, options?: SearchOptions): Promise<SearchHit[]>;
 }

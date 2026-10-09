@@ -9,8 +9,9 @@ import { createPapersAdapter, type PapersAdapter } from "../adapters/papers";
 import { phAdapter } from "../adapters/ph";
 import { createPodcastsAdapter, type PodcastsAdapter, UpstreamError } from "../adapters/podcasts";
 import { createRedditAdapter, type RedditAdapter, UpstreamError as RedditUpstreamError } from "../adapters/reddit";
-import type { CollectionSummary, SearchHit } from "../adapters/types";
+import type { CollectionAdapter, CollectionSummary, Provenance, SearchHit } from "../adapters/types";
 import { searchPlaces } from "../lib/nomad-search";
+import { COLLECTION_CAP, GLOBAL_CAP, mergeResults, SEARCH_TIMEOUT_MS } from "../search";
 
 export type Env = { PODCASTS_API_BASE?: string; REDDIT_INSIGHTS_API_BASE?: string; RESEARCH_PAPERS_BASE?: string };
 
@@ -20,6 +21,8 @@ export type AppDeps = {
   podcasts?: (env: Env) => PodcastsAdapter;
   reddit?: (env: Env) => RedditAdapter;
   papers?: (env: Env) => PapersAdapter;
+  /** Per-adapter search deadline; does not change adapter fetch behaviour. */
+  searchTimeoutMs?: number;
 };
 
 const clamp = (raw: string | undefined, def: number, min: number, max: number) => {
@@ -163,35 +166,117 @@ export function createApp(deps: AppDeps) {
   app.get("/papers/cited-works", async (c) => c.json(await papersFor(c.env).citedWorks()));
   app.get("/papers/authors", async (c) => c.json(await papersFor(c.env).authors()));
 
-  /* ⌘K: one call per collection so a slow source never blocks the others. */
+  /* ⌘K: parallel bounded reads; PH stays in the browser. */
   app.get("/search", async (c) => {
     const q = (c.req.query("q") ?? "").trim().slice(0, 120);
     const collection = c.req.query("collection");
-    if (!q) return c.json({ hits: [] });
-    let hits: SearchHit[] = [];
-    if (!collection || collection === "nomad") hits = hits.concat(searchPlaces(await places(), q));
-    if (!collection || collection === "podcasts") {
-      try {
-        hits = hits.concat(await podcastsFor(c.env).search(q));
-      } catch {
-        // A failed source returns nothing rather than failing the palette.
-      }
-    }
-    if (!collection || collection === "reddit") {
-      try {
-        hits = hits.concat(await redditFor(c.env).search(q));
-      } catch {
-        /* Unavailable sources do not block search. */
-      }
-    }
-    if (!collection || collection === "papers") {
-      try {
-        hits = hits.concat(await papersFor(c.env).search(q));
-      } catch {
-        /* Failed exports do not block other collections. */
-      }
-    }
-    return c.json({ hits });
+    const kind = c.req.query("kind");
+    const limit = clamp(c.req.query("limit"), GLOBAL_CAP, 1, GLOBAL_CAP);
+    if (!q) return c.json({ hits: [], collections: [], provenance: {} });
+    const source = (name: string, site: string, via: string, url: string): Provenance => ({
+      source: name,
+      sourceUrl: site,
+      via,
+      viaUrl: url,
+      collectedAt: null,
+      note: "Search source summary; collection dates and pinned revisions are shown in the record view.",
+    });
+    const runSearch = (adapter: Pick<CollectionAdapter, "search">, onPartial: (hits: readonly SearchHit[]) => void) =>
+      adapter.search(q, COLLECTION_CAP, { onPartial });
+    const adapters: {
+      id: string;
+      search: (onPartial: (hits: readonly SearchHit[]) => void) => Promise<SearchHit[]>;
+      provenance: Provenance;
+    }[] = [
+      { id: "nomad", search: async () => searchPlaces(await places(), q, COLLECTION_CAP), provenance: nomadProvenance },
+      {
+        id: "podcasts",
+        search: (onPartial) => runSearch(podcastsFor(c.env), onPartial),
+        provenance: source(
+          "High Signal Podcasts",
+          "https://podcasts.highsignal.app",
+          "public API",
+          `${c.env?.PODCASTS_API_BASE ?? "https://api.podcasts.highsignal.app/api"}/search`,
+        ),
+      },
+      {
+        id: "reddit",
+        search: (onPartial) => runSearch(redditFor(c.env), onPartial),
+        provenance: source(
+          "Reddit, via Reddit Insights capture runs",
+          "https://reddit-insights.highsignal.app",
+          "public Snapshot API",
+          `${c.env?.REDDIT_INSIGHTS_API_BASE ?? "https://reddit-insights.highsignal.app"}/api/snapshots/catalog`,
+        ),
+      },
+      {
+        id: "papers",
+        search: (onPartial) => runSearch(papersFor(c.env), onPartial),
+        provenance: source(
+          "Research Papers (High Signal), CC-BY 4.0",
+          "https://papers.highsignal.app",
+          "public JSON exports",
+          c.env?.RESEARCH_PAPERS_BASE ?? "https://papers.highsignal.app",
+        ),
+      },
+    ];
+    const results = await Promise.all(
+      adapters
+        .filter((a) => !collection || a.id === collection)
+        .map(async (adapter) => {
+          const started = performance.now();
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          let partial: SearchHit[] = [];
+          let accepting = true;
+          const onPartial = (hits: readonly SearchHit[]) => {
+            if (accepting) partial = hits.filter((h) => h.collection === adapter.id && (!kind || h.kind === kind));
+          };
+          try {
+            const hits = await Promise.race([
+              Promise.resolve().then(() => adapter.search(onPartial)),
+              new Promise<never>((_, reject) => {
+                timer = setTimeout(() => reject(new Error("timeout")), deps.searchTimeoutMs ?? SEARCH_TIMEOUT_MS);
+              }),
+            ]);
+            return {
+              adapter,
+              hits: hits.filter((h) => !kind || h.kind === kind),
+              status: { id: adapter.id, ok: true, ms: Math.round(performance.now() - started), count: 0 },
+            };
+          } catch (error) {
+            const timedOut = error instanceof Error && error.message === "timeout";
+            return {
+              adapter,
+              hits: timedOut ? partial : [],
+              status: {
+                id: adapter.id,
+                ok: false,
+                ms: Math.round(performance.now() - started),
+                count: 0,
+                error: timedOut ? "timeout" : "unavailable",
+              },
+            };
+          } finally {
+            accepting = false;
+            clearTimeout(timer);
+          }
+        }),
+    );
+    const hits = mergeResults(
+      results.flatMap((r) => r.hits),
+      [],
+      q,
+      { limit },
+    );
+    if (results.some((r) => !r.status.ok)) c.header("cache-control", "no-store");
+    return c.json({
+      hits,
+      collections: results.map(({ status }) => ({
+        ...status,
+        count: hits.filter((h) => h.collection === status.id).length,
+      })),
+      provenance: Object.fromEntries(results.map(({ adapter }) => [adapter.id, adapter.provenance])),
+    });
   });
 
   app.notFound((c) => c.json({ error: "not_found" }, 404));

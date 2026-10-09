@@ -41,14 +41,14 @@ provenance on every record.
 
 ## Features (shipped)
 
-- PH Catalog (implemented locally; build/rendered browser verification blocked by sandbox): sample: 2,000 of 574,752 products; browser DuckDB-WASM Parquet queries, category/website facets, URL state, sorting, paging, product detail and filtered CSV/JSON exports with provenance. Static collection summary; client search available, global palette wiring deferred. Typecheck, Biome and 53 Vitest tests pass; `pnpm run check` stops at Cloudflare build `listen EPERM` on port 9229. Browser engine/rendering are unverified offline; Node WASM Parquet ingestion requires an unavailable extension, so SQL builders/contracts are unit-tested and the real sample schema/count were checked with local DuckDB.
+- PH Catalog (implemented locally; build/rendered browser verification blocked by sandbox): sample: 2,000 of 574,752 products; browser DuckDB-WASM Parquet queries, category/website facets, URL state, sorting, paging, product detail and filtered CSV/JSON exports with provenance. Static collection summary; client search lazily merged into the shared global palette. Typecheck, Biome and 53 Vitest tests pass; `pnpm run check` stops at Cloudflare build `listen EPERM` on port 9229. Browser engine/rendering are unverified offline; Node WASM Parquet ingestion requires an unavailable extension, so SQL builders/contracts are unit-tested and the real sample schema/count were checked with local DuckDB.
 
 - Collections overview with counts and provenance.
 - Nomad Atlas places: all Atlas filters, presets, profiles, sorts, table/cards, details, compare-3, exports, data notes; old Atlas links translate.
 - Podcasts: claims search, episodes, people, claim detail with quote, speaker attribution, timestamp links and transcript window.
 - Reddit Insights: catalog communities, pinned captured threads and discussion, coverage and window provenance, posts/comments exports; fixture-backed adapter/API tests. Local typecheck, lint and tests pass; full build and rendered review are blocked by sandbox socket restrictions (`listen EPERM`). Live reads remain unverified (offline task).
 - Research Papers: merged public paper lists, citation/review metrics, attributed reading paths, cited works, authors, URL filters, details and provenance exports.
-- ⌘K search across Nomad, Podcasts, Reddit (community names and already loaded latest threads), and Research Papers.
+- Shared search index shipped locally: accent/case folding, stable relevance ranking, collection/global caps and collection groups. ⌘K uses one parallel, timeout-isolated `/api/search` request per query plus lazy browser PH search, across Nomad, Podcasts, Reddit (community names and already loaded latest threads), Research Papers and PH Catalog. Source summaries and per-adapter status accompany API hits. Typecheck, Biome and fixture/contract tests pass; full build and 1440/390 rendered review remain blocked by sandbox socket restrictions.
 
 ## Todo / Planned / Deferred / Blocked
 
