@@ -5,19 +5,21 @@
 import { Hono } from "hono";
 import { nomadProvenance, nomadSummary } from "../adapters/nomad/meta";
 import { type Dataset, explorable, type Place, queryPlaces, readPlacesQuery } from "../adapters/nomad/places";
+import { createPapersAdapter, type PapersAdapter } from "../adapters/papers";
 import { phAdapter } from "../adapters/ph";
 import { createPodcastsAdapter, type PodcastsAdapter, UpstreamError } from "../adapters/podcasts";
 import { createRedditAdapter, type RedditAdapter, UpstreamError as RedditUpstreamError } from "../adapters/reddit";
 import type { CollectionSummary, SearchHit } from "../adapters/types";
 import { searchPlaces } from "../lib/nomad-search";
 
-export type Env = { PODCASTS_API_BASE?: string; REDDIT_INSIGHTS_API_BASE?: string };
+export type Env = { PODCASTS_API_BASE?: string; REDDIT_INSIGHTS_API_BASE?: string; RESEARCH_PAPERS_BASE?: string };
 
 export type AppDeps = {
   /** Loads the Nomad Atlas snapshot (bundled JSON in the Worker; injectable in tests). */
   nomad: () => Promise<Dataset>;
   podcasts?: (env: Env) => PodcastsAdapter;
   reddit?: (env: Env) => RedditAdapter;
+  papers?: (env: Env) => PapersAdapter;
 };
 
 const clamp = (raw: string | undefined, def: number, min: number, max: number) => {
@@ -37,6 +39,18 @@ export function createApp(deps: AppDeps) {
       if (!adapter) {
         adapter = createRedditAdapter({ base });
         redditAdapters.set(base, adapter);
+      }
+      return adapter;
+    });
+  const paperAdapters = new Map<string, PapersAdapter>();
+  const papersFor =
+    deps.papers ??
+    ((env: Env) => {
+      const base = env?.RESEARCH_PAPERS_BASE ?? "https://papers.highsignal.app";
+      let adapter = paperAdapters.get(base);
+      if (!adapter) {
+        adapter = createPapersAdapter({ base });
+        paperAdapters.set(base, adapter);
       }
       return adapter;
     });
@@ -82,6 +96,11 @@ export function createApp(deps: AppDeps) {
       collections.push({ id: "reddit", error: "The Reddit Snapshot API did not answer." });
     }
     collections.push(await phAdapter.summary());
+    try {
+      collections.push(await papersFor(c.env).summary());
+    } catch {
+      collections.push({ id: "papers", error: "The Research Papers public exports did not answer." });
+    }
     return c.json({ collections });
   });
 
@@ -130,6 +149,20 @@ export function createApp(deps: AppDeps) {
     return c.json(await redditFor(c.env).snapshot(c.req.param("subreddit"), c.req.param("date"), c.req.query("v")));
   });
 
+  /* Research Papers: public GET exports only. */
+  app.get("/papers/papers", async (c) => c.json(await papersFor(c.env).papers(new URL(c.req.url).searchParams)));
+  app.get("/papers/papers/:id", async (c) => {
+    const result = await papersFor(c.env).paper(c.req.param("id"));
+    return result ? c.json(result) : c.json({ error: "not_found" }, 404);
+  });
+  app.get("/papers/paths", async (c) => c.json(await papersFor(c.env).paths()));
+  app.get("/papers/paths/:id", async (c) => {
+    const result = await papersFor(c.env).path(c.req.param("id"));
+    return result ? c.json(result) : c.json({ error: "not_found" }, 404);
+  });
+  app.get("/papers/cited-works", async (c) => c.json(await papersFor(c.env).citedWorks()));
+  app.get("/papers/authors", async (c) => c.json(await papersFor(c.env).authors()));
+
   /* ⌘K: one call per collection so a slow source never blocks the others. */
   app.get("/search", async (c) => {
     const q = (c.req.query("q") ?? "").trim().slice(0, 120);
@@ -149,6 +182,13 @@ export function createApp(deps: AppDeps) {
         hits = hits.concat(await redditFor(c.env).search(q));
       } catch {
         /* Unavailable sources do not block search. */
+      }
+    }
+    if (!collection || collection === "papers") {
+      try {
+        hits = hits.concat(await papersFor(c.env).search(q));
+      } catch {
+        /* Failed exports do not block other collections. */
       }
     }
     return c.json({ hits });

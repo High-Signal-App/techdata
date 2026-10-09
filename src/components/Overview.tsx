@@ -17,6 +17,12 @@ const VIEWS: Record<string, { label: string; href: string }[]> = {
     { label: "compare", href: "/nomad/compare/" },
     { label: "data notes", href: "/nomad/notes/" },
   ],
+  papers: [
+    { label: "papers", href: "/papers/" },
+    { label: "reading paths", href: "/papers/paths/" },
+    { label: "cited works", href: "/papers/cited/" },
+    { label: "authors", href: "/papers/authors/" },
+  ],
   podcasts: [
     { label: "claims", href: "/podcasts/claims/" },
     { label: "episodes", href: "/podcasts/" },
@@ -29,6 +35,7 @@ const NAMES: Record<string, string> = {
   reddit: "Reddit Insights",
   nomad: "Nomad Atlas",
   podcasts: "High Signal Podcasts",
+  papers: "Research Papers",
 };
 
 /** One row per collection: what it holds, where it comes from, how fresh it is. */
@@ -61,6 +68,9 @@ export default function Overview() {
             ) : (
               <>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{c.description}</p>
+                {c.id === "papers" && (
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{c.provenance.note}</p>
+                )}
                 <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2">
                   {Object.entries(c.counts).map(([k, v]) => (
                     <div key={k}>

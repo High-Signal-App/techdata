@@ -23,6 +23,7 @@ provenance on every record.
 - Nomads.com data (saved snapshot via Nomad Atlas).
 - Reddit Insights public Snapshot API (`reddit-insights.highsignal.app`), read-only.
 - High Signal Podcasts public API (`api.podcasts.highsignal.app`).
+- Research Papers public JSON exports (`papers.highsignal.app`, CC-BY 4.0).
 
 ### Internal
 
@@ -46,10 +47,12 @@ provenance on every record.
 - Nomad Atlas places: all Atlas filters, presets, profiles, sorts, table/cards, details, compare-3, exports, data notes; old Atlas links translate.
 - Podcasts: claims search, episodes, people, claim detail with quote, speaker attribution, timestamp links and transcript window.
 - Reddit Insights: catalog communities, pinned captured threads and discussion, coverage and window provenance, posts/comments exports; fixture-backed adapter/API tests. Local typecheck, lint and tests pass; full build and rendered review are blocked by sandbox socket restrictions (`listen EPERM`). Live reads remain unverified (offline task).
-- ⌘K search across Nomad, Podcasts and Reddit (community names and already loaded latest threads).
+- Research Papers: merged public paper lists, citation/review metrics, attributed reading paths, cited works, authors, URL filters, details and provenance exports.
+- ⌘K search across Nomad, Podcasts, Reddit (community names and already loaded latest threads), and Research Papers.
 
 ## Todo / Planned / Deferred / Blocked
 
 1. Blocked on owner: domain, Cloudflare Access, deploy approval, `UI_LIBRARY_TOKEN` CI secret.
-2. Planned: Research Papers adapter; PH full-export hosting, jsDelivr/CSP deploy decision and DuckDB-WASM vs D1 benchmark.
-3. Deferred: fate of the five public sites; collector location.
+2. Planned: PH full-export hosting, jsDelivr/CSP deploy decision and DuckDB-WASM vs D1 benchmark.
+3. Research Papers data gap: citation edges are not in the public export (operator ClickHouse only); no per-paper edge lists or full-corpus browsing.
+4. Deferred: fate of the five public sites; collector location.

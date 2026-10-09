@@ -1,0 +1,14 @@
+---
+import { AuthorsView } from "../../components/papers/PublicTables";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="authors · research papers"
+  heading="authors"
+  description="Author rankings and their published top arXiv IDs from the public export. Research Papers (High Signal), CC-BY 4.0."
+  nav="papers-authors"
+  breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "authors" }]}
+>
+  <AuthorsView client:load />
+</Console>

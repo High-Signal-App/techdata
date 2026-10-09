@@ -14,12 +14,9 @@ Collectors stay in their own repos; techdata only reads until parity is proven.
 | --- | --- | --- | --- |
 | Nomad Atlas places | Nomads.com, via `Significant-Hobbies/nomad-data-adventure` | Bundled `public/data/nomad/cities.json` (byte-identical, sha256-checked) and Atlas's `model.js` copied unchanged | Snapshot collected 2026-09-07, published 2026-09-13 (`517cbeb`) |
 | High Signal Podcasts | `Significant-Hobbies/on-record` | Public API `api.podcasts.highsignal.app/api` (read-only) | Live; every response records when it was read |
-
 | Reddit Insights | Reddit, via `High-Signal-App/research-subreddit` | Public Snapshot API `reddit-insights.highsignal.app/api/snapshots` (GET only) | Capture windows and revision on every snapshot; 24-hour serving leases |
-
 | PH Catalog | Product Hunt public pages, via `Significant-Hobbies/ph-catalog` | Browser DuckDB-WASM over configurable Parquet (local sample) | Catalogue handoff v1, published 2026-08-31; sample: 2,000 of 574,752 products |
-
-Next: Research Papers (see "What's next").
+| Research Papers | `High-Signal-App/research-papers` | Public GET JSON exports at `papers.highsignal.app` (CC-BY 4.0) | Response Date/Last-Modified or read time; collection date not recorded |
 
 ## Nomad Atlas parity
 
@@ -111,6 +108,41 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
   (public product pages), catalogue by ph-catalog. Per-record collection dates are
   absent; the release publication date is not used as a collection date.
 
+## Research Papers coverage (read-only)
+
+- **Papers** (`/papers/`): merged public top, hot, sleepers and OpenReview
+  review lists, keyed by published arXiv/OpenReview ID, with list/category/year/
+  venue/decision/topic filters and facet counts, search, sorting, pagination,
+  URL state, detail and filtered CSV/JSON exports. Differing list metrics remain
+  in the `published` field; top-papers fields take precedence in the merged row.
+- Detail shows the published citation count, cites/year, in-corpus degree,
+  PageRank/Katz, topics, keywords, reviews, arXiv/OpenReview links, public paper
+  Markdown (top 200 only), and actual reading-path memberships.
+- **Reading paths** (`/papers/paths/`): readings in source order with authors,
+  source links, the path's own `sourceNote` and `trustNote`. A path reading need
+  not be in the selected paper export. Authors on paper rows come only from
+  published reading-path metadata, not author rankings.
+- **Cited works** (`/papers/cited/`) and **authors** (`/papers/authors/`): public
+  aggregate rankings, sortable/filterable tables, details and exports.
+- Corpus totals in `summary.json` describe the operator snapshot (478,991
+  papers and 8,981,698 paper edges), not the number of publicly browsable papers.
+  Public paper counts are computed from the merged exports. Missing files are
+  labelled explicitly; counts then cover only available files.
+- **Citation edges are not in the public export (operator ClickHouse only).**
+  References/citations here are published aggregate metrics, top cited works
+  and readings inside paths. No per-paper reference/citation lists are invented.
+- Attribution: **Research Papers (High Signal), CC-BY 4.0**, via public JSON
+  exports. Every API envelope and export carries source and fetched-at;
+  collection date is null when unrecorded. Submitted dates, Markdown
+  `last_updated` and `paths.generatedAt` are not collection dates. Freshness
+  uses response Last-Modified/Date where present, otherwise read time.
+- `RESEARCH_PAPERS_BASE` optionally overrides the default public site base.
+  Resources load lazily and cache per adapter instance. No operator APIs,
+  ClickHouse access, collection or source writes are used.
+- API: `/api/papers/papers` (view filter params, `sort=field:asc|desc`,
+  `limit`, `offset`), `/api/papers/papers/:id`, `/api/papers/paths`,
+  `/api/papers/paths/:id`, `/api/papers/cited-works`, `/api/papers/authors`.
+
 ## Architecture
 
 - Astro 7 + React islands, prerendered pages, on one Cloudflare Worker
@@ -143,6 +175,5 @@ Deploy is manual and owner-approved only (`.github/workflows/deploy.yml`,
 ## What's next
 
 1. Owner decisions: domain, Cloudflare Access policy, deploy approval.
-2. Research Papers adapter (paths, paper detail, citation graph).
-3. PH Catalog full-export hosting (Parquet in R2; DuckDB-WASM vs D1 benchmark).
-4. Parity sign-off per collection, then decide the public sites' fate.
+2. PH Catalog full-export hosting (Parquet in R2; DuckDB-WASM vs D1 benchmark).
+3. Parity sign-off per collection, then decide the public sites' fate.

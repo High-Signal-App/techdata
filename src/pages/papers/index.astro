@@ -1,0 +1,14 @@
+---
+import PapersView from "../../components/papers/PapersView";
+import Console from "../../layouts/Console.astro";
+---
+
+<Console
+  title="papers · research papers"
+  heading="papers"
+  description="Selected public arXiv and OpenReview papers with citation metrics and review signals. Research Papers (High Signal), CC-BY 4.0."
+  nav="papers-papers"
+  breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "papers" }]}
+>
+  <PapersView client:load />
+</Console>

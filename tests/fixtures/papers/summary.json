@@ -1,0 +1,17 @@
+{
+  "papers_total": 478991,
+  "papers_ingested": 478991,
+  "url_edges": 0,
+  "unique_hosts": 0,
+  "unique_urls": 0,
+  "texts_stored": 511313,
+  "gz_size": "1.5 GB",
+  "gz_bytes": 1569659859,
+  "paper_edges": 8981698,
+  "papers_remaining": 0,
+  "ingest_percent": 100.0,
+  "avg_bytes_per_paper": 3069,
+  "projected_total_bytes": 1569659859,
+  "projected_total_human": "1.5 GB",
+  "avg_per_paper_human": "3.0 kB"
+}

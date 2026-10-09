@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Dataset } from "../src/adapters/nomad/places";
+import { createPapersAdapter } from "../src/adapters/papers";
 import { createPodcastsAdapter } from "../src/adapters/podcasts";
 import { createRedditAdapter } from "../src/adapters/reddit";
 import { createApp } from "../src/server/app";
@@ -37,6 +38,7 @@ const upstream = async (url: string) => {
 
 const app = createApp({
   nomad: async () => dataset,
+  papers: () => createPapersAdapter({ fetch: async () => new Response(null, { status: 404 }) }),
   reddit: () => createRedditAdapter({ fetch: async () => Response.json(redditCatalog) }),
   podcasts: () => createPodcastsAdapter({ base: "https://api.example/api", fetch: upstream }),
 });
@@ -49,7 +51,7 @@ describe("api", () => {
   it("lists all collections with provenance", async () => {
     const { body } = await get("/api/collections");
     const list = body.collections as { id: string; counts: Record<string, number> }[];
-    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit", "ph"]);
+    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit", "ph", "papers"]);
     expect(list[0]?.counts.places).toBe(1374);
     expect(list[1]?.counts.claims).toBe(10);
     expect(list[3]?.counts["sample products"]).toBe(2000);
