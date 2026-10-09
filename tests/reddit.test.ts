@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createRedditAdapter, UpstreamError } from "../src/adapters/reddit";
 import { createApp } from "../src/server/app";
 import catalog from "./fixtures/reddit/catalog.json";
@@ -97,6 +97,48 @@ describe("reddit adapter", () => {
     expect(r.calls.filter((url) => !url.endsWith("catalog"))).toHaveLength(1);
     expect(await a.search("")).toEqual([]);
   });
+  it.each(["slow", "failing"])("returns communities without waiting for a %s snapshot read", async (state) => {
+    vi.useFakeTimers();
+    try {
+      let snapshotFinished = false;
+      const a = createRedditAdapter({
+        now,
+        fetch: async (url) => {
+          const isCatalog = url.endsWith("catalog");
+          await new Promise((resolve) => setTimeout(resolve, isCatalog ? 1000 : 10_000));
+          if (!isCatalog && state === "failing") throw new Error("snapshot unavailable");
+          return Response.json(isCatalog ? catalog : snapshot);
+        },
+      });
+      const pendingSnapshot = a
+        .snapshot(snapshot.subreddit, snapshot.date)
+        .catch(() => null)
+        .finally(() => {
+          snapshotFinished = true;
+        });
+      const onPartial = vi.fn();
+      const search = a.search("agent", 5, { onPartial });
+      await vi.advanceTimersByTimeAsync(1000);
+      const hits = await search;
+      expect(hits).toContainEqual(expect.objectContaining({ kind: "communities", title: "r/AI_Agents" }));
+      expect(onPartial).toHaveBeenCalledWith(hits);
+      expect(snapshotFinished).toBe(false);
+      await vi.advanceTimersByTimeAsync(9000);
+      await pendingSnapshot;
+      expect(snapshotFinished).toBe(true);
+      expect(hits.every((h) => h.kind === "communities")).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("bounds best-effort cached thread work without suppressing communities", async () => {
+    const a = createRedditAdapter({ fetch: fixtureFetcher().fetch, now, searchThreadsBudgetMs: 0 });
+    await a.snapshot(snapshot.subreddit, snapshot.date);
+    expect(await a.search(snapshot.posts[0]?.title ?? "")).toEqual([]);
+    expect(await a.search("agent")).toContainEqual(expect.objectContaining({ title: "r/AI_Agents" }));
+  });
+
   it("does not search revoked or expired loaded revisions", async () => {
     let removed = false;
     const a = createRedditAdapter({

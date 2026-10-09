@@ -1,5 +1,5 @@
 /** Read-only public captures. Author/profile metadata is deliberately excluded. */
-import type { CollectionSummary, Provenance, SearchHit } from "../types";
+import type { CollectionSummary, Provenance, SearchHit, SearchOptions } from "../types";
 
 export const REDDIT_SITE = "https://reddit-insights.highsignal.app";
 export const ATTRIBUTION =
@@ -110,7 +110,12 @@ export function snapshotHref(s: CatalogEntry, post?: string) {
 }
 
 export function createRedditAdapter(
-  opts: { base?: string; fetch?: (input: string, init?: RequestInit) => Promise<Response>; now?: () => Date } = {},
+  opts: {
+    base?: string;
+    fetch?: (input: string, init?: RequestInit) => Promise<Response>;
+    now?: () => Date;
+    searchThreadsBudgetMs?: number;
+  } = {},
 ) {
   const base = (opts.base ?? REDDIT_SITE).replace(/\/$/, "");
   const doFetch = opts.fetch ?? fetch;
@@ -216,10 +221,10 @@ export function createRedditAdapter(
         mode: "read-only",
       };
     },
-    async search(query: string, limit = 5): Promise<SearchHit[]> {
-      const { data } = await catalog();
+    async search(query: string, limit = 5, options: SearchOptions = {}): Promise<SearchHit[]> {
       const q = query.trim().toLowerCase().slice(0, 120);
       if (!q) return [];
+      const { data } = await catalog();
       const bound = Math.min(10, Math.max(1, limit));
       const latest = new Map<string, CatalogEntry>();
       for (const e of data.entries)
@@ -235,7 +240,13 @@ export function createRedditAdapter(
           meta: e.date,
           href: snapshotHref(e),
         }));
+      options.onPartial?.(hits);
+      // Community matches are ready now: never wait for or scan snapshots for them.
+      if (hits.length) return hits;
+      // Thread-only queries use already loaded snapshots, with no fetch or pending-read wait.
+      const deadline = performance.now() + (opts.searchThreadsBudgetMs ?? 25);
       for (const s of [...loaded.values()].reverse()) {
+        if (performance.now() >= deadline) break;
         const entry = latest.get(s.subreddit);
         if (
           !entry ||
@@ -246,7 +257,7 @@ export function createRedditAdapter(
           continue;
         for (const p of s.posts
           .slice(0, 500)
-          .filter((p) => p.title.toLowerCase().includes(q))
+          .filter((p) => performance.now() < deadline && p.title.toLowerCase().includes(q))
           .slice(0, bound)) {
           if (hits.filter((h) => h.kind === "posts").length >= bound) break;
           hits.push({
@@ -260,6 +271,7 @@ export function createRedditAdapter(
           });
         }
       }
+      options.onPartial?.(hits);
       return hits;
     },
   };
