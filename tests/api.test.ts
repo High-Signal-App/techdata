@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Dataset } from "../src/adapters/nomad/places";
-import { createPapersAdapter } from "../src/adapters/papers";
 import { createPodcastsAdapter } from "../src/adapters/podcasts";
 import { createRedditAdapter } from "../src/adapters/reddit";
 import { createApp } from "../src/server/app";
@@ -38,12 +37,7 @@ const upstream = async (url: string) => {
 
 const app = createApp({
   nomad: async () => dataset,
-<<<<<<< HEAD
-  papers: () => createPapersAdapter({ fetch: async () => new Response(null, { status: 404 }) }),
-||||||| a225c94
-=======
   reddit: () => createRedditAdapter({ fetch: async () => Response.json(redditCatalog) }),
->>>>>>> origin/main
   podcasts: () => createPodcastsAdapter({ base: "https://api.example/api", fetch: upstream }),
 });
 const get = async (path: string) => {
@@ -52,22 +46,10 @@ const get = async (path: string) => {
 };
 
 describe("api", () => {
-<<<<<<< HEAD
-  it("lists collections with provenance", async () => {
-||||||| a225c94
-  it("lists both collections with provenance", async () => {
-=======
   it("lists all collections with provenance", async () => {
->>>>>>> origin/main
     const { body } = await get("/api/collections");
     const list = body.collections as { id: string; counts: Record<string, number> }[];
-<<<<<<< HEAD
-    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "papers"]);
-||||||| a225c94
-    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts"]);
-=======
     expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit", "ph"]);
->>>>>>> origin/main
     expect(list[0]?.counts.places).toBe(1374);
     expect(list[1]?.counts.claims).toBe(10);
     expect(list[3]?.counts["sample products"]).toBe(2000);
