@@ -14,7 +14,8 @@ and record durable follow-up in this repo's GitHub Issues.
 - **Checks**: `pnpm run check` (typecheck, Biome via `pnpm exec biome`, Vitest,
   build). Never `npx biome`.
 - **Deploy**: manual `workflow_dispatch` only, after explicit owner approval.
-  Not deployed; do not create Cloudflare resources without approval.
+  Worker must only be reachable behind Cloudflare Access; `techdata-data`
+  stays private. Do not create Cloudflare resources without approval.
 
 ## Rules
 

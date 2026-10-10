@@ -101,7 +101,7 @@ export function createPhQuery(execute: Execute, fetchedAt: string) {
         source: provenance.source,
         collectedAt: provenance.collectedAt,
         provenance,
-        sample: PH_META.sampleLabel,
+        exportedAt: PH_META.exportedAt,
         attribution: PH_META.attribution,
         filters,
         rows: await rows(filters, sort),
@@ -115,7 +115,7 @@ export function createPhQuery(execute: Execute, fetchedAt: string) {
         id: p.slug,
         title: p.name,
         subtitle: p.tagline ?? undefined,
-        meta: PH_META.sampleLabel,
+        meta: PH_META.coverageLabel,
         href: `/ph/?product=${encodeURIComponent(p.slug)}`,
       }));
     },
@@ -135,7 +135,11 @@ export const searchPh = async (query: string, limit = 5) => (await loadPhQuery()
 
 async function openBrowserQuery() {
   const duckdb = await import("@duckdb/duckdb-wasm");
-  const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
+  const assetUrl = (name: string) => new URL(`/api/files/duckdb/1.32.0/${name}`, location.origin).href;
+  const bundle = await duckdb.selectBundle({
+    mvp: { mainModule: assetUrl("duckdb-mvp.wasm"), mainWorker: assetUrl("duckdb-browser-mvp.worker.js") },
+    eh: { mainModule: assetUrl("duckdb-eh.wasm"), mainWorker: assetUrl("duckdb-browser-eh.worker.js") },
+  });
   if (!bundle.mainWorker) throw new Error("DuckDB worker is unavailable.");
   const workerUrl = URL.createObjectURL(
     new Blob([`importScripts(${JSON.stringify(bundle.mainWorker)});`], { type: "text/javascript" }),
@@ -144,9 +148,18 @@ async function openBrowserQuery() {
   const db = new duckdb.AsyncDuckDB(new duckdb.VoidLogger(), worker);
   try {
     await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-    const response = await fetch(PH_DATA_URL);
-    if (!response.ok) throw new Error(`PH Parquet file did not load (${response.status}).`);
-    await db.registerFileBuffer("ph.parquet", new Uint8Array(await response.arrayBuffer()));
+    try {
+      await db.registerFileURL(
+        "ph.parquet",
+        new URL(PH_DATA_URL, location.origin).href,
+        duckdb.DuckDBDataProtocol.HTTP,
+        false,
+      );
+    } catch (error) {
+      throw new Error("PH Parquet HTTP range file could not be registered. Check access to the private data route.", {
+        cause: error,
+      });
+    }
     const fetchedAt = new Date().toISOString();
     const conn = await db.connect();
     await conn.query("CREATE VIEW ph_products AS SELECT * FROM read_parquet('ph.parquet')");

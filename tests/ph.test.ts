@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { phAdapter } from "../src/adapters/ph";
 import { PH_META } from "../src/adapters/ph/meta";
@@ -35,7 +34,7 @@ describe("PH query contract (injected executor; no network)", () => {
     expect(exported.rows).toEqual(fixture);
     expect(exported).toMatchObject({
       source: "Product Hunt",
-      sample: PH_META.sampleLabel,
+      exportedAt: PH_META.exportedAt,
       collectedAt: null,
       filters,
       provenance: { revision: PH_META.revision, fetchedAt: "2026-10-09T12:00:00Z" },
@@ -52,15 +51,12 @@ describe("PH query contract (injected executor; no network)", () => {
     expect(calls.length).toBe(callCount);
     await query.record("0up");
     expect(calls.at(-1)).toEqual(recordSql("0up"));
-    expect(readFileSync(new URL("../public/data/ph/sample.parquet", import.meta.url))).toEqual(
-      readFileSync(new URL("./fixtures/ph/sample.parquet", import.meta.url)),
-    );
   });
-  it("provides a static read-only sample summary", async () => {
+  it("provides a static read-only full-export summary", async () => {
     expect(await phAdapter.summary()).toMatchObject({
       id: "ph",
       mode: "read-only",
-      counts: { "sample products": 2000 },
+      counts: { products: 575479, "with categories": 93897 },
       provenance: { revision: PH_META.revision, collectedAt: null },
     });
   });

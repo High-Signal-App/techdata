@@ -5,7 +5,7 @@ Release: [Catalogue handoff v1](https://github.com/Significant-Hobbies/ph-catalo
 Sample date: 2026-10-09. `sample.parquet` is a real deterministic 2,000-product
 subset of the 574,752-product export, hash-ordered by slug with spam/contact-detail
 rows filtered out. Seven source fields are preserved; categories is VARCHAR[].
-`public/data/ph/sample.parquet` is the same supplied sample; neither is regenerated.
+The sample is retained only as a test fixture; the app reads the full export from private R2.
 Record collection dates, votes and launch dates are not present in this export.
 
 `rows.json` contains the first five supplied sample rows ordered by slug, extracted

@@ -1,7 +1,7 @@
 name: Deploy (manual)
 
 # Owner-approved deploys only. Never runs on push. Needs CLOUDFLARE_API_TOKEN,
-# CLOUDFLARE_ACCOUNT_ID and UI_LIBRARY_TOKEN secrets, none of which exist yet.
+# CLOUDFLARE_ACCOUNT_ID secrets.
 on:
   workflow_dispatch:
     inputs:
@@ -28,9 +28,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - env:
-          UI_LIBRARY_TOKEN: ${{ secrets.UI_LIBRARY_TOKEN }}
-        run: git config --global url."https://x-access-token:${UI_LIBRARY_TOKEN}@github.com/".insteadOf "https://github.com/"
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - run: pnpm exec wrangler deploy

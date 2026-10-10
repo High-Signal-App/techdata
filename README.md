@@ -15,7 +15,7 @@ Collectors stay in their own repos; techdata only reads until parity is proven.
 | Nomad Atlas places | Nomads.com, via `Significant-Hobbies/nomad-data-adventure` | Bundled `public/data/nomad/cities.json` (byte-identical, sha256-checked) and Atlas's `model.js` copied unchanged | Snapshot collected 2026-09-07, published 2026-09-13 (`517cbeb`) |
 | High Signal Podcasts | `Significant-Hobbies/on-record` | Public API `api.podcasts.highsignal.app/api` (read-only) | Live; every response records when it was read |
 | Reddit Insights | Reddit, via `High-Signal-App/research-subreddit` | Public Snapshot API `reddit-insights.highsignal.app/api/snapshots` (GET only) | Capture windows and revision on every snapshot; 24-hour serving leases |
-| PH Catalog | Product Hunt public pages, via `Significant-Hobbies/ph-catalog` | Browser DuckDB-WASM over configurable Parquet (local sample) | Catalogue handoff v1, published 2026-08-31; sample: 2,000 of 574,752 products |
+| PH Catalog | Product Hunt public pages, via `Significant-Hobbies/ph-catalog` | Browser DuckDB-WASM over private R2 Parquet via the Worker | ph-catalog catalog-state, published/exported 2026-10-10; 575,479 products, 93,897 with categories |
 | Research Papers | `High-Signal-App/research-papers` | Public GET JSON exports at `papers.highsignal.app` (CC-BY 4.0) | Response Date/Last-Modified or read time; collection date not recorded |
 
 ## Nomad Atlas parity
@@ -91,17 +91,17 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 
 ## PH Catalog coverage (read-only)
 
-- `/ph/`: sample: 2,000 of 574,752 products. Browser-only DuckDB-WASM queries
+- `/ph/`: 575,479 products (93,897 with categories). Browser-only DuckDB-WASM queries
   names/taglines/descriptions with case/accent-insensitive search, category and
   website facets with counts, sorting, URL state, paging and slug-selected detail.
 - CSV/JSON exports include all filtered rows and provenance; JSON carries source,
-  collectedAt (not recorded), fetchedAt, release revision, sample label and filters.
-- `PUBLIC_PH_PARQUET_URL` is a build-time override (default `/data/ph/sample.parquet`).
-  The full private release export is not bundled. R2 hosting remains a later step.
-- `GET /api/ph/summary` and `/api/collections` expose static sample provenance;
+  collectedAt (not recorded), fetchedAt, release revision, export date and filters.
+- The full Parquet export loads from `/api/files/ph/producthunt-full.parquet`
+  using HTTP range reads; it is not downloaded into a browser buffer first.
+- `GET /api/ph/summary` and `/api/collections` expose static full-export provenance;
   product queries stay in the browser.
-- Pinned DuckDB-WASM 1.32.0 bundles load lazily from jsDelivr in the browser;
-  no large WASM assets are shipped to Cloudflare. CDN/CSP choice needs deploy review.
+- Pinned DuckDB-WASM 1.32.0 modules and workers load lazily from
+  `/api/files/duckdb/1.32.0/` on the same origin.
 - Only the DuckDB-WASM path is implemented; the DuckDB-WASM vs D1 benchmark is open.
   The shared ⌘K index lazily merges client `searchPh()` hits with server results.
 - No per-row server API, writes, votes or launch dates. Attribution: Product Hunt
@@ -167,8 +167,7 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 
 ## Run
 
-Needs Node 22+, pnpm 10.33.2 and read access to the private
-`sass-maker/ui-library` repo.
+Needs Node 22+ and pnpm 10.33.2. `sass-maker/ui-library` is public.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -178,10 +177,38 @@ pnpm run build && pnpm run preview   # production build on workerd, port 4329
 ```
 
 Deploy is manual and owner-approved only (`.github/workflows/deploy.yml`,
-`workflow_dispatch`). Nothing is deployed yet; no Cloudflare resources exist.
+`workflow_dispatch`). The Worker must only be reachable behind Cloudflare
+Access, including any workers.dev or alternate hostname. The R2 bucket stays
+private: do not enable a public bucket endpoint.
+
+### Private R2 data
+
+`wrangler.jsonc` binds the existing `techdata-data` bucket as `DATA`.
+`GET`/`HEAD` `/api/files/*` serves only `ph/` and `duckdb/` keys through the
+Access-protected Worker, with streaming single-range reads and private caching.
+
+Objects uploaded on 2026-10-10 using `wrangler r2 object put --remote`:
+
+- `ph/producthunt-full.parquet`: full export from
+  [ph-catalog catalog-state](https://github.com/Significant-Hobbies/ph-catalog/releases/tag/catalog-state),
+  79,066,044 bytes, SHA-256
+  `e1d25bc8c46fe0e92c68b51a107702d12c3da87b738cbfdfa8c7cd84424cd006`.
+- `duckdb/1.32.0/{duckdb-eh.wasm,duckdb-mvp.wasm,duckdb-browser-eh.worker.js,duckdb-browser-mvp.worker.js}`:
+  copied from `@duckdb/duckdb-wasm` 1.32.0 `dist`.
+
+Upload command shape (documentation only; uploads require owner approval):
+
+```sh
+wrangler r2 object put techdata-data/ph/producthunt-full.parquet --remote --file <export.parquet> --content-type application/octet-stream
+wrangler r2 object put techdata-data/duckdb/1.32.0/duckdb-eh.wasm --remote --file <dist/duckdb-eh.wasm> --content-type application/wasm
+wrangler r2 object put techdata-data/duckdb/1.32.0/duckdb-browser-eh.worker.js --remote --file <dist/duckdb-browser-eh.worker.js> --content-type application/javascript
+```
+
+The MVP files use the same respective content types. The route preserves stored
+Content-Type metadata and adds `nosniff`; keep upload metadata correct.
 
 ## What's next
 
 1. Owner decisions: domain, Cloudflare Access policy, deploy approval.
-2. PH Catalog full-export hosting (Parquet in R2; DuckDB-WASM vs D1 benchmark).
+2. DuckDB-WASM vs D1 benchmark.
 3. Parity sign-off per collection, then decide the public sites' fate.
