@@ -156,7 +156,7 @@ async function openBrowserQuery() {
         false,
       );
     } catch (error) {
-      throw new Error("PH Parquet HTTP range file could not be registered. Check access to the private data route.", {
+      throw new Error("PH Parquet HTTP range file could not be registered. Check access to the Worker data route.", {
         cause: error,
       });
     }

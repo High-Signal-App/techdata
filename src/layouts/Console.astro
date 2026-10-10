@@ -8,12 +8,14 @@ interface Props {
   /** Document title (without the app name). */
   title: string;
   heading: string;
-  description?: string;
+  description: string;
   nav: NavKey;
   breadcrumbs: { label: string; href?: string }[];
 }
 
 const { title, heading, description, nav, breadcrumbs } = Astro.props;
+const documentTitle = `${title} · techdata`;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 ---
 
 <!doctype html>
@@ -21,10 +23,14 @@ const { title, heading, description, nav, breadcrumbs } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="light" />
-    <title>{title} · techdata</title>
-    {description && <meta name="description" content={description} />}
+    <title>{documentTitle}</title>
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta property="og:title" content={documentTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="techdata" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
@@ -40,10 +46,21 @@ const { title, heading, description, nav, breadcrumbs } = Astro.props;
       title={heading}
       description={description}
       search={{ label: "Search collections…" }}
-      sidebarFooter="Private workbench. Read-only: each collection keeps its own collector."
+      sidebarFooter="Public workbench. Read-only, with sources and collection dates."
     >
       <slot name="actions" slot="actions" />
       <slot />
+      <footer class="mt-10 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span>sources</span>
+        <a class="underline underline-offset-4" href="https://nomad.significanthobbies.com/">Nomad Atlas</a>
+        <a class="underline underline-offset-4" href="https://nomads.com/">Nomads.com</a>
+        <a class="underline underline-offset-4" href="https://podcasts.highsignal.app/">High Signal Podcasts</a>
+        <a class="underline underline-offset-4" href="https://reddit-insights.highsignal.app/">Reddit Insights</a>
+        <a class="underline underline-offset-4" href="https://www.producthunt.com/">Product Hunt</a>
+        <a class="underline underline-offset-4" href="https://github.com/Significant-Hobbies/ph-catalog">PH Catalog</a>
+        <a class="underline underline-offset-4" href="https://papers.highsignal.app/">Research Papers</a>
+        <a class="underline underline-offset-4" href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0 (Research Papers)</a>
+      </footer>
     </ConsolePage>
     <GlobalSearch client:idle />
   </body>
