@@ -1,12 +1,16 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { ActiveFilters, FacetFilter, FilterBar, FilterSearch, useUrlFilters } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, Provenance, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
-import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import type { FilterDef, FilterState } from "@saas-maker/ui/lib/filters";
 import * as React from "react";
 import { PH_META } from "../../adapters/ph/meta";
 import { loadPhQuery, type PhSort, type Product } from "../../adapters/ph/query";
+import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 
 const defs: FilterDef<Product>[] = [
   { kind: "facet", id: "category", label: "category", value: (p) => p.categories },
@@ -108,9 +112,12 @@ export default function ProductsView() {
     update({ ...filters, facets: { ...filters.facets, [name]: values } });
   const detail = state === "ready" ? result?.detail : null;
   const provenance = result?.exported.provenance;
+  const pin = (p: Product) =>
+    pinFromColumns("/ph/", p.slug, p.name, p, columns, provenance, "product", {}, p.producthunt_url ?? undefined);
   return (
     <>
       <FilterBar>
+        <SaveView />
         <FilterSearch
           value={filters.q ?? ""}
           onChange={(q) => update({ ...filters, q })}
@@ -132,6 +139,7 @@ export default function ProductsView() {
       <ActiveFilters defs={defs} state={filters} onChange={update} className="my-3" />
       <RecordLayout>
         <DataTable
+          pin={pin}
           className="flex-1"
           label="PH products"
           data={state === "ready" ? (result?.rows ?? []) : []}
@@ -177,6 +185,7 @@ export default function ProductsView() {
           )}
         />
         <RecordDetail
+          actions={detail && <PinButton item={pin(detail)} />}
           open={!!slug}
           onOpenChange={(open) => !open && setSlug(null)}
           title={detail?.name ?? "product"}

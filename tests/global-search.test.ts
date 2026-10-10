@@ -2,13 +2,16 @@ import type { SearchResult, SearchSource } from "@saas-maker/ui/blocks/search-pa
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { nomadProvenance } from "../src/adapters/nomad/meta";
 import GlobalSearch from "../src/components/GlobalSearch";
+import { type PinnedItem, pinFromColumns } from "../src/lib/compare";
 
 const mocks = vi.hoisted(() => ({
   props: undefined as
     | { sources: SearchSource[]; onOpenChange: (open: boolean) => void; onSelect: (result: SearchResult) => void }
     | undefined,
   searchPh: vi.fn(),
+  pins: [] as PinnedItem[],
 }));
 vi.mock("@saas-maker/ui/blocks/search-palette", () => ({
   SearchPalette: (props: typeof mocks.props) => {
@@ -17,10 +20,18 @@ vi.mock("@saas-maker/ui/blocks/search-palette", () => ({
   },
 }));
 vi.mock("../src/adapters/ph/query", () => ({ searchPh: mocks.searchPh }));
+vi.mock("../src/lib/local-lists", () => ({ usePins: () => ({ items: mocks.pins }) }));
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
+  mocks.pins = [];
 });
+
+function source(id: string): SearchSource {
+  const s = mocks.props?.sources.find((s) => s.id === id);
+  if (!s) throw new Error(`Missing palette source: ${id}`);
+  return s;
+}
 
 // Exercise the palette source boundary with real React hooks; no network or browser engine.
 describe("global search sources", () => {
@@ -57,24 +68,26 @@ describe("global search sources", () => {
     props.onOpenChange(true);
     await Promise.all(props.sources.map((s) => s.search("")));
     expect(fetch).not.toHaveBeenCalled();
-    const groups = await Promise.all(props.sources.map((s) => s.search("lisbon")));
+    const groups = Object.fromEntries(
+      await Promise.all(props.sources.map(async (s) => [s.id, await s.search("lisbon")])),
+    );
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledWith("/api/search?q=lisbon");
-    expect(groups[0][0]).toMatchObject({ title: "Lisbon", subtitle: "places" });
-    expect(groups[4][0].title).toBe("Loading PH Catalog…");
+    expect(groups.nomad[0]).toMatchObject({ title: "Lisbon", subtitle: "places" });
+    expect(groups.ph[0].title).toBe("Loading PH Catalog…");
     await vi.waitFor(() => expect(mocks.searchPh).toHaveBeenCalledTimes(1));
     // PH contract hit; query mechanics and full-export provenance are covered by ph.test.ts.
     release([
       { collection: "ph", kind: "products", id: "fixture-slug", title: "Lisbon", href: "/ph/?product=fixture-slug" },
     ]);
     await vi.waitFor(async () => {
-      expect(await props.sources[4].search("lisbon")).toMatchObject([
+      expect(await source("ph").search("lisbon")).toMatchObject([
         { href: "/ph/?product=fixture-slug", subtitle: "products" },
       ]);
     });
     expect(fetch).toHaveBeenCalledTimes(1);
     props.onOpenChange(false);
-    expect(await props.sources[4].search("lisbon")).toEqual([]);
+    expect(await source("ph").search("lisbon")).toEqual([]);
   });
 
   it("keeps same-view history navigation and other-view navigation", () => {
@@ -111,9 +124,22 @@ describe("global search sources", () => {
     const props = mocks.props;
     if (!props) throw new Error("Palette did not render");
     props.onOpenChange(true);
-    await props.sources[0].search("test");
+    await source("nomad").search("test");
     await vi.waitFor(async () => {
-      expect(await props.sources[4].search("test")).toEqual([{ id: "ph-status", title: "PH catalog unavailable" }]);
+      expect(await source("ph").search("test")).toEqual([{ id: "ph-status", title: "PH catalog unavailable" }]);
     });
+  });
+
+  it("searches pinned records in their own group without fetching a collection", async () => {
+    const pin = pinFromColumns("/nomad/", "lisbon-portugal", "Lisbon", {}, [], nomadProvenance, "place");
+    if (!pin) throw new Error("Pin did not validate");
+    mocks.pins = [pin];
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    renderToStaticMarkup(createElement(GlobalSearch));
+    expect(source("pinned").label).toBe("pinned");
+    expect(await source("pinned").search("LISBON")).toMatchObject([{ title: "Lisbon", href: pin.href }]);
+    expect(await source("pinned").search("no match")).toEqual([]);
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

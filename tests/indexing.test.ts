@@ -28,7 +28,7 @@ describe("public indexing endpoints", () => {
         view === "index.astro" ? "/" : `/${view.replace(/(?:\/index)?\.astro$/, "")}/`,
       );
       expect(locations.sort()).toEqual(paths.map((path) => `${origin}${path}`).sort());
-      expect(locations).toHaveLength(14);
+      expect(locations).toHaveLength(15);
       expect(xml).not.toContain("/api/");
       expect(locations.every((location) => new URL(location).search === "")).toBe(true);
     },

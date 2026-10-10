@@ -1,12 +1,16 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { FilterBar, FilterSearch } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
-import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { Skeleton } from "@saas-maker/ui/components/skeleton";
 import * as React from "react";
 import { type Claim, type Episode, type Show, transcriptLabel } from "../../adapters/podcasts";
+import { pinFromColumns } from "../../lib/compare";
 import { formatDate, today, useUrlParam } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { ClaimDetail, ClaimList, ExternalLink, LiveProvenance, useApi } from "./shared";
 
 const PAGE = 50;
@@ -71,6 +75,18 @@ export default function EpisodesView() {
   const rows = state.status === "ready" ? state.value.data.sources : [];
   const total = state.status === "ready" ? state.value.data.total : 0;
   const [publishers, setPublishers] = React.useState<Show[]>([]);
+  const pin = (e: Episode) =>
+    pinFromColumns(
+      "/podcasts/",
+      e.id,
+      e.title,
+      e,
+      columns,
+      state.status === "ready" ? state.value.provenance : undefined,
+      "episode",
+      {},
+      e.sourceUrl ?? undefined,
+    );
   React.useEffect(() => {
     if (state.status === "ready" && state.value.data.publishers.length) setPublishers(state.value.data.publishers);
   }, [state]);
@@ -79,6 +95,7 @@ export default function EpisodesView() {
     <>
       <div className="mb-4">
         <FilterBar>
+          <SaveView />
           <FilterSearch value={draft} onChange={setDraft} placeholder="Episode or show…" />
           <Select
             value={show ?? "all"}
@@ -105,6 +122,7 @@ export default function EpisodesView() {
       </div>
       <RecordLayout>
         <DataTable
+          pin={pin}
           className="flex-1"
           label="Episodes"
           data={rows}
@@ -213,6 +231,19 @@ function EpisodeDetail({ id }: { id: string }) {
         <ClaimList claims={claims} status="ready" onOpen={(c) => setClaimId(c.id)} />
       </section>
       <LiveProvenance info={state.value.provenance} page={source.sourceUrl ?? undefined} />
+      <PinButton
+        item={pinFromColumns(
+          "/podcasts/",
+          source.id,
+          source.title,
+          source,
+          columns,
+          state.value.provenance,
+          "episode",
+          {},
+          source.sourceUrl ?? undefined,
+        )}
+      />
     </>
   );
 }

@@ -6,7 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { XIcon } from "lucide-react";
 import * as React from "react";
 import { CLAIM_TYPES, type Claim } from "../../adapters/podcasts";
+import { claimColumns, pinClaim } from "../../lib/podcast-pins";
 import { today, useUrlParam } from "../../lib/url-state";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { ClaimDetail, ClaimList, claimExportColumns, LiveProvenance, useApi } from "./shared";
 
 /**
@@ -14,6 +17,9 @@ import { ClaimDetail, ClaimList, claimExportColumns, LiveProvenance, useApi } fr
  * newest 50 matches, so this is a search, not a full listing.
  */
 export default function ClaimsView() {
+  const [layout, setLayout] = useUrlParam("view");
+  const [sortParam, setSort] = useUrlParam("sort");
+  const [sortId, sortDirection] = (sortParam ?? "").split(":");
   const [q, setQ] = useUrlParam("q");
   const [type, setType] = useUrlParam("type");
   const [person, setPerson] = useUrlParam("person");
@@ -45,6 +51,7 @@ export default function ClaimsView() {
     <>
       <div className="mb-4 flex flex-col gap-3">
         <FilterBar>
+          <SaveView />
           <FilterSearch value={draft} onChange={setDraft} placeholder="Words in the claim…" />
           <Select value={type ?? "any"} onValueChange={(v) => setType(v === "any" ? null : v)}>
             <SelectTrigger size="sm" className="ui-case h-8 w-auto gap-1.5" aria-label="Claim type">
@@ -102,6 +109,9 @@ export default function ClaimsView() {
       <RecordLayout>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex min-h-8 flex-wrap items-center justify-between gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setLayout(layout === "table" ? null : "table")}>
+              {layout === "table" ? "quote view" : "table & pin"}
+            </Button>
             <p className="text-sm text-muted-foreground" aria-live="polite">
               {state.status === "ready"
                 ? claims.length
@@ -120,14 +130,31 @@ export default function ClaimsView() {
               />
             )}
           </div>
-          <ClaimList
-            claims={claims}
-            status={state.status}
-            selectedId={claimId}
-            onOpen={(c) => setClaimId(c.id)}
-            onRetry={retry}
-            empty="The index has no published claim with these words. Try fewer or different words."
-          />
+          {layout === "table" ? (
+            <DataTable
+              label="claims"
+              data={claims}
+              columns={claimColumns}
+              getRowId={(c) => c.id}
+              sort={sortId ? [{ id: sortId, desc: sortDirection === "desc" }] : []}
+              onSortChange={(sort) => setSort(sort[0] ? `${sort[0].id}:${sort[0].desc ? "desc" : "asc"}` : null)}
+              pin={(c) => pinClaim(c, state.status === "ready" ? state.value.provenance : undefined)}
+              status={state.status}
+              onRowClick={(c) => setClaimId(c.id)}
+              selectedId={claimId}
+              onRetry={retry}
+              empty="no published claims match"
+            />
+          ) : (
+            <ClaimList
+              claims={claims}
+              status={state.status}
+              selectedId={claimId}
+              onOpen={(c) => setClaimId(c.id)}
+              onRetry={retry}
+              empty="The index has no published claim with these words. Try fewer or different words."
+            />
+          )}
           {state.status === "ready" && <LiveProvenance info={state.value.provenance} />}
         </div>
         <RecordDetail

@@ -1,11 +1,15 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { ActiveFilters, FacetFilter, FilterBar, FilterSearch, useUrlFilters } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
-import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { type FilterDef, facetCounts, filterRows } from "@saas-maker/ui/lib/filters";
 import type { Catalog, CatalogEntry, Snapshot } from "../../adapters/reddit";
 import { snapshotHref } from "../../adapters/reddit";
+import { pinFromColumns } from "../../lib/compare";
 import { useUrlParam } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { CaptureProvenance, Freshness, ReadError, useApi, useSort } from "./shared";
 
 type Community = CatalogEntry & { dates: string[] };
@@ -40,9 +44,24 @@ export default function CommunitiesView() {
   const search = (e: Community) => e.subreddit;
   const rows = filterRows(all, defs, filters, { search });
   const selected = all.find((e) => e.subreddit === community);
+  const pin = (e: Community) =>
+    pinFromColumns(
+      "/reddit/",
+      e.subreddit,
+      `r/${e.subreddit}`,
+      e,
+      columns,
+      state.status === "ready"
+        ? { ...state.value.provenance, collectedAt: e.capturedAt, revision: e.source.revision }
+        : undefined,
+      "community",
+      {},
+      `https://www.reddit.com/r/${encodeURIComponent(e.subreddit)}/`,
+    );
   return (
     <div className="flex flex-col gap-4">
       <FilterBar>
+        <SaveView />
         <FilterSearch
           value={filters.q ?? ""}
           onChange={(q) => setFilters({ ...filters, q })}
@@ -68,6 +87,7 @@ export default function CommunitiesView() {
       )}
       <RecordLayout>
         <DataTable
+          pin={pin}
           label="Subreddits"
           data={rows}
           columns={columns}
@@ -101,6 +121,7 @@ export default function CommunitiesView() {
           )}
         />
         <RecordDetail
+          actions={selected && <PinButton item={pin(selected)} />}
           open={!!community}
           onOpenChange={(v) => !v && setCommunity(null)}
           title={community ? `r/${community}` : "subreddit"}

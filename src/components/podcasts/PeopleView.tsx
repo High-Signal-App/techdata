@@ -2,11 +2,15 @@ import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { FilterBar, FilterSearch } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
 import { Button } from "@saas-maker/ui/components/button";
-import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { Skeleton } from "@saas-maker/ui/components/skeleton";
 import * as React from "react";
 import { type Claim, type Person, PODCASTS_SITE } from "../../adapters/podcasts";
+import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { ClaimDetail, ClaimList, ExternalLink, LiveProvenance, useApi } from "./shared";
 
 const PAGE = 50;
@@ -57,16 +61,30 @@ export default function PeopleView() {
   const [state, retry] = useApi<{ people: Person[]; total: number }>(mounted ? `people?${params}` : null);
   const rows = state.status === "ready" ? state.value.data.people : [];
   const total = state.status === "ready" ? state.value.data.total : 0;
+  const pin = (p: Person) =>
+    pinFromColumns(
+      "/podcasts/people/",
+      p.slug,
+      p.name,
+      p,
+      columns,
+      state.status === "ready" ? state.value.provenance : undefined,
+      "person",
+      {},
+      `${PODCASTS_SITE}/people/${encodeURIComponent(p.slug)}`,
+    );
 
   return (
     <>
       <div className="mb-4">
         <FilterBar>
+          <SaveView />
           <FilterSearch value={draft} onChange={setDraft} placeholder="Name, title or organisation…" />
         </FilterBar>
       </div>
       <RecordLayout>
         <DataTable
+          pin={pin}
           className="flex-1"
           label="People"
           data={rows}
@@ -184,6 +202,19 @@ function PersonDetail({ slug }: { slug: string }) {
         )}
       </section>
       <LiveProvenance info={state.value.provenance} />
+      <PinButton
+        item={pinFromColumns(
+          "/podcasts/people/",
+          person.slug,
+          person.name,
+          person,
+          columns,
+          state.value.provenance,
+          "person",
+          {},
+          `${PODCASTS_SITE}/people/${encodeURIComponent(person.slug)}`,
+        )}
+      />
     </>
   );
 }

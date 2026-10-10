@@ -163,7 +163,21 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
   `/api/podcasts/{stats,episodes,episodes/:id,people,people/:slug,claims,claims/:id}`,
   `/api/reddit/catalog` and `/api/reddit/snapshots/:date/:subreddit?v=`.
 - UI: `ConsolePage`, `DataTable`, `FilterBar`/`useUrlFilters`, `SearchPalette`,
-  `RecordDetail`, `ExportMenu` from `@saas-maker/*` v0.1.11 (git dependency).
+  `RecordDetail`, `ExportMenu` from `@saas-maker/*` v0.1.14 (git dependency).
+
+## Saved views and compare tray
+
+Every explorer can save its collection URL, filters, sort and visible columns,
+or copy the same link for sharing. Saved views appear in a fixed-height sidebar
+list with rename/delete controls. Views and pins use schema-validated, versioned
+localStorage keys; unavailable storage falls back to session storage, then memory.
+
+Select table rows or pin a record in its details to add it to `/compare/` (up to
+24 pins). Nomad's existing shortlist uses “pin selected to tray”; the original
+`/nomad/compare/?places=…` view is unchanged. Claims offer a table alongside the
+existing quote view. The palette includes a pinned group. Compare retains the
+selected record's actual fields and source dates/revision/URL as a local snapshot;
+different collections stay in separate groups and unverified speakers stay unnamed.
 
 ## Run
 

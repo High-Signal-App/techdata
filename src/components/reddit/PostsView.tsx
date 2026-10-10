@@ -8,14 +8,18 @@ import {
   useUrlFilters,
 } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
-import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import { type FilterDef, facetCounts, filterRows, rangeBounds } from "@saas-maker/ui/lib/filters";
 import * as React from "react";
 import { ATTRIBUTION, type Catalog, type Comment, type Post, type Snapshot, snapshotHref } from "../../adapters/reddit";
 import type { Provenance } from "../../adapters/types";
+import { pinFromColumns } from "../../lib/compare";
 import { useUrlParam } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { CaptureProvenance, Freshness, ReadError, useApi, useSort } from "./shared";
 
 const defs: FilterDef<Post>[] = [
@@ -146,6 +150,18 @@ export default function PostsView() {
   const rows = filterRows(all, defs, filters, { search });
   const bounds = rangeBounds(all, (p) => p.score);
   const post = all.find((p) => p.id === postId);
+  const pin = (p: Post) =>
+    pinFromColumns(
+      "/reddit/posts/",
+      p.id,
+      p.title,
+      p,
+      columns,
+      state.status === "ready" ? state.value.provenance : undefined,
+      "post",
+      snapshot ? { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision.slice(0, 12) } : {},
+      `https://www.reddit.com${p.permalink}`,
+    );
   const meta =
     state.status === "ready"
       ? {
@@ -160,6 +176,7 @@ export default function PostsView() {
   return (
     <div className="flex flex-col gap-4">
       <FilterBar>
+        <SaveView />
         <Picker
           label="subreddit"
           value={community ?? ""}
@@ -213,6 +230,7 @@ export default function PostsView() {
       )}
       <RecordLayout>
         <DataTable
+          pin={pin}
           label="Captured threads"
           data={rows}
           columns={columns}
@@ -252,6 +270,7 @@ export default function PostsView() {
           )}
         />
         <RecordDetail
+          actions={post && <PinButton item={pin(post)} />}
           open={!!postId}
           onOpenChange={(v) => !v && setPostId(null)}
           title={post?.title ?? "thread"}
