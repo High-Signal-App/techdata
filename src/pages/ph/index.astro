@@ -1,9 +1,11 @@
 ---
+import summary from "../../../public/data/ph/summary.json";
 import { PH_META } from "../../adapters/ph/meta";
 import ProductsView from "../../components/ph/ProductsView";
 import Console from "../../layouts/Console.astro";
 ---
 
-<Console title="PH Catalog" heading="PH Catalog" description={`${PH_META.coverageLabel}. Public product metadata queried in your browser. Not a ranking: the catalogue has no votes/dates.`} nav="ph-products" breadcrumbs={[{ label: "PH Catalog" }]}>
-  <ProductsView client:load />
+<Console title="PH Catalog" heading="PH Catalog" description={`${PH_META.coverageLabel}. Product Hunt metadata: browse the first page immediately, then search and filter the full catalog in your browser. No votes or launch dates.`} nav="ph-products" breadcrumbs={[{ label: "PH Catalog" }]}>
+  <p class="mb-3 text-xs text-muted-foreground">Source: Product Hunt · <a class="underline" href={summary.provenance.releaseUrl}>{summary.provenance.revision}</a> · exported {summary.provenance.exportedAt} · per-record collection dates not recorded.</p>
+  <ProductsView summary={summary} client:load />
 </Console>

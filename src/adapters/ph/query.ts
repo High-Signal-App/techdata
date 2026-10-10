@@ -136,6 +136,8 @@ export const searchPh = async (query: string, limit = 5) => (await loadPhQuery()
 async function openBrowserQuery() {
   const duckdb = await import("@duckdb/duckdb-wasm");
   const assetUrl = (name: string) => new URL(`/api/files/duckdb/1.32.0/${name}`, location.origin).href;
+  // In 1.32.0 EH is smaller than MVP (34.2 vs 39.4 MB raw). selectBundle
+  // feature-detects without downloading either module; instantiate fetches one.
   const bundle = await duckdb.selectBundle({
     mvp: { mainModule: assetUrl("duckdb-mvp.wasm"), mainWorker: assetUrl("duckdb-browser-mvp.worker.js") },
     eh: { mainModule: assetUrl("duckdb-eh.wasm"), mainWorker: assetUrl("duckdb-browser-eh.worker.js") },
