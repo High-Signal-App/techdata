@@ -1,11 +1,13 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { ActiveFilters, FacetFilter, FilterBar, FilterSearch, useUrlFilters } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, Provenance, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
+import { Button } from "@saas-maker/ui/components/button";
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import type { FilterDef, FilterState } from "@saas-maker/ui/lib/filters";
 import * as React from "react";
 import { PH_META } from "../../adapters/ph/meta";
 import { loadPhQuery, type PhSort, type Product } from "../../adapters/ph/query";
+import { afterPhPaint, latestPhRead, type PhSummary, summaryPage } from "../../adapters/ph/summary";
 import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
@@ -56,10 +58,10 @@ type Result = {
   categories: { value: string; count: number }[];
   websites: { value: string; count: number }[];
   detail: Product | null;
-  exported: Awaited<ReturnType<Awaited<ReturnType<typeof loadPhQuery>>["export"]>>;
+  provenance: PhSummary["provenance"] | Awaited<ReturnType<typeof loadPhQuery>>["provenance"];
 };
 
-export default function ProductsView() {
+export default function ProductsView({ summary }: { summary: PhSummary }) {
   const [filters, setFilters] = useUrlFilters(defs);
   const [pageParam, setPage] = useUrlParam("page");
   const [sortParam, setSort] = useUrlParam("sort");
@@ -70,40 +72,68 @@ export default function ProductsView() {
   const sort: PhSort = { id, desc: direction === "desc" };
   const [state, setState] = React.useState<"loading" | "error" | "ready">("loading");
   const [error, setError] = React.useState("");
-  const [result, setResult] = React.useState<Result | null>(null);
+  const [result, setResult] = React.useState<Result>({
+    rows: summary.rows.slice(0, 50),
+    total: summary.total,
+    categories: summary.categories,
+    websites: summary.websites,
+    detail: null,
+    provenance: summary.provenance,
+  });
+  const [query, setQuery] = React.useState<Awaited<ReturnType<typeof loadPhQuery>> | null>(null);
   const [nonce, setNonce] = React.useState(0);
   const key = JSON.stringify({ q: filters.q, categories: filters.facets.category, website: filters.facets.website });
   React.useEffect(() => {
+    void nonce; // Retry a failed engine load without changing the URL.
     let current = true;
-    void nonce;
-    setState("loading");
-    const filter = JSON.parse(key);
-    loadPhQuery()
-      .then(async (query) => {
-        const sorting = { id, desc: direction === "desc" };
-        const [rows, total, categories, websites, detail, exported] = await Promise.all([
-          query.rows(filter, sorting, page),
-          query.count(filter),
-          query.facets(filter, "category"),
-          query.facets(filter, "website"),
-          slug ? query.record(slug) : Promise.resolve(null),
-          query.export(filter, sorting),
-        ]);
-        if (current) {
-          setResult({ rows, total, categories, websites, detail, exported });
-          setState("ready");
-        }
-      })
-      .catch((e: unknown) => {
-        if (current) {
-          setError(e instanceof Error ? e.message : "Engine or Parquet file failed.");
-          setState("error");
-        }
-      });
+    const cancel = afterPhPaint(() => {
+      loadPhQuery()
+        .then((engine) => {
+          if (current) setQuery(engine);
+        })
+        .catch((e: unknown) => {
+          if (current) {
+            setError(e instanceof Error ? e.message : "Engine or Parquet file failed.");
+            setState("error");
+          }
+        });
+    });
     return () => {
       current = false;
+      cancel();
     };
-  }, [key, page, id, direction, slug, nonce]);
+  }, [nonce]);
+  React.useEffect(() => {
+    if (!query) return;
+    setState("loading");
+    const filter = JSON.parse(key);
+    const sorting = { id, desc: direction === "desc" };
+    return latestPhRead(
+      async () => {
+        const unfiltered = !filter.q?.trim() && !filter.categories?.length && !filter.website?.length;
+        const [rows, total, categories, websites, detail] = await Promise.all([
+          query.rows(filter, sorting, page),
+          unfiltered ? Promise.resolve(summary.total) : query.count(filter),
+          unfiltered ? Promise.resolve(summary.categories) : query.facets(filter, "category"),
+          unfiltered ? Promise.resolve(summary.websites) : query.facets(filter, "website"),
+          slug ? query.record(slug) : Promise.resolve(null),
+        ]);
+        return { rows, total, categories, websites, detail, provenance: query.provenance };
+      },
+      (next) => {
+        setResult(next);
+        setState("ready");
+        performance.mark("ph-query-ready");
+      },
+      (e) => {
+        setError(e instanceof Error ? e.message : "Engine or Parquet file failed.");
+        setState("error");
+      },
+    );
+  }, [query, key, page, id, direction, slug, summary]);
+  const preview = summaryPage(summary, JSON.parse(key), sort, page);
+  const showingSummary = !query || state !== "ready";
+  const visibleRows = showingSummary ? (preview ?? summary.rows.slice(0, 50)) : result.rows;
   const update = (next: FilterState) => {
     setFilters(next);
     setPage(null);
@@ -111,7 +141,7 @@ export default function ProductsView() {
   const facet = (name: string, values: string[]) =>
     update({ ...filters, facets: { ...filters.facets, [name]: values } });
   const detail = state === "ready" ? result?.detail : null;
-  const provenance = result?.exported.provenance;
+  const provenance = showingSummary ? summary.provenance : result.provenance;
   const pin = (p: Product) =>
     pinFromColumns("/ph/", p.slug, p.name, p, columns, provenance, "product", {}, p.producthunt_url ?? undefined);
   return (
@@ -125,27 +155,54 @@ export default function ProductsView() {
         />
         <FacetFilter
           label="category"
-          options={result?.categories ?? []}
+          options={showingSummary ? summary.categories : result.categories}
           selected={filters.facets.category ?? []}
           onChange={(v) => facet("category", v)}
         />
         <FacetFilter
           label="has website"
-          options={result?.websites ?? []}
+          options={showingSummary ? summary.websites : result.websites}
           selected={filters.facets.website ?? []}
           onChange={(v) => facet("website", v)}
         />
       </FilterBar>
       <ActiveFilters defs={defs} state={filters} onChange={update} className="my-3" />
+      <p className="my-3 text-sm text-muted-foreground" role="status">
+        {state === "error" ? (
+          <>
+            Full catalog could not load: {error}{" "}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setQuery(null);
+                setState("loading");
+                setNonce((n) => n + 1);
+              }}
+            >
+              retry
+            </Button>
+          </>
+        ) : showingSummary ? (
+          <>
+            Loading full catalog…{" "}
+            {preview
+              ? "You can browse the first 100 products by name."
+              : "Your view is queued; showing the first 50 products by name until ready."}
+          </>
+        ) : (
+          "Full catalog ready."
+        )}
+      </p>
       <RecordLayout>
         <DataTable
           pin={pin}
           className="flex-1"
           label="PH products"
-          data={state === "ready" ? (result?.rows ?? []) : []}
+          data={visibleRows}
           columns={columns}
           getRowId={(p) => p.slug}
-          status={state}
+          status="ready"
           error={`PH Catalog could not load: ${error}`}
           onRetry={() => setNonce((n) => n + 1)}
           selectedId={slug}
@@ -156,30 +213,21 @@ export default function ProductsView() {
             setSort(s[0] ? `${s[0].id}:${s[0].desc ? "desc" : "asc"}` : null);
             setPage(null);
           }}
-          manual={{ rowCount: result?.total ?? 0, page, onPageChange: (p) => setPage(p ? String(p + 1) : null) }}
+          manual={{
+            rowCount: showingSummary ? summary.total : result.total,
+            page: showingSummary && !preview ? 0 : page,
+            onPageChange: (p) => setPage(p ? String(p + 1) : null),
+          }}
           empty="No products match these filters."
           toolbar={() => (
             <>
               <p className="text-sm text-muted-foreground" aria-live="polite">
-                {state === "ready"
-                  ? `${result?.total.toLocaleString("en-US")} matching products`
-                  : state === "error"
-                    ? "PH Catalog engine or file failed to load."
-                    : "Loading DuckDB engine and PH Parquet catalogue…"}
+                {showingSummary
+                  ? `${summary.total.toLocaleString("en-US")} products · default view`
+                  : `${result.total.toLocaleString("en-US")} matching products`}
               </p>
-              {state === "ready" && result && (
-                <ExportMenu
-                  rows={result.exported.rows}
-                  columns={[
-                    ...exportColumns,
-                    { id: "source", value: () => result.exported.source },
-                    { id: "collectedAt", value: () => result.exported.collectedAt },
-                    { id: "fetchedAt", value: () => provenance?.fetchedAt },
-                    { id: "revision", value: () => PH_META.revision },
-                  ]}
-                  filename={`ph-products-${today()}`}
-                  meta={{ ...result.exported, rows: undefined }}
-                />
+              {state === "ready" && query && (
+                <PhExport key={`${key}:${id}:${direction}`} query={query} filters={JSON.parse(key)} sort={sort} />
               )}
             </>
           )}
@@ -234,6 +282,71 @@ export default function ProductsView() {
           )}
         </RecordDetail>
       </RecordLayout>
+    </>
+  );
+}
+
+/** Export is expensive: read all filtered rows only on explicit request. */
+function PhExport({
+  query,
+  filters,
+  sort,
+}: {
+  query: Awaited<ReturnType<typeof loadPhQuery>>;
+  filters: Parameters<typeof query.export>[0];
+  sort: PhSort;
+}) {
+  const [exported, setExported] = React.useState<Awaited<ReturnType<typeof query.export>> | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const active = React.useRef(true);
+  React.useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  if (exported)
+    return (
+      <ExportMenu
+        rows={exported.rows}
+        columns={[
+          ...exportColumns,
+          { id: "source", value: () => exported.source },
+          { id: "collectedAt", value: () => exported.collectedAt },
+          { id: "fetchedAt", value: () => exported.provenance.fetchedAt },
+          { id: "revision", value: () => PH_META.revision },
+        ]}
+        filename={`ph-products-${today()}`}
+        meta={{ ...exported, rows: undefined }}
+      />
+    );
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError("");
+          try {
+            const value = await query.export(filters, sort);
+            if (active.current) setExported(value);
+          } catch (e) {
+            if (active.current) setError(e instanceof Error ? e.message : "Export failed.");
+          } finally {
+            if (active.current) setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Preparing export…" : "prepare export"}
+      </Button>
+      {error && (
+        <span role="status" className="text-sm">
+          {error}
+        </span>
+      )}
     </>
   );
 }

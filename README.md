@@ -91,7 +91,11 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 
 ## PH Catalog coverage (read-only)
 
-- `/ph/`: 575,479 products (93,897 with categories). Browser-only DuckDB-WASM queries
+- `/ph/`: 575,479 products (93,897 with categories). The prerendered HTML contains
+  the first page by name from the real export, with full-export facet counts.
+  DuckDB-WASM starts after paint; the first two pages remain browsable during
+  loading. Other URL filters/sorts/pages and product details wait for the engine.
+  Browser-only DuckDB-WASM queries
   names/taglines/descriptions with case/accent-insensitive search, category and
   website facets with counts, sorting, URL state, paging and slug-selected detail.
 - CSV/JSON exports include all filtered rows and provenance; JSON carries source,
@@ -101,12 +105,34 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
 - `GET /api/ph/summary` and `/api/collections` expose static full-export provenance;
   product queries stay in the browser.
 - Pinned DuckDB-WASM 1.32.0 modules and workers load lazily from
-  `/api/files/duckdb/1.32.0/` on the same origin.
+  `/api/files/duckdb/1.32.0/` on the same origin. Capability selection downloads
+  only one bundle: the smaller EH on supported browsers, otherwise MVP.
+- Full filtered exports are prepared on request, then downloaded through the
+  export menu; they do not block the first interactive page.
 - Only the DuckDB-WASM path is implemented; the DuckDB-WASM vs D1 benchmark is open.
   The shared ⌘K index lazily merges client `searchPh()` hits with server results.
 - No per-row server API, writes, votes or launch dates. Attribution: Product Hunt
   (public product pages), catalogue by ph-catalog. Per-record collection dates are
   absent; the release publication date is not used as a collection date.
+
+Regenerate the small summary using the pinned WASM dependency (no additional
+production dependency). The script checks the full SHA-256 and both totals,
+uses the same default SQL sort as the browser, and enforces a 150 KiB gzip cap.
+DuckDB may download its matching Parquet extension on the first script run.
+Keep the downloaded Parquet outside the repository:
+
+```sh
+gh release download catalog-state --repo Significant-Hobbies/ph-catalog --pattern producthunt-full.parquet --dir /tmp/techdata-ph-export
+node scripts/ph-summary.mjs /tmp/techdata-ph-export/producthunt-full.parquet
+```
+
+`public/data/ph/summary.json` contains 100 display rows (descriptions are deferred
+to the full engine), category/website counts, totals and release/source provenance.
+Astro passes it to the server-rendered React island, so useful rows are in the
+HTML before hydration. `ph-query-ready` is a browser performance mark emitted
+after the requested full-engine page/detail and its counts/facets resolve; export
+preparation is deliberately separate. Saved views, column visibility and filter
+URLs use the existing state hooks.
 
 ## Research Papers coverage (read-only)
 
