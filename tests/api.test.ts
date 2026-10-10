@@ -48,6 +48,130 @@ const get = async (path: string) => {
   return { status: res.status, body: (await res.json()) as Record<string, unknown> };
 };
 
+describe("private data files", () => {
+  const content = "0123456789";
+  const object: R2Object = {
+    key: "ph/producthunt-full.parquet",
+    version: "fixture",
+    size: content.length,
+    etag: "file-etag",
+    httpEtag: '"file-etag"',
+    uploaded: new Date("2026-10-10"),
+    checksums: { toJSON: () => ({}) },
+    storageClass: "Standard",
+    httpMetadata: { contentType: "application/wasm" },
+    writeHttpMetadata: (headers) => headers.set("content-type", "application/wasm"),
+  };
+  const head = vi.fn(async (key: string) => (key.endsWith("missing") ? null : object));
+  const read = vi.fn(async (_key: string, options?: R2GetOptions) => {
+    const range = options?.range as { offset: number; length: number } | undefined;
+    const response = new Response(range ? content.slice(range.offset, range.offset + range.length) : content);
+    if (!response.body) throw new Error("Fixture body is missing");
+    return {
+      ...object,
+      writeHttpMetadata: (headers: Headers) => object.writeHttpMetadata(headers),
+      body: response.body,
+      get bodyUsed() {
+        return response.bodyUsed;
+      },
+      arrayBuffer: () => response.arrayBuffer(),
+      bytes: async () => new Uint8Array(await response.arrayBuffer()),
+      text: () => response.text(),
+      json: <T>() => response.json() as Promise<T>,
+      blob: () => response.blob(),
+    } satisfies R2ObjectBody;
+  });
+  const unused = () => {
+    throw new Error("Unexpected R2 write or list");
+  };
+  const DATA: R2Bucket = {
+    head,
+    get: read,
+    put: unused,
+    createMultipartUpload: unused,
+    resumeMultipartUpload: unused,
+    delete: unused,
+    list: unused,
+  };
+  const request = (path: string, init?: RequestInit) => app.request(`/api/files/${path}`, init, { DATA });
+
+  it("streams full objects with metadata and private caching", async () => {
+    const response = await request("ph/producthunt-full.parquet");
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(content);
+    expect(response.headers.get("content-length")).toBe("10");
+    expect(response.headers.get("content-type")).toBe("application/vnd.apache.parquet");
+    expect(response.headers.get("etag")).toBe('"file-etag"');
+    expect(response.headers.get("accept-ranges")).toBe("bytes");
+    expect(response.headers.get("cache-control")).toBe("private, max-age=3600");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect((await request("duckdb/1.32.0/duckdb-eh.wasm")).headers.get("cache-control")).toBe(
+      "private, max-age=31536000, immutable",
+    );
+    expect((await request("duckdb/unversioned.wasm")).headers.get("cache-control")).toBe("private, max-age=3600");
+  });
+
+  it.each([
+    ["bytes=2-5", "2345", "bytes 2-5/10", 2, 4],
+    ["bytes=7-", "789", "bytes 7-9/10", 7, 3],
+    ["bytes=-3", "789", "bytes 7-9/10", 7, 3],
+    ["bytes=8-99", "89", "bytes 8-9/10", 8, 2],
+    ["bytes=-99", content, "bytes 0-9/10", 0, 10],
+  ])("serves %s with a bounded R2 read", async (range, expected, contentRange, offset, length) => {
+    const response = await request("ph/producthunt-full.parquet", { headers: { Range: String(range) } });
+    expect(response.status).toBe(206);
+    expect(response.headers.get("content-range")).toBe(contentRange);
+    expect(response.headers.get("content-length")).toBe(String(length));
+    expect(await response.text()).toBe(expected);
+    expect(read).toHaveBeenLastCalledWith("ph/producthunt-full.parquet", { range: { offset, length } });
+  });
+
+  it("serves HEAD metadata without reading a body, ignoring Range", async () => {
+    read.mockClear();
+    const response = await request("ph/producthunt-full.parquet", { method: "HEAD", headers: { Range: "bytes=2-5" } });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-length")).toBe("10");
+    expect(response.headers.get("content-range")).toBeNull();
+    expect(await response.text()).toBe("");
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "bytes=10-",
+    "bytes=5-2",
+    "bytes=-0",
+    "bytes=-",
+    "bytes=1-2,4-5",
+    "items=0-1",
+    "bytes=wat",
+    "bytes=9007199254740992-",
+  ])("rejects bad range %s without reading a body", async (range) => {
+    read.mockClear();
+    const response = await request("ph/producthunt-full.parquet", { headers: { Range: range } });
+    expect(response.status).toBe(416);
+    expect(response.headers.get("content-range")).toBe("bytes */10");
+    expect(await response.text()).toBe("");
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it.each(["other/private", "ph/forbidden..parquet", "ph/%2e%2e%2fprivate", "ph/%ZZ"])(
+    "rejects disallowed key %s without accessing R2",
+    async (key) => {
+      head.mockClear();
+      expect((await request(key)).status).toBe(404);
+      expect(head).not.toHaveBeenCalled();
+    },
+  );
+
+  it("returns 404 for missing objects and 503 without a binding", async () => {
+    expect((await request("ph/missing")).status).toBe(404);
+    const response = await app.request("/api/files/ph/producthunt-full.parquet");
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "data_unavailable" });
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+});
+
 describe("api", () => {
   it("lists all collections with provenance", async () => {
     const { body } = await get("/api/collections");
@@ -55,10 +179,10 @@ describe("api", () => {
     expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit", "ph", "papers"]);
     expect(list[0]?.counts.places).toBe(1374);
     expect(list[1]?.counts.claims).toBe(10);
-    expect(list[3]?.counts["sample products"]).toBe(2000);
+    expect(list[3]?.counts.products).toBe(575479);
     expect((await get("/api/ph/summary")).body.provenance).toMatchObject({
       source: "Product Hunt",
-      revision: "catalog-handoff-v1",
+      revision: "catalog-state-2026-10-10",
       collectedAt: null,
     });
   });

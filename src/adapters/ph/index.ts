@@ -7,8 +7,8 @@ export const phAdapter = {
     return {
       id: "ph",
       label: PH_META.label,
-      description: `Public product metadata · ${PH_META.sampleLabel}. Not a ranking: the catalogue has no votes/dates.`,
-      counts: { "sample products": PH_META.sampleCount },
+      description: `Public product metadata · ${PH_META.coverageLabel}. Not a ranking: the catalogue has no votes/dates.`,
+      counts: { products: PH_META.fullCount, "with categories": PH_META.fullWithCategories },
       provenance: phProvenance(),
       mode: "read-only",
     };

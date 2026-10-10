@@ -157,7 +157,7 @@ export default function ProductsView() {
                   ? `${result?.total.toLocaleString("en-US")} matching products`
                   : state === "error"
                     ? "PH Catalog engine or file failed to load."
-                    : "Loading DuckDB engine and PH Parquet sample…"}
+                    : "Loading DuckDB engine and PH Parquet catalogue…"}
               </p>
               {state === "ready" && result && (
                 <ExportMenu
@@ -204,7 +204,7 @@ export default function ProductsView() {
                 ]}
               />
               <p className="text-sm text-muted-foreground">
-                {PH_META.sampleLabel}. Not a ranking: the catalogue has no votes/dates.
+                {PH_META.coverageLabel}. Not a ranking: the catalogue has no votes/dates.
               </p>
               {provenance && (
                 <Provenance
@@ -221,7 +221,7 @@ export default function ProductsView() {
               )}
             </>
           ) : (
-            <p className="text-sm">This slug is not in the loaded sample.</p>
+            <p className="text-sm">This slug is not in the loaded catalogue.</p>
           )}
         </RecordDetail>
       </RecordLayout>

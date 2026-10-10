@@ -63,7 +63,7 @@ describe("global search sources", () => {
     expect(groups[0][0]).toMatchObject({ title: "Lisbon", subtitle: "places" });
     expect(groups[4][0].title).toBe("Loading PH Catalog…");
     await vi.waitFor(() => expect(mocks.searchPh).toHaveBeenCalledTimes(1));
-    // PH contract hit; query mechanics and real sample provenance are covered by ph.test.ts.
+    // PH contract hit; query mechanics and full-export provenance are covered by ph.test.ts.
     release([
       { collection: "ph", kind: "products", id: "fixture-slug", title: "Lisbon", href: "/ph/?product=fixture-slug" },
     ]);

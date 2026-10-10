@@ -13,7 +13,12 @@ import type { CollectionAdapter, CollectionSummary, Provenance, SearchHit } from
 import { searchPlaces } from "../lib/nomad-search";
 import { COLLECTION_CAP, GLOBAL_CAP, mergeResults, SEARCH_TIMEOUT_MS } from "../search";
 
-export type Env = { PODCASTS_API_BASE?: string; REDDIT_INSIGHTS_API_BASE?: string; RESEARCH_PAPERS_BASE?: string };
+export type Env = {
+  PODCASTS_API_BASE?: string;
+  REDDIT_INSIGHTS_API_BASE?: string;
+  RESEARCH_PAPERS_BASE?: string;
+  DATA?: R2Bucket;
+};
 
 export type AppDeps = {
   /** Loads the Nomad Atlas snapshot (bundled JSON in the Worker; injectable in tests). */
@@ -29,6 +34,13 @@ const clamp = (raw: string | undefined, def: number, min: number, max: number) =
   const n = Number(raw ?? def);
   return Number.isFinite(n) ? Math.min(Math.max(Math.trunc(n), min), max) : def;
 };
+
+const FILE_TYPES: Record<string, string> = {
+  wasm: "application/wasm",
+  js: "text/javascript",
+  parquet: "application/vnd.apache.parquet",
+};
+const fileContentType = (key: string) => FILE_TYPES[key.slice(key.lastIndexOf(".") + 1)];
 
 export function createApp(deps: AppDeps) {
   const app = new Hono<{ Bindings: Env }>().basePath("/api");
@@ -82,6 +94,65 @@ export function createApp(deps: AppDeps) {
     }
     console.error(err);
     return c.json({ error: "internal" }, 500);
+  });
+
+  app.on(["GET", "HEAD"], "/files/*", async (c) => {
+    let key: string;
+    try {
+      key = decodeURIComponent(c.req.path.slice("/api/files/".length));
+    } catch {
+      return c.json({ error: "not_found" }, 404);
+    }
+    if ((!key.startsWith("ph/") && !key.startsWith("duckdb/")) || key.includes("..")) {
+      return c.json({ error: "not_found" }, 404);
+    }
+    const bucket = c.env?.DATA;
+    if (!bucket) {
+      c.header("cache-control", "no-store");
+      return c.json({ error: "data_unavailable" }, 503);
+    }
+    const object = await bucket.head(key);
+    if (!object) return c.json({ error: "not_found" }, 404);
+    const headers = new Headers({
+      "Content-Type": fileContentType(key) ?? object.httpMetadata?.contentType ?? "application/octet-stream",
+      "Content-Length": String(object.size),
+      ETag: object.httpEtag,
+      "Accept-Ranges": "bytes",
+      "Cache-Control": /^duckdb\/\d+\.\d+\.\d+\//.test(key)
+        ? "private, max-age=31536000, immutable"
+        : "private, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
+    });
+    // Range applies to GET only; HEAD returns the full object's metadata.
+    if (c.req.method === "HEAD") return new Response(null, { headers });
+    const range = c.req.header("range");
+    let offset = 0;
+    let length = object.size;
+    if (range !== undefined) {
+      const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+      const start = match?.[1] ? Number(match[1]) : undefined;
+      const end = match?.[2] ? Number(match[2]) : undefined;
+      if (
+        !match ||
+        (start === undefined && end === undefined) ||
+        (start !== undefined && (!Number.isSafeInteger(start) || start >= object.size)) ||
+        (end !== undefined && !Number.isSafeInteger(end)) ||
+        (start !== undefined && end !== undefined && end < start) ||
+        (start === undefined && end === 0) ||
+        object.size === 0
+      ) {
+        headers.set("Content-Range", `bytes */${object.size}`);
+        headers.set("Content-Length", "0");
+        return new Response(null, { status: 416, headers });
+      }
+      offset = start ?? Math.max(0, object.size - (end ?? 0));
+      length = (start === undefined ? object.size - 1 : Math.min(end ?? object.size - 1, object.size - 1)) - offset + 1;
+      headers.set("Content-Range", `bytes ${offset}-${offset + length - 1}/${object.size}`);
+      headers.set("Content-Length", String(length));
+    }
+    const body = await bucket.get(key, range === undefined ? undefined : { range: { offset, length } });
+    if (!body) return c.json({ error: "not_found" }, 404);
+    return new Response(body.body, { status: range === undefined ? 200 : 206, headers });
   });
 
   app.get("/health", (c) => c.json({ ok: true }));

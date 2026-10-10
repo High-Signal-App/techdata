@@ -4,6 +4,6 @@ import ProductsView from "../../components/ph/ProductsView";
 import Console from "../../layouts/Console.astro";
 ---
 
-<Console title="PH Catalog" heading="PH Catalog" description={`${PH_META.sampleLabel}. Public product metadata queried in your browser. Not a ranking: the catalogue has no votes/dates.`} nav="ph-products" breadcrumbs={[{ label: "PH Catalog" }]}>
+<Console title="PH Catalog" heading="PH Catalog" description={`${PH_META.coverageLabel}. Public product metadata queried in your browser. Not a ranking: the catalogue has no votes/dates.`} nav="ph-products" breadcrumbs={[{ label: "PH Catalog" }]}>
   <ProductsView client:load />
 </Console>

@@ -1,5 +1,5 @@
 {
-  // Intended Worker for techdata. Not deployed: deploy is owner-approved and
+  // techdata Worker with private R2 data. Deploy is owner-approved and
   // manual (.github/workflows/deploy.yml, workflow_dispatch only).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "techdata",
@@ -7,6 +7,7 @@
   "compatibility_date": "2026-09-30",
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "binding": "ASSETS" },
+  "r2_buckets": [{ "binding": "DATA", "bucket_name": "techdata-data" }],
   "observability": { "enabled": true },
   "vars": {
     "PODCASTS_API_BASE": "https://api.podcasts.highsignal.app/api"
