@@ -2,6 +2,7 @@ import type { ConsolePageProps } from "@saas-maker/templates/console-page";
 import { NOMAD_SNAPSHOT } from "../adapters/nomad/meta";
 
 export type NavKey =
+  | "compare"
   | "reddit-communities"
   | "reddit-posts"
   | "ph-products"
@@ -26,7 +27,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
     active: key === active,
   });
   return [
-    { items: [item("overview", "overview", "/")] },
+    { items: [item("overview", "overview", "/"), item("compare", "compare tray", "/compare/")] },
     {
       title: "nomad atlas",
       items: [
@@ -47,7 +48,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
       title: "reddit insights",
       items: [item("reddit-communities", "subreddits", "/reddit/"), item("reddit-posts", "threads", "/reddit/posts/")],
     },
-    { title: "PH Catalog", items: [item("ph-products", "products (sample)", "/ph/")] },
+    { title: "ph catalog", items: [item("ph-products", "products", "/ph/")] },
     {
       title: "research papers",
       items: [

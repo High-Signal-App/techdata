@@ -1,6 +1,8 @@
 ---
 import { ConsolePage } from "@saas-maker/templates/console-page";
 import GlobalSearch from "../components/GlobalSearch";
+import CompareTray from "../components/views/CompareTray";
+import SavedViews from "../components/views/SavedViews";
 import { consoleNav, type NavKey } from "../lib/nav";
 import "../styles/app.css";
 
@@ -46,10 +48,14 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
       title={heading}
       description={description}
       search={{ label: "Search collections…" }}
-      sidebarFooter="Public workbench. Read-only, with sources and collection dates."
     >
+      <div slot="sidebarFooter">
+        <SavedViews client:load />
+        <p class="mt-3">public workbench · read-only, with sources and collection dates.</p>
+      </div>
       <slot name="actions" slot="actions" />
       <slot />
+      <CompareTray client:load />
       <footer class="mt-10 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span>sources</span>
         <a class="underline underline-offset-4" href="https://nomad.significanthobbies.com/">Nomad Atlas</a>

@@ -4,6 +4,7 @@ export const prerender = false;
 
 const paths = [
   "/",
+  "/compare/",
   "/nomad/",
   "/nomad/compare/",
   "/nomad/notes/",

@@ -15,7 +15,9 @@ import {
   transcriptLabel,
 } from "../../adapters/podcasts";
 import type { Provenance as ProvenanceInfo } from "../../adapters/types";
+import { pinClaim } from "../../lib/podcast-pins";
 import { formatDate } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
 
 export type Loadable<T> = { status: "loading" } | { status: "error" } | { status: "ready"; value: Envelope<T> };
 
@@ -218,6 +220,7 @@ export function ClaimDetail({ id }: { id: string }) {
         <ExternalLink href={`${PODCASTS_SITE}/claims/${encodeURIComponent(claim.id)}`}>public claim page</ExternalLink>
       </div>
       <LiveProvenance info={state.value.provenance} page={claim.sourceUrl ?? undefined} />
+      <PinButton item={pinClaim(claim, state.value.provenance)} />
     </>
   );
 }

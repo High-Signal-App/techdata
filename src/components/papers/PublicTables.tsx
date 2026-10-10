@@ -1,11 +1,16 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { ActiveFilters, FacetFilter, FilterBar, FilterSearch, useUrlFilters } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
-import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { type FilterDef, facetCounts, filterRows } from "@saas-maker/ui/lib/filters";
 import type { ReactNode } from "react";
 import { type Author, type CitedWork, formatYear, type ReadingPath } from "../../adapters/papers";
+import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
+import type { ViewPath } from "../../lib/views";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { MissingExports, PublicProvenance, provenanceColumns, showValue, usePapersApi } from "./shared";
 
 const pathColumns: DataColumn<ReadingPath>[] = [
@@ -218,6 +223,9 @@ function PublicTable<T extends object>({
   });
   const page = Math.min(Math.max(0, Math.ceil(rows.length / 50) - 1), Math.max(0, Number(pageParam ?? 1) - 1) || 0);
   const selected = all.find((r) => rowId(r) === id);
+  const group = `/papers/${endpoint === "cited-works" ? "cited" : endpoint}/` as ViewPath;
+  const pin = (r: T) =>
+    pinFromColumns(group, rowId(r), String(columns[0].value(r)), r, columns, state.value?.provenance, "record");
   const exportColumns = [...new Set(all.flatMap((r) => Object.keys(r)))].map((k) => ({
     id: k,
     value: (r: T) => r[k as keyof T],
@@ -230,6 +238,7 @@ function PublicTable<T extends object>({
     <>
       <div className="mb-4 flex flex-col gap-3">
         <FilterBar>
+          <SaveView />
           <FilterSearch
             value={filters.q ?? ""}
             onChange={(q) => changeFilters((s) => ({ ...s, q: q || undefined }))}
@@ -253,6 +262,7 @@ function PublicTable<T extends object>({
       <MissingExports missing={state.value?.missing ?? []} />
       <RecordLayout>
         <DataTable
+          pin={pin}
           className="flex-1"
           label={label}
           data={rows.slice(page * 50, (page + 1) * 50)}
@@ -294,6 +304,7 @@ function PublicTable<T extends object>({
           )}
         />
         <RecordDetail
+          actions={selected && <PinButton item={pin(selected)} />}
           open={!!id}
           onOpenChange={(v) => !v && setId(null)}
           title={selected ? String(columns[0].value(selected)) : label}

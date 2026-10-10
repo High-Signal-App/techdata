@@ -8,7 +8,7 @@ import {
   useUrlFilters,
 } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
-import { type DataColumn, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import { facetCounts, filterRows, rangeBounds } from "@saas-maker/ui/lib/filters";
 import {
@@ -22,7 +22,11 @@ import {
   type ReadingPath,
   sortPapers,
 } from "../../adapters/papers";
+import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { LoadingDetail, MissingExports, PublicProvenance, provenanceColumns, showValue, usePapersApi } from "./shared";
 
 export const paperColumns: DataColumn<Paper>[] = paperSortFields.map((id) => ({
@@ -144,10 +148,12 @@ export default function PapersView() {
     setPage(null);
   };
   const current = all.find((p) => p.id === paperId);
+  const pin = (p: Paper) => paperPin(p, state.value?.provenance);
   return (
     <>
       <div className="mb-4 flex flex-col gap-3">
         <FilterBar>
+          <SaveView />
           <FilterSearch
             value={filters.q ?? ""}
             onChange={(q) => changeFilters((s) => ({ ...s, q: q || undefined }))}
@@ -187,6 +193,7 @@ export default function PapersView() {
       <MissingExports missing={state.value?.missing ?? []} />
       <RecordLayout>
         <DataTable
+          pin={pin}
           className="flex-1"
           label="Research papers"
           data={rows.slice(page * 50, (page + 1) * 50)}
@@ -297,6 +304,16 @@ function PaperDetail({ id }: { id: string }) {
       )}
       <MissingExports missing={state.value.missing} />
       <PublicProvenance info={state.value.provenance} />
+      <PinButton item={paperPin(p, state.value.provenance)} />
     </>
   );
+}
+
+function paperPin(p: Paper, provenance: import("../../adapters/types").Provenance | undefined) {
+  const url = p.id.startsWith("arxiv:")
+    ? `https://arxiv.org/abs/${encodeURIComponent(p.id.slice(6))}`
+    : p.id.startsWith("openreview:")
+      ? `https://openreview.net/forum?id=${encodeURIComponent(p.id.slice(11))}`
+      : undefined;
+  return pinFromColumns("/papers/", p.id, p.title, p, paperColumns, provenance, "paper", {}, url);
 }

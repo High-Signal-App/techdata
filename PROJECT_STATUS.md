@@ -27,7 +27,7 @@ provenance on every record.
 
 ### Internal
 
-- `sass-maker/ui-library` v0.1.11 (git dependency).
+- `sass-maker/ui-library` v0.1.14 (git dependency in this checkout).
 - `Significant-Hobbies/nomad-data-adventure`, `Significant-Hobbies/on-record` (read-only sources).
 
 ## Timeline
@@ -42,7 +42,18 @@ provenance on every record.
 
 ## Features (shipped)
 
-- Public indexing: all 14 views keep distinct titles/descriptions, Open Graph metadata and visible source links. `PUBLIC_SITE_URL` supplies build-time self-canonicals; runtime robots/sitemap use the request origin and exclude API paths. File reads allow only the five approved objects, with public caching and conditional ETags. No robots headers on API responses. The v0.1.14 UI-library upgrade remains blocked by sandbox writes to Fleet state/shared pnpm store; v0.1.11 manifest and lockfile are retained. Rendered review at 1440/390 remains unverified because the local runtime cannot bind sockets.
+- Saved views across all 11 explorers: exact filter/sort/column URLs, copy link,
+  rename/delete in a sidebar list with reserved height; versioned, validated local
+  storage with session/memory fallback. Cross-collection tray and `/compare/`
+  group real record facts with their original provenance; table selection, detail
+  pin controls and pinned palette group. Old Nomad compare URLs remain intact.
+  Typecheck, Biome and all 131 Vitest tests pass, including storage validation,
+  URL preservation, deduplication, grouping and unverified speaker protection.
+  Node-prerender review build succeeds for all 15 pages; production build remains
+  blocked by sandbox socket restrictions (`listen EPERM` on port 9229). Rendered
+  1440/390 review remains unverified: browser tools require unavailable approval.
+
+- Public indexing: all 15 views keep distinct titles/descriptions, Open Graph metadata and visible source links. `PUBLIC_SITE_URL` supplies build-time self-canonicals; runtime robots/sitemap use the request origin and exclude API paths. File reads allow only the five approved objects, with public caching and conditional ETags. No robots headers on API responses. Rendered review at 1440/390 remains unverified because the local runtime cannot bind sockets.
 
 - PH Catalog: full export of 575,479 products (93,897 with categories), revision `catalog-state-2026-10-10`. Browser DuckDB-WASM uses Worker-served HTTP range reads from private R2; pinned 1.32.0 binaries use the same route. Category/website facets, URL state, sorting, paging, product detail and filtered CSV/JSON exports retain provenance. Static collection summary; client search lazily merges into the shared global palette. Current typecheck, Biome and all 123 Vitest tests pass; the full check reaches build, which is blocked by sandbox socket restrictions (`listen EPERM` on port 9229). Live Worker-served R2 and browser loading remain unverified in this task.
 

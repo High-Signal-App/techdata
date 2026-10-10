@@ -1,0 +1,7 @@
+---
+import CompareView from "../components/views/CompareView";
+import Console from "../layouts/Console.astro";
+---
+<Console title="compare" heading="compare" description="Pinned records with collection-specific facts and provenance, saved on this device." nav="compare" breadcrumbs={[{ label: "compare" }]}>
+  <CompareView client:load />
+</Console>

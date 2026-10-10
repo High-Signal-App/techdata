@@ -9,7 +9,7 @@ import {
 } from "@saas-maker/ui/blocks/filter-bar";
 import { RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
 import { Button } from "@saas-maker/ui/components/button";
-import { type DataColumn, type DataSort, DataTable } from "@saas-maker/ui/components/data-table";
+import type { DataColumn, DataSort } from "@saas-maker/ui/components/data-table";
 import { Pagination } from "@saas-maker/ui/components/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { ToggleGroup, ToggleGroupItem } from "@saas-maker/ui/components/toggle-group";
@@ -43,11 +43,17 @@ import {
   placeSearchText,
   SORT_OPTIONS,
   sortPlaces,
+  sourceUrl,
   unusualCost,
   WEATHER_FILTERS,
   writeSort,
 } from "../../adapters/nomad/places";
+import { pinFromColumns } from "../../lib/compare";
+import { usePins } from "../../lib/local-lists";
 import { today, useUrlParam } from "../../lib/url-state";
+import PinButton from "../views/PinButton";
+import SaveView from "../views/SaveView";
+import DataTable from "../views/ViewTable";
 import { PlaceDetail } from "./PlaceDetail";
 import { CompareToggle, MAX_COMPARE, parseCompare, ShortlistBar } from "./shortlist";
 
@@ -240,6 +246,19 @@ export default function PlacesExplorer() {
     [shortlist, setCompareParam],
   );
   const columns = React.useMemo(() => columnsFor(profile), [profile]);
+  const pins = usePins();
+  const pin = (p: Place) =>
+    pinFromColumns(
+      "/nomad/",
+      p.slug,
+      p.name,
+      p,
+      [...columns, { id: "profile", header: "cost profile", value: () => profile }],
+      nomadProvenance,
+      "place",
+      { profile },
+      sourceUrl(p),
+    );
 
   const setSort = (s: PlaceSort) => setSortParam(s.id === DEFAULT_SORT.id && s.desc ? null : writeSort(s));
   const tableSort: DataSort = [sort];
@@ -278,6 +297,25 @@ export default function PlacesExplorer() {
   return (
     <>
       <div className="mb-4 flex flex-col gap-3">
+        {shortlist.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => {
+              pins.update((items) => [
+                ...items,
+                ...shortlist.flatMap((slug) => {
+                  const p = bySlug.get(slug);
+                  const item = p ? pin(p) : null;
+                  return item ? [item] : [];
+                }),
+              ]);
+            }}
+          >
+            pin selected to tray
+          </Button>
+        )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex items-center gap-2">
             <span className="ui-case text-xs text-muted-foreground">cost profile</span>
@@ -323,6 +361,7 @@ export default function PlacesExplorer() {
         </div>
 
         <FilterBar>
+          <SaveView />
           <FilterSearch
             value={filters.q ?? ""}
             onChange={(q) => setFilters((s) => ({ ...s, q: q || undefined }))}
@@ -476,13 +515,16 @@ export default function PlacesExplorer() {
           subtitle={open ? `${open.country} · ${open.region}` : undefined}
           actions={
             open && (
-              <Button
-                variant={shortlist.includes(open.slug) ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => toggleCompare(open.slug)}
-              >
-                {shortlist.includes(open.slug) ? "remove from compare" : "add to compare"}
-              </Button>
+              <>
+                <PinButton item={pin(open)} />
+                <Button
+                  variant={shortlist.includes(open.slug) ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => toggleCompare(open.slug)}
+                >
+                  {shortlist.includes(open.slug) ? "remove from compare" : "add to compare"}
+                </Button>
+              </>
             )
           }
         >
