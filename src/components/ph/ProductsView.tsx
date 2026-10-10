@@ -62,6 +62,8 @@ type Result = {
 };
 
 export default function ProductsView({ summary }: { summary: PhSummary }) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
   const [filters, setFilters] = useUrlFilters(defs);
   const [pageParam, setPage] = useUrlParam("page");
   const [sortParam, setSort] = useUrlParam("sort");
@@ -214,7 +216,8 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
             setPage(null);
           }}
           manual={{
-            rowCount: showingSummary ? summary.total : result.total,
+            // Library pagination uses the runtime locale; render it only after hydration.
+            rowCount: mounted ? (showingSummary ? summary.total : result.total) : visibleRows.length,
             page: showingSummary && !preview ? 0 : page,
             onPageChange: (p) => setPage(p ? String(p + 1) : null),
           }}
