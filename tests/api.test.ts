@@ -48,7 +48,7 @@ const get = async (path: string) => {
   return { status: res.status, body: (await res.json()) as Record<string, unknown> };
 };
 
-describe("private data files", () => {
+describe("public allowlisted data files", () => {
   const content = "0123456789";
   const object: R2Object = {
     key: "ph/producthunt-full.parquet",
@@ -62,7 +62,7 @@ describe("private data files", () => {
     httpMetadata: { contentType: "application/wasm" },
     writeHttpMetadata: (headers) => headers.set("content-type", "application/wasm"),
   };
-  const head = vi.fn(async (key: string) => (key.endsWith("missing") ? null : object));
+  const head = vi.fn(async (_key: string): Promise<R2Object | null> => object);
   const read = vi.fn(async (_key: string, options?: R2GetOptions) => {
     const range = options?.range as { offset: number; length: number } | undefined;
     const response = new Response(range ? content.slice(range.offset, range.offset + range.length) : content);
@@ -95,7 +95,7 @@ describe("private data files", () => {
   };
   const request = (path: string, init?: RequestInit) => app.request(`/api/files/${path}`, init, { DATA });
 
-  it("streams full objects with metadata and private caching", async () => {
+  it("streams full objects with metadata and public caching", async () => {
     const response = await request("ph/producthunt-full.parquet");
     expect(response.status).toBe(200);
     expect(await response.text()).toBe(content);
@@ -103,12 +103,56 @@ describe("private data files", () => {
     expect(response.headers.get("content-type")).toBe("application/vnd.apache.parquet");
     expect(response.headers.get("etag")).toBe('"file-etag"');
     expect(response.headers.get("accept-ranges")).toBe("bytes");
-    expect(response.headers.get("cache-control")).toBe("private, max-age=3600");
+    expect(response.headers.get("cache-control")).toBe("public, max-age=3600");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect((await request("duckdb/1.32.0/duckdb-eh.wasm")).headers.get("cache-control")).toBe(
-      "private, max-age=31536000, immutable",
+      "public, max-age=31536000, immutable",
     );
-    expect((await request("duckdb/unversioned.wasm")).headers.get("cache-control")).toBe("private, max-age=3600");
+    expect(response.headers.get("x-robots-tag")).toBeNull();
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
+  it.each(["duckdb-eh.wasm", "duckdb-mvp.wasm", "duckdb-browser-eh.worker.js", "duckdb-browser-mvp.worker.js"])(
+    "serves the pinned binary %s with immutable public caching",
+    async (file) => {
+      const response = await request(`duckdb/1.32.0/${file}`);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+      expect(response.headers.get("content-type")).toBe(
+        file.endsWith(".wasm") ? "application/wasm" : "text/javascript",
+      );
+    },
+  );
+
+  it.each(['"file-etag"', 'W/"file-etag"', '"other", W/"file-etag"', "*"])(
+    "returns 304 for matching If-None-Match %s before applying Range",
+    async (etag) => {
+      read.mockClear();
+      const response = await request("ph/producthunt-full.parquet", {
+        headers: { "If-None-Match": etag, Range: "bytes=2-5" },
+      });
+      expect(response.status).toBe(304);
+      expect(response.headers.get("etag")).toBe('"file-etag"');
+      expect(response.headers.get("cache-control")).toBe("public, max-age=3600");
+      expect(response.headers.get("content-length")).toBeNull();
+      expect(response.headers.get("content-range")).toBeNull();
+      expect(await response.text()).toBe("");
+      expect(read).not.toHaveBeenCalled();
+    },
+  );
+
+  it("serves unmatched ETags and handles conditional HEAD without a body read", async () => {
+    const changed = await request("ph/producthunt-full.parquet", { headers: { "If-None-Match": '"other"' } });
+    expect(changed.status).toBe(200);
+    expect(await changed.text()).toBe(content);
+    read.mockClear();
+    const cached = await request("ph/producthunt-full.parquet", {
+      method: "HEAD",
+      headers: { "If-None-Match": '"file-etag"' },
+    });
+    expect(cached.status).toBe(304);
+    expect(await cached.text()).toBe("");
+    expect(read).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -150,21 +194,40 @@ describe("private data files", () => {
     const response = await request("ph/producthunt-full.parquet", { headers: { Range: range } });
     expect(response.status).toBe(416);
     expect(response.headers.get("content-range")).toBe("bytes */10");
+    expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.text()).toBe("");
     expect(read).not.toHaveBeenCalled();
   });
 
-  it.each(["other/private", "ph/forbidden..parquet", "ph/%2e%2e%2fprivate", "ph/%ZZ"])(
-    "rejects disallowed key %s without accessing R2",
-    async (key) => {
-      head.mockClear();
-      expect((await request(key)).status).toBe(404);
-      expect(head).not.toHaveBeenCalled();
-    },
-  );
+  it.each([
+    "other/private",
+    "ph/forbidden..parquet",
+    "ph/%2e%2e%2fprivate",
+    "ph/%ZZ",
+    "ph/other.parquet",
+    "duckdb/unversioned.wasm",
+    "duckdb/1.32.0/other.js",
+    "duckdb/1.31.0/duckdb-eh.wasm",
+    "",
+    "ph/",
+    "duckdb/",
+    "duckdb/1.32.0/",
+    "?list=1",
+  ])("rejects disallowed key %s without accessing R2", async (key) => {
+    head.mockClear();
+    read.mockClear();
+    const response = await request(key);
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(head).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
+  });
 
   it("returns 404 for missing objects and 503 without a binding", async () => {
-    expect((await request("ph/missing")).status).toBe(404);
+    head.mockResolvedValueOnce(null);
+    const missing = await request("ph/producthunt-full.parquet");
+    expect(missing.status).toBe(404);
+    expect(missing.headers.get("cache-control")).toBe("no-store");
     const response = await app.request("/api/files/ph/producthunt-full.parquet");
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: "data_unavailable" });
@@ -173,6 +236,22 @@ describe("private data files", () => {
 });
 
 describe("api", () => {
+  it("publicly caches successful GET data, with no robots header, and never caches errors", async () => {
+    for (const path of ["/api/health", "/api/ph/summary", "/api/nomad/places"]) {
+      const response = await app.request(path);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("cache-control")).toBe("public, max-age=60");
+      expect(response.headers.get("x-robots-tag")).toBeNull();
+    }
+    for (const path of ["/api/unknown", "/api/nomad/places/nowhere", "/api/podcasts/claims/missing"]) {
+      const response = await app.request(path);
+      expect(response.status).toBe(404);
+      expect(response.headers.get("cache-control")).toBe("no-store");
+      expect(response.headers.get("x-robots-tag")).toBeNull();
+    }
+    expect((await app.request("/api/health", { method: "POST" })).headers.get("cache-control")).toBe("no-store");
+  });
+
   it("lists all collections with provenance", async () => {
     const { body } = await get("/api/collections");
     const list = body.collections as { id: string; counts: Record<string, number> }[];
@@ -263,7 +342,7 @@ describe("api", () => {
       via: "public API",
       collectedAt: null,
     });
-    expect(response.headers.get("cache-control")).toBe("private, max-age=60");
+    expect(response.headers.get("cache-control")).toBe("public, max-age=60");
   });
 
   it.each(["timeout", "unavailable"])("isolates an adapter %s and does not cache partial failures", async (failure) => {

@@ -1,7 +1,8 @@
 name: Deploy (manual)
 
 # Owner-approved deploys only. Never runs on push. Needs CLOUDFLARE_API_TOKEN,
-# CLOUDFLARE_ACCOUNT_ID secrets.
+# CLOUDFLARE_ACCOUNT_ID secrets. PUBLIC_SITE_URL is a repository Actions variable
+# for the public deployment origin used by prerendered page canonicals.
 on:
   workflow_dispatch:
     inputs:
@@ -21,6 +22,8 @@ jobs:
     if: ${{ inputs.confirm == 'deploy techdata' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

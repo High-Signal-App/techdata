@@ -1,6 +1,6 @@
 # techdata
 
-The owner's private data workbench: one console over several data collections,
+A public data workbench: one console over several data collections,
 each read through its own adapter, with search, filters, comparison and
 exports that carry their source and collection date. It is the first product
 built on the SaaS Maker UI library (`sass-maker/ui-library`, Console template).
@@ -155,7 +155,7 @@ newsletter capture, project strip, Ask-AI footer and App Health tracking.
   provenance}`. Source summaries need no extra upstream reads; record views carry
   dates/revisions. Optional `collection` and `kind` filters remain supported.
   Timeouts retain request-local partial hits when supported.
-  Failures return other hits with `no-store`; successful reads stay private/short-lived.
+  Failures return other hits with `no-store`; successful reads use short-lived public caching.
   `src/search/index.ts` ranks and caps hits; ⌘K shares one request per query and
   lazily merges browser-only PH hits into stable collection groups.
 - `GET /api/collections`, `/api/nomad/places`
@@ -177,15 +177,34 @@ pnpm run build && pnpm run preview   # production build on workerd, port 4329
 ```
 
 Deploy is manual and owner-approved only (`.github/workflows/deploy.yml`,
-`workflow_dispatch`). The Worker must only be reachable behind Cloudflare
-Access, including any workers.dev or alternate hostname. The R2 bucket stays
-private: do not enable a public bucket endpoint.
+`workflow_dispatch`). The Worker is public and requires no authentication.
+The R2 bucket stays private: do not enable a public bucket endpoint.
+
+Set `PUBLIC_SITE_URL` at build time to the deployment origin, for example
+`https://techdata.<account-subdomain>.workers.dev`. The manual workflow reads
+it from the repository Actions variable `PUBLIC_SITE_URL`. Astro's `site`
+setting uses this value to build self-canonicals without query strings; when
+unset, pages omit canonicals rather than using a placeholder host.
+`/robots.txt` and `/sitemap.xml` run in the Worker and use the request origin,
+including when the build variable is unset. Robots allows pages and disallows
+`/api/`; JSON and file responses have no robots header.
+
+Content duplicates the five live source sites: [Nomad Atlas](https://nomad.significanthobbies.com/)
+([Nomads.com](https://nomads.com/)), [High Signal Podcasts](https://podcasts.highsignal.app/),
+[Reddit Insights](https://reddit-insights.highsignal.app/),
+[Product Hunt](https://www.producthunt.com/) (catalogue by [ph-catalog](https://github.com/Significant-Hobbies/ph-catalog)),
+and [Research Papers](https://papers.highsignal.app/) (CC-BY 4.0).
+The owner deliberately chose indexable pages with techdata self-canonicals on
+2026-10-10. Revisit this canonical/indexing choice when those sites retire.
 
 ### Private R2 data
 
 `wrangler.jsonc` binds the existing `techdata-data` bucket as `DATA`.
-`GET`/`HEAD` `/api/files/*` serves only `ph/` and `duckdb/` keys through the
-Access-protected Worker, with streaming single-range reads and private caching.
+`GET`/`HEAD` `/api/files/*` serves exactly the five objects listed below through
+the public Worker; all other keys and directory/list requests return 404.
+Reads stream with single-range support. Parquet uses public one-hour caching,
+an ETag and conditional 304 responses; versioned DuckDB files use immutable
+one-year public caching.
 
 Objects uploaded on 2026-10-10 using `wrangler r2 object put --remote`:
 
@@ -209,6 +228,6 @@ Content-Type metadata and adds `nosniff`; keep upload metadata correct.
 
 ## What's next
 
-1. Owner decisions: domain, Cloudflare Access policy, deploy approval.
+1. Owner decisions: deployment origin (`PUBLIC_SITE_URL`), deploy approval.
 2. DuckDB-WASM vs D1 benchmark.
 3. Parity sign-off per collection, then decide the public sites' fate.

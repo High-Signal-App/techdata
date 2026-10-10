@@ -243,7 +243,7 @@ describe("papers public export adapter", () => {
       const response = await get(`/api/papers/${route}`);
       expect(response.status).toBe(200);
       expect(((await response.json()) as { provenance: { source: string } }).provenance.source).toContain("CC-BY 4.0");
-      expect(response.headers.get("x-robots-tag")).toBe("noindex");
+      expect(response.headers.get("x-robots-tag")).toBeNull();
     }
     expect((await get("/api/papers/papers/openreview:missing")).status).toBe(404);
     expect((await get("/api/papers/paths/missing")).status).toBe(404);

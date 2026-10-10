@@ -1,5 +1,5 @@
 {
-  // techdata Worker with private R2 data. Deploy is owner-approved and
+  // Public techdata Worker; the R2 bucket has no public endpoint. Deploy is owner-approved and
   // manual (.github/workflows/deploy.yml, workflow_dispatch only).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "techdata",

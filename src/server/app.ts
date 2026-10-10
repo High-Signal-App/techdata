@@ -40,6 +40,13 @@ const FILE_TYPES: Record<string, string> = {
   js: "text/javascript",
   parquet: "application/vnd.apache.parquet",
 };
+const FILE_KEYS = new Set([
+  "ph/producthunt-full.parquet",
+  "duckdb/1.32.0/duckdb-eh.wasm",
+  "duckdb/1.32.0/duckdb-mvp.wasm",
+  "duckdb/1.32.0/duckdb-browser-eh.worker.js",
+  "duckdb/1.32.0/duckdb-browser-mvp.worker.js",
+]);
 const fileContentType = (key: string) => FILE_TYPES[key.slice(key.lastIndexOf(".") + 1)];
 
 export function createApp(deps: AppDeps) {
@@ -77,8 +84,9 @@ export function createApp(deps: AppDeps) {
 
   app.use("*", async (c, next) => {
     await next();
-    c.header("x-robots-tag", "noindex");
-    if (!c.res.headers.has("cache-control")) c.header("cache-control", "private, max-age=60");
+    if (c.res.status >= 400) c.header("cache-control", "no-store");
+    else if (!c.res.headers.has("cache-control"))
+      c.header("cache-control", c.req.method === "GET" ? "public, max-age=60" : "no-store");
   });
 
   app.onError((err, c) => {
@@ -103,7 +111,7 @@ export function createApp(deps: AppDeps) {
     } catch {
       return c.json({ error: "not_found" }, 404);
     }
-    if ((!key.startsWith("ph/") && !key.startsWith("duckdb/")) || key.includes("..")) {
+    if (!FILE_KEYS.has(key)) {
       return c.json({ error: "not_found" }, 404);
     }
     const bucket = c.env?.DATA;
@@ -119,10 +127,22 @@ export function createApp(deps: AppDeps) {
       ETag: object.httpEtag,
       "Accept-Ranges": "bytes",
       "Cache-Control": /^duckdb\/\d+\.\d+\.\d+\//.test(key)
-        ? "private, max-age=31536000, immutable"
-        : "private, max-age=3600",
+        ? "public, max-age=31536000, immutable"
+        : "public, max-age=3600",
       "X-Content-Type-Options": "nosniff",
     });
+    // If-None-Match uses weak comparison for GET and HEAD and precedes Range.
+    const notModified = c.req
+      .header("if-none-match")
+      ?.split(",")
+      .some((tag) => {
+        const value = tag.trim();
+        return value === "*" || value.replace(/^W\//, "") === object.httpEtag;
+      });
+    if (notModified) {
+      headers.delete("Content-Length");
+      return new Response(null, { status: 304, headers });
+    }
     // Range applies to GET only; HEAD returns the full object's metadata.
     if (c.req.method === "HEAD") return new Response(null, { headers });
     const range = c.req.header("range");

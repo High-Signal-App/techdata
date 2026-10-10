@@ -6,7 +6,7 @@ and record durable follow-up in this repo's GitHub Issues.
 
 ## Project
 
-- **What**: techdata, the owner's private data workbench (plan:
+- **What**: techdata, a public, indexable data workbench (plan:
   Significant-Hobbies/ph-catalog#14).
 - **Stack**: Astro 7 + React islands on one Cloudflare Worker; Hono for
   `/api/*`; SaaS Maker UI (`@saas-maker/*`, git dependency pinned to a tag).
@@ -14,8 +14,9 @@ and record durable follow-up in this repo's GitHub Issues.
 - **Checks**: `pnpm run check` (typecheck, Biome via `pnpm exec biome`, Vitest,
   build). Never `npx biome`.
 - **Deploy**: manual `workflow_dispatch` only, after explicit owner approval.
-  Worker must only be reachable behind Cloudflare Access; `techdata-data`
-  stays private. Do not create Cloudflare resources without approval.
+  Worker is public with no authentication; `techdata-data` stays private and
+  is served only through allowlisted Worker routes. Do not create Cloudflare
+  resources without approval.
 
 ## Rules
 
