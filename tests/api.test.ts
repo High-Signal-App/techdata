@@ -100,7 +100,7 @@ describe("private data files", () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe(content);
     expect(response.headers.get("content-length")).toBe("10");
-    expect(response.headers.get("content-type")).toBe("application/wasm");
+    expect(response.headers.get("content-type")).toBe("application/vnd.apache.parquet");
     expect(response.headers.get("etag")).toBe('"file-etag"');
     expect(response.headers.get("accept-ranges")).toBe("bytes");
     expect(response.headers.get("cache-control")).toBe("private, max-age=3600");
