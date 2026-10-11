@@ -6,7 +6,10 @@ import Console from "../../layouts/Console.astro";
 const initial = await createPapersAdapter({
   fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
 })
-  .papers(new URLSearchParams({ limit: "50" }))
+  // Only seed the visible rows. Astro serializes props before the table markup;
+  // a full page duplicates offscreen records in both HTML and hydration data.
+  .papers(new URLSearchParams({ limit: "10" }))
+  .then(({ data, ...metadata }) => ({ ...metadata, data: { rows: data.rows, total: data.total } }))
   .catch(() => undefined);
 ---
 

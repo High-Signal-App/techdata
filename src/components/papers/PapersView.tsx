@@ -141,7 +141,7 @@ export default function PapersView({ initial }: { initial?: Envelope<{ rows: Pap
   const all = state.value?.data.rows ?? [];
   const total = Math.min(state.value?.data.total ?? all.length, 2000);
   const pending = all.length < total;
-  // The seed is a complete first page, not the full client-side filter corpus.
+  // The seed covers visible rows; pagination and filtering still use the full corpus.
   const needsFullData = !!(
     filters.q ||
     sortParam ||

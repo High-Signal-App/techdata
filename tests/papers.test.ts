@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { toCSV } from "@saas-maker/ui/lib/export";
 import { activeFilters, readFilters } from "@saas-maker/ui/lib/filters";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   createPapersAdapter,
@@ -13,7 +15,7 @@ import {
 } from "../src/adapters/papers";
 import { createPodcastsAdapter } from "../src/adapters/podcasts";
 import { createRedditAdapter } from "../src/adapters/reddit";
-import { paperColumns, paperDetailItems, paperExport } from "../src/components/papers/PapersView";
+import PapersView, { paperColumns, paperDetailItems, paperExport } from "../src/components/papers/PapersView";
 import { createApp } from "../src/server/app";
 import redditCatalog from "./fixtures/reddit/catalog.json";
 
@@ -48,6 +50,22 @@ const adapter = (missing: string[] = []) => {
 };
 
 describe("papers public export adapter", () => {
+  it("paints ten seeded rows without waiting for the corpus and keeps full pagination and provenance", async () => {
+    const { data, ...metadata } = await adapter().a.papers(new URLSearchParams("limit=10"));
+    const html = renderToStaticMarkup(
+      createElement(PapersView, { initial: { ...metadata, data: { rows: data.rows, total: data.total } } }),
+    );
+    expect(html.match(/data-row="true"/g)).toHaveLength(10);
+    expect(html).toContain(data.rows[0].title.replaceAll("&", "&amp;"));
+    expect(html).not.toContain('data-slot="data-table-skeleton"');
+    expect(html).toContain("resource-table");
+    expect(html).toContain(`10 of ${data.total} publicly exported papers`);
+    expect(html).toContain(`aria-label="Page ${Math.ceil(data.total / 50)}"`);
+    expect(html).toContain(metadata.provenance.sourceUrl);
+    expect(html).toContain(metadata.provenance.fetchedAt);
+    expect(html).not.toContain("lucide-download"); // Exports wait for the complete corpus.
+  });
+
   it("renders years without digit grouping in tables, range chips, details and CSV", async () => {
     const { a } = adapter();
     const rows = (await a.papers(new URLSearchParams("limit=2000"))).data.rows;
