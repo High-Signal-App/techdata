@@ -1,4 +1,6 @@
-import * as React from "react";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
+import { SkeletonText } from "@saas-maker/ui/components/skeleton";
+import { useJsonResource } from "../../lib/resource";
 import { formatDate } from "../../lib/url-state";
 
 export type CitationGraph = {
@@ -19,39 +21,14 @@ export type CitationGraph = {
 };
 
 /** Module is small; the data request starts only when a paper detail mounts. */
-let graphRequest: Promise<CitationGraph> | undefined;
 export default function Citations({ id }: { id: string }) {
-  const [graph, setGraph] = React.useState<CitationGraph | null>(null);
-  const [failed, setFailed] = React.useState(false);
-  React.useEffect(() => {
-    let current = true;
-    graphRequest ??= fetch("/data/papers/citations.json")
-      .then((response) => {
-        if (!response.ok) throw new Error("Citation snapshot unavailable");
-        return response.json() as Promise<CitationGraph>;
-      })
-      .catch((error) => {
-        graphRequest = undefined;
-        throw error;
-      });
-    graphRequest
-      .then((value) => {
-        if (current) setGraph(value);
-      })
-      .catch(() => {
-        if (current) setFailed(true);
-      });
-    return () => {
-      current = false;
-    };
-  }, []);
-  if (!graph)
+  const resource = useJsonResource<CitationGraph>("/data/papers/citations.json");
+  if (resource.status === "error")
     return (
-      <p className="text-sm text-muted-foreground" role="status">
-        {failed ? "The OpenAlex citation snapshot did not load." : "Loading citations within this collection…"}
-      </p>
+      <ErrorState title="the openalex citation snapshot did not load." description={null} onRetry={resource.retry} />
     );
-  return <CitationLists id={id} graph={graph} />;
+  if (!resource.data) return <SkeletonText lines={5} />;
+  return <CitationLists id={id} graph={resource.data} />;
 }
 
 export function CitationLists({ id, graph }: { id: string; graph: CitationGraph }) {

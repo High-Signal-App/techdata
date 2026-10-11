@@ -1,8 +1,10 @@
 import { Provenance } from "@saas-maker/ui/blocks/record-detail";
 import { Button } from "@saas-maker/ui/components/button";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@saas-maker/ui/components/command";
+import { DataTableSkeleton } from "@saas-maker/ui/components/data-table";
+import { EmptyState } from "@saas-maker/ui/components/empty-state";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import { Popover, PopoverContent, PopoverTrigger } from "@saas-maker/ui/components/popover";
-import { Skeleton } from "@saas-maker/ui/components/skeleton";
 import { ArrowUpRightIcon, PlusIcon, XIcon } from "lucide-react";
 import * as React from "react";
 import { NOMAD_SNAPSHOT, nomadProvenanceInfo } from "../../adapters/nomad/meta";
@@ -15,27 +17,36 @@ import {
   sourceUrl,
   unusualCost,
 } from "../../adapters/nomad/places";
+import { useJsonResource } from "../../lib/resource";
 import { useUrlParam } from "../../lib/url-state";
 import { MAX_COMPARE, parseCompare } from "./shortlist";
 
 /** Up to three places side by side across Nomad Atlas's 22 metrics. */
 export default function ComparePlaces() {
-  const [all, setAll] = React.useState<Place[] | null>(null);
-  const [failed, setFailed] = React.useState(false);
-  React.useEffect(() => {
-    fetch(NOMAD_SNAPSHOT.file)
-      .then((r) => (r.ok ? (r.json() as Promise<Dataset>) : Promise.reject(new Error(String(r.status)))))
-      .then((d) => setAll(explorable(d.cities)))
-      .catch(() => setFailed(true));
-  }, []);
+  const resource = useJsonResource<Dataset>(NOMAD_SNAPSHOT.file, undefined, false);
+  const all = React.useMemo(() => (resource.data ? explorable(resource.data.cities) : null), [resource.data]);
   const [param, setParam] = useUrlParam("places");
   const slugs = parseCompare(param);
   const bySlug = React.useMemo(() => new Map((all ?? []).map((p) => [p.slug, p])), [all]);
   const chosen = slugs.map((s) => bySlug.get(s)).filter((p): p is Place => !!p);
   const set = (next: string[]) => setParam(next.length ? next.join(",") : null);
 
-  if (failed) return <p className="text-sm">The places snapshot did not load. Refresh to try again.</p>;
-  if (!all) return <Skeleton className="h-96 w-full" />;
+  if (resource.status === "error")
+    return <ErrorState title="the places snapshot did not load." description={null} onRetry={resource.retry} />;
+  if (!all)
+    return (
+      <DataTableSkeleton
+        rows={COMPARE_METRICS.length}
+        columns={[
+          { id: "metric", header: "metric" },
+          ...Array.from({ length: Math.max(2, slugs.length) }, (_, i) => ({
+            id: `place-${i}`,
+            header: "place",
+            minWidth: "9rem",
+          })),
+        ]}
+      />
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,9 +73,10 @@ export default function ComparePlaces() {
       </div>
 
       {chosen.length < 2 ? (
-        <p className="rounded-lg border border-border px-4 py-16 text-center text-sm text-muted-foreground">
-          Pick {chosen.length ? "one more place" : "two or three places"} to compare them side by side.
-        </p>
+        <EmptyState
+          className="rounded-lg border border-border"
+          title={`pick ${chosen.length ? "one more place" : "two or three places"} to compare them side by side.`}
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border bg-card">
           <table className="w-full border-separate border-spacing-0 text-sm">

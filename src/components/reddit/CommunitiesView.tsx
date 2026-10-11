@@ -1,7 +1,9 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { ActiveFilters, FacetFilter, FilterBar, FilterSearch, useUrlFilters } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
+import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
+import { SkeletonText } from "@saas-maker/ui/components/skeleton";
 import { type FilterDef, facetCounts, filterRows } from "@saas-maker/ui/lib/filters";
 import type { Catalog, CatalogEntry, Snapshot } from "../../adapters/reddit";
 import { snapshotHref } from "../../adapters/reddit";
@@ -32,9 +34,9 @@ export default function CommunitiesView() {
   const sort = useSort("subreddit");
   const map = new Map<string, Community>();
   if (state.status === "ready")
-    for (const e of [...state.value.data.entries].sort(
-      (a, b) => b.date.localeCompare(a.date) || b.capturedAt.localeCompare(a.capturedAt),
-    )) {
+    for (const e of state.value.data.entries
+      .filter((entry) => Date.parse(entry.expiresAt) > Date.now())
+      .sort((a, b) => b.date.localeCompare(a.date) || b.capturedAt.localeCompare(a.capturedAt))) {
       const existing = map.get(e.subreddit);
       if (existing) {
         if (!existing.dates.includes(e.date)) existing.dates.push(e.date);
@@ -78,13 +80,16 @@ export default function CommunitiesView() {
         ))}
       </FilterBar>
       <ActiveFilters defs={defs} state={filters} onChange={setFilters} />
-      {state.status === "error" && <ReadError error={state.error} retry={retry} />}
-      {state.status === "ready" && (
-        <p className="text-sm text-muted-foreground">
-          catalog generated {state.value.data.generatedAt}; latest capture {state.value.provenance.collectedAt}. Select
-          a community for its exact collection window.
-        </p>
-      )}
+      <div className="capture-metadata">
+        {state.status === "ready" ? (
+          <p className="text-sm text-muted-foreground">
+            catalog generated {state.value.data.generatedAt}; latest capture {state.value.provenance.collectedAt}.
+            Select a community for its exact collection window.
+          </p>
+        ) : state.status === "loading" ? (
+          <SkeletonText lines={3} />
+        ) : null}
+      </div>
       <RecordLayout>
         <DataTable
           pin={pin}
@@ -95,6 +100,7 @@ export default function CommunitiesView() {
           {...sort}
           status={state.status}
           onRetry={retry}
+          error={state.status === "error" ? <ReadError error={state.error} retry={retry} /> : undefined}
           onRowClick={(e) => setCommunity(e.subreddit)}
           selectedId={community}
           toolbar={(view) => (
@@ -150,7 +156,7 @@ function CommunityDetail({ entry }: { entry: Community }) {
       <a className="text-sm underline underline-offset-4" href={snapshotHref(entry)}>
         open captured threads
       </a>
-      {state.status === "loading" && <p className="text-sm">loading capture…</p>}
+      {state.status === "loading" && <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />}
       {state.status === "error" && <ReadError error={state.error} retry={retry} />}
       {state.status === "ready" && (
         <>

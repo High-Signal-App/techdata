@@ -1,6 +1,13 @@
 ---
+import { createPapersAdapter } from "../../adapters/papers";
 import { PathsView } from "../../components/papers/PublicTables";
 import Console from "../../layouts/Console.astro";
+
+const initial = await createPapersAdapter({
+  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
+})
+  .paths()
+  .catch(() => undefined);
 ---
 
 <Console
@@ -10,5 +17,5 @@ import Console from "../../layouts/Console.astro";
   nav="papers-paths"
   breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "reading paths" }]}
 >
-  <PathsView client:load />
+  <PathsView initial={initial} client:load />
 </Console>

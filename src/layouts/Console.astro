@@ -3,6 +3,7 @@ import { ConsolePage } from "@saas-maker/templates/console-page";
 import figtreeFont from "@saas-maker/ui/fonts/figtree-latin-normal.woff2?url";
 import geistFont from "@saas-maker/ui/fonts/geist-latin-normal.woff2?url";
 import GlobalSearch from "../components/GlobalSearch";
+import ResourcePrefetch from "../components/ResourcePrefetch";
 import CompareTray from "../components/views/CompareTray";
 import SavedViews from "../components/views/SavedViews";
 import { consoleNav, type NavKey } from "../lib/nav";
@@ -78,5 +79,6 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
       </footer>
     </ConsolePage>
     <GlobalSearch client:idle />
+    <ResourcePrefetch client:idle />
   </body>
 </html>

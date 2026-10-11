@@ -30,5 +30,5 @@ const rows = results.map((result, i) =>
   nav="overview"
   breadcrumbs={[{ label: "overview" }]}
 >
-  <Overview rows={rows} />
+  <Overview rows={rows} client:load />
 </Console>

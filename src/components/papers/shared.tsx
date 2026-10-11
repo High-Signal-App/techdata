@@ -1,29 +1,20 @@
 import { Provenance } from "@saas-maker/ui/blocks/record-detail";
-import { Skeleton } from "@saas-maker/ui/components/skeleton";
+import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
-import * as React from "react";
 import type { Envelope } from "../../adapters/papers";
 import type { Provenance as ProvenanceInfo } from "../../adapters/types";
+import { useJsonResource } from "../../lib/resource";
 
-export function usePapersApi<T>(key: string | null) {
-  const [state, setState] = React.useState<{ status: "loading" | "error" | "ready"; value?: Envelope<T> }>({
-    status: "loading",
-  });
-  const [nonce, setNonce] = React.useState(0);
-  React.useEffect(() => {
-    if (key === null) return;
-    void nonce;
-    const ctrl = new AbortController();
-    setState({ status: "loading" });
-    fetch(`/api/papers/${key}`, { signal: ctrl.signal })
-      .then((r) => (r.ok ? (r.json() as Promise<Envelope<T>>) : Promise.reject(new Error(String(r.status)))))
-      .then((value) => setState({ status: "ready", value }))
-      .catch((e: unknown) => {
-        if (!(e instanceof DOMException && e.name === "AbortError")) setState({ status: "error" });
-      });
-    return () => ctrl.abort();
-  }, [key, nonce]);
-  return [state, () => setNonce((n) => n + 1)] as const;
+export function usePapersApi<T>(key: string | null, initial?: Envelope<T>) {
+  const resource = useJsonResource<Envelope<T>>(key === null ? null : `/api/papers/${key}`, initial);
+  return [
+    {
+      status: resource.status === "error" ? "error" : resource.data ? "ready" : "loading",
+      value: resource.status === "error" ? undefined : resource.data,
+    } as { status: "loading" | "error" | "ready"; value?: Envelope<T> },
+    resource.retry,
+  ] as const;
 }
 export function PublicProvenance({ info }: { info: ProvenanceInfo }) {
   return (
@@ -41,19 +32,23 @@ export function PublicProvenance({ info }: { info: ProvenanceInfo }) {
     />
   );
 }
-export function LoadingDetail({ error }: { error: boolean }) {
+export function LoadingDetail({ error, retry }: { error: boolean; retry: () => void }) {
   return error ? (
-    <p className="text-sm">This public record did not load. Close and reopen to try again.</p>
+    <ErrorState title="this public record did not load." description={null} onRetry={retry} />
   ) : (
-    <Skeleton className="h-40 w-full" />
+    <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />
   );
 }
 export function MissingExports({ missing }: { missing: string[] }) {
-  return missing.length ? (
-    <p role="status" className="my-3 text-sm text-muted-foreground">
-      Unavailable public exports: {missing.join(", ")}. Results cover available files only.
-    </p>
-  ) : null;
+  return (
+    <div className="min-h-8">
+      {missing.length ? (
+        <p role="status" className="my-3 text-sm text-muted-foreground">
+          Unavailable public exports: {missing.join(", ")}. Results cover available files only.
+        </p>
+      ) : null}
+    </div>
+  );
 }
 /** CSV must carry provenance too; JSON additionally wraps this in metadata. */
 export function provenanceColumns<T>(info: ProvenanceInfo): ExportColumn<T>[] {

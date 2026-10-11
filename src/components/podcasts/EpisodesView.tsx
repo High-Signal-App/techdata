@@ -1,9 +1,10 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { FilterBar, FilterSearch } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
+import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
-import { Skeleton } from "@saas-maker/ui/components/skeleton";
 import * as React from "react";
 import { type Claim, type Envelope, type Episode, type Show, transcriptLabel } from "../../adapters/podcasts";
 import { pinFromColumns } from "../../lib/compare";
@@ -71,7 +72,10 @@ export default function EpisodesView({ initial }: { initial?: Envelope<EpisodePa
   if (show) params.set("show", show);
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  const [state, retry] = useApi<EpisodePage>(mounted ? `episodes?${params}` : null, initial);
+  const [state, retry] = useApi<EpisodePage>(
+    mounted ? `episodes?${params}` : null,
+    q || show || page ? undefined : initial,
+  );
   const rows = state.status === "ready" ? state.value.data.sources : [];
   const total = state.status === "ready" ? state.value.data.total : 0;
   const [publishers, setPublishers] = React.useState<Show[]>(initial?.data.publishers ?? []);
@@ -193,16 +197,9 @@ function EpisodeDetail({ id }: { id: string }) {
   const [claimId, setClaimId] = React.useState<string | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: close the open claim when the record changes
   React.useEffect(() => setClaimId(null), [id]);
-  if (state.status === "loading") return <Skeleton className="h-40 w-full" />;
+  if (state.status === "loading") return <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />;
   if (state.status === "error")
-    return (
-      <p className="text-sm">
-        This episode did not load.{" "}
-        <button type="button" className="underline underline-offset-4" onClick={retry}>
-          Try again
-        </button>
-      </p>
-    );
+    return <ErrorState title="this public record did not load." description={null} onRetry={retry} />;
   const { source, claims } = state.value.data;
   const timed = claims.filter((c) => c.timestampS != null).length;
   if (claimId)

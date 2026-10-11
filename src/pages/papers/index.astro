@@ -1,6 +1,16 @@
 ---
+import { createPapersAdapter } from "../../adapters/papers";
 import PapersView from "../../components/papers/PapersView";
 import Console from "../../layouts/Console.astro";
+
+const initial = await createPapersAdapter({
+  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
+})
+  // Only seed the visible rows. Astro serializes props before the table markup;
+  // a full page duplicates offscreen records in both HTML and hydration data.
+  .papers(new URLSearchParams({ limit: "10" }))
+  .then(({ data, ...metadata }) => ({ ...metadata, data: { rows: data.rows, total: data.total } }))
+  .catch(() => undefined);
 ---
 
 <Console
@@ -10,5 +20,5 @@ import Console from "../../layouts/Console.astro";
   nav="papers-papers"
   breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "papers" }]}
 >
-  <PapersView client:load />
+  <PapersView initial={initial} client:load />
 </Console>
