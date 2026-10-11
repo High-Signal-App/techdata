@@ -5,7 +5,7 @@ import { Button } from "@saas-maker/ui/components/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { XIcon } from "lucide-react";
 import * as React from "react";
-import { CLAIM_TYPES, type Claim } from "../../adapters/podcasts";
+import { CLAIM_TYPES, type Claim, type Envelope } from "../../adapters/podcasts";
 import { claimColumns, pinClaim } from "../../lib/podcast-pins";
 import { today, useUrlParam } from "../../lib/url-state";
 import SaveView from "../views/SaveView";
@@ -16,7 +16,7 @@ import { ClaimDetail, ClaimList, claimExportColumns, LiveProvenance, useApi } fr
  * Claim search over the public API's full-text index. The API returns the
  * newest 50 matches, so this is a search, not a full listing.
  */
-export default function ClaimsView() {
+export default function ClaimsView({ initial }: { initial?: Envelope<{ claims: Claim[]; evidence?: string }> }) {
   const [layout, setLayout] = useUrlParam("view");
   const [sortParam, setSort] = useUrlParam("sort");
   const [sortId, sortDirection] = (sortParam ?? "").split(":");
@@ -43,9 +43,12 @@ export default function ClaimsView() {
   if (to) params.set("to", to);
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  const [state, retry] = useApi<{ claims: Claim[]; evidence?: string }>(mounted ? `claims?${params}` : null);
-  const claims = state.status === "ready" ? state.value.data.claims : [];
   const filtered = !!(q || type || person || from || to);
+  const [state, retry] = useApi<{ claims: Claim[]; evidence?: string }>(
+    mounted ? `claims?${params}` : null,
+    filtered ? undefined : initial,
+  );
+  const claims = state.status === "ready" ? state.value.data.claims : [];
 
   return (
     <>
@@ -108,7 +111,7 @@ export default function ClaimsView() {
 
       <RecordLayout>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className="flex min-h-8 flex-wrap items-center justify-between gap-2">
+          <div className="flex min-h-[4.5rem] flex-wrap items-center justify-between gap-2">
             <Button size="sm" variant="ghost" onClick={() => setLayout(layout === "table" ? null : "table")}>
               {layout === "table" ? "quote view" : "table & pin"}
             </Button>

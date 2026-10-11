@@ -1,9 +1,11 @@
 import { type QuoteItem, QuoteList, QuoteSpeakerLabel, QuoteTimestamp } from "@saas-maker/ui/blocks/quote-list";
 import { KeyValueList, Provenance } from "@saas-maker/ui/blocks/record-detail";
-import { Skeleton } from "@saas-maker/ui/components/skeleton";
+import { QuoteListSkeleton, RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
+import { EmptyState } from "@saas-maker/ui/components/empty-state";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import { ArrowUpRightIcon } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 import {
   type Claim,
   type ClaimReference,
@@ -16,33 +18,23 @@ import {
 } from "../../adapters/podcasts";
 import type { Provenance as ProvenanceInfo } from "../../adapters/types";
 import { pinClaim } from "../../lib/podcast-pins";
+import { useJsonResource } from "../../lib/resource";
 import { formatDate } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
 
 export type Loadable<T> = { status: "loading" } | { status: "error" } | { status: "ready"; value: Envelope<T> };
 
-/** GET /api/podcasts/… with abort on change; `key` null skips the request. */
+/** Public reads share cached content and revalidate without clearing the view. */
 export function useApi<T>(key: string | null, initial?: Envelope<T>): [Loadable<T>, () => void] {
-  const [state, setState] = React.useState<Loadable<T>>(
-    initial ? { status: "ready", value: initial } : { status: "loading" },
-  );
-  const [nonce, setNonce] = React.useState(0);
-  const loadedKey = React.useRef<string | null>(null);
-  React.useEffect(() => {
-    if (key === null) return;
-    void nonce;
-    const ctrl = new AbortController();
-    if (!initial || loadedKey.current !== null) setState({ status: "loading" });
-    loadedKey.current = key;
-    fetch(`/api/podcasts/${key}`, { signal: ctrl.signal })
-      .then((r) => (r.ok ? (r.json() as Promise<Envelope<T>>) : Promise.reject(new Error(String(r.status)))))
-      .then((value) => setState({ status: "ready", value }))
-      .catch((e: unknown) => {
-        if (!(e instanceof DOMException && e.name === "AbortError")) setState({ status: "error" });
-      });
-    return () => ctrl.abort();
-  }, [key, nonce, initial]);
-  return [state, () => setNonce((n) => n + 1)];
+  const resource = useJsonResource<Envelope<T>>(key === null ? null : `/api/podcasts/${key}`, initial);
+  return [
+    resource.status === "error"
+      ? { status: "error" }
+      : resource.data
+        ? { status: "ready", value: resource.data }
+        : { status: "loading" },
+    resource.retry,
+  ];
 }
 
 export function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -91,10 +83,23 @@ export function ClaimList({
   empty?: React.ReactNode;
   onRetry?: () => void;
 }) {
+  if (status === "loading") return <QuoteListSkeleton rows={8} label="claims" className="resource-quotes" />;
+  if (status === "error")
+    return (
+      <ErrorState
+        className="resource-quotes"
+        title="the podcasts api did not answer."
+        description={null}
+        onRetry={onRetry}
+      />
+    );
+  if (!claims.length)
+    return <EmptyState className="resource-quotes" title="no published claims match." description={empty} />;
   const byId = new Map(claims.map((c) => [c.id, c]));
   return (
     <QuoteList
-      label="Claims"
+      className="resource-quotes"
+      label="claims"
       items={claims.map(toQuote)}
       status={status}
       selectedId={selectedId}
@@ -133,23 +138,9 @@ type ClaimDetailData = {
 /** Full claim: verbatim quote, transcript window, evidence, references and provenance. */
 export function ClaimDetail({ id }: { id: string }) {
   const [state, retry] = useApi<ClaimDetailData>(`claims/${encodeURIComponent(id)}?context=1`);
-  if (state.status === "loading")
-    return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-    );
+  if (state.status === "loading") return <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />;
   if (state.status === "error")
-    return (
-      <p className="text-sm">
-        This claim did not load.{" "}
-        <button type="button" className="underline underline-offset-4" onClick={retry}>
-          Try again
-        </button>
-      </p>
-    );
+    return <ErrorState title="this claim did not load." description={null} onRetry={retry} />;
   const { claim, evidence, references, context } = state.value.data;
   return (
     <>

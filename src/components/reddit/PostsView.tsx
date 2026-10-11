@@ -8,8 +8,10 @@ import {
   useUrlFilters,
 } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
+import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
+import { SkeletonText } from "@saas-maker/ui/components/skeleton";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import { type FilterDef, facetCounts, filterRows, rangeBounds } from "@saas-maker/ui/lib/filters";
 import * as React from "react";
@@ -114,14 +116,17 @@ function Picker({
   );
 }
 export default function PostsView() {
-  const [catalog] = useApi<Catalog>("catalog");
+  const [catalog, retryCatalog] = useApi<Catalog>("catalog");
   const [subreddit, setSubreddit] = useUrlParam("subreddit");
   const [date, setDate] = useUrlParam("date");
   const [version, setVersion] = useUrlParam("v");
   const [postId, setPostId] = useUrlParam("post");
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  const entries = catalog.status === "ready" ? catalog.value.data.entries : [];
+  const entries =
+    catalog.status === "ready"
+      ? catalog.value.data.entries.filter((entry) => Date.parse(entry.expiresAt) > Date.now())
+      : [];
   const community = subreddit ?? entries[0]?.subreddit;
   const dates = [...new Set(entries.filter((e) => e.subreddit === community).map((e) => e.date))].sort().reverse();
   const day = date ?? dates[0];
@@ -209,25 +214,31 @@ export default function PostsView() {
           selected={filters.facets.label ?? []}
           onChange={(v) => setFilters({ ...filters, facets: { ...filters.facets, label: v } })}
         />
-        {bounds && (
-          <RangeFilter
-            label="recorded score"
-            bounds={bounds}
-            step={1}
-            value={filters.ranges.score}
-            onChange={(v) => setFilters({ ...filters, ranges: { ...filters.ranges, score: v ?? {} } })}
-          />
-        )}
+        <div className="min-h-8">
+          {bounds && (
+            <RangeFilter
+              label="recorded score"
+              bounds={bounds}
+              step={1}
+              value={filters.ranges.score}
+              onChange={(v) => setFilters({ ...filters, ranges: { ...filters.ranges, score: v ?? {} } })}
+            />
+          )}
+        </div>
       </FilterBar>
       <ActiveFilters defs={defs} state={filters} onChange={setFilters} />
-      {catalog.status === "error" && <ReadError error={catalog.error} retry={() => location.reload()} />}
-      {state.status === "error" && <ReadError error={state.error} retry={retry} />}
-      {snapshot && (
-        <>
-          <Freshness snapshot={snapshot} />
-          <p className="text-sm text-muted-foreground">{snapshot.coverage.note}</p>
-        </>
-      )}
+      <div className="capture-metadata">
+        {snapshot ? (
+          <>
+            <Freshness snapshot={snapshot} />
+            <p className="text-sm text-muted-foreground">{snapshot.coverage.note}</p>
+          </>
+        ) : state.status === "loading" &&
+          catalog.status !== "error" &&
+          (catalog.status === "loading" || !!community) ? (
+          <SkeletonText lines={3} />
+        ) : null}
+      </div>
       <RecordLayout>
         <DataTable
           pin={pin}
@@ -237,7 +248,14 @@ export default function PostsView() {
           getRowId={(p) => p.id}
           status={!community || !day ? catalog.status : state.status}
           {...sort}
-          onRetry={retry}
+          onRetry={!community || !day ? retryCatalog : retry}
+          error={
+            catalog.status === "error" ? (
+              <ReadError error={catalog.error} retry={retryCatalog} />
+            ) : state.status === "error" ? (
+              <ReadError error={state.error} retry={retry} />
+            ) : undefined
+          }
           onRowClick={(p) => setPostId(p.id)}
           selectedId={postId}
           empty="No captured threads match."
@@ -276,6 +294,7 @@ export default function PostsView() {
           title={post?.title ?? "thread"}
           subtitle={community ? `r/${community}` : undefined}
         >
+          {state.status === "loading" && <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />}
           {state.status === "error" && <ReadError error={state.error} retry={retry} />}
           {snapshot && post && state.status === "ready" && (
             <PostDetail post={post} snapshot={snapshot} provenance={state.value.provenance} />

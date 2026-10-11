@@ -1,11 +1,12 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { FilterBar, FilterSearch } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
+import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
 import { Button } from "@saas-maker/ui/components/button";
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
-import { Skeleton } from "@saas-maker/ui/components/skeleton";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import * as React from "react";
-import { type Claim, type Person, PODCASTS_SITE } from "../../adapters/podcasts";
+import { type Claim, type Envelope, type Person, PODCASTS_SITE } from "../../adapters/podcasts";
 import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
@@ -37,7 +38,7 @@ const columns: DataColumn<Person>[] = [
 ];
 
 /** Verified speakers, most claims first. Unverified speakers are never listed as people. */
-export default function PeopleView() {
+export default function PeopleView({ initial }: { initial?: Envelope<{ people: Person[]; total: number }> }) {
   const [q, setQ] = useUrlParam("q");
   const [pageParam, setPageParam] = useUrlParam("page");
   const [slug, setSlug] = useUrlParam("person");
@@ -58,7 +59,10 @@ export default function PeopleView() {
   if (q) params.set("q", q);
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  const [state, retry] = useApi<{ people: Person[]; total: number }>(mounted ? `people?${params}` : null);
+  const [state, retry] = useApi<{ people: Person[]; total: number }>(
+    mounted ? `people?${params}` : null,
+    q || page ? undefined : initial,
+  );
   const rows = state.status === "ready" ? state.value.data.people : [];
   const total = state.status === "ready" ? state.value.data.total : 0;
   const pin = (p: Person) =>
@@ -147,16 +151,9 @@ function PersonDetail({ slug }: { slug: string }) {
   const [claimId, setClaimId] = React.useState<string | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: close the open claim when the record changes
   React.useEffect(() => setClaimId(null), [slug]);
-  if (state.status === "loading") return <Skeleton className="h-40 w-full" />;
+  if (state.status === "loading") return <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />;
   if (state.status === "error")
-    return (
-      <p className="text-sm">
-        This person did not load.{" "}
-        <button type="button" className="underline underline-offset-4" onClick={retry}>
-          Try again
-        </button>
-      </p>
-    );
+    return <ErrorState title="this public record did not load." description={null} onRetry={retry} />;
   const { person, claims } = state.value.data;
   if (claimId)
     return (

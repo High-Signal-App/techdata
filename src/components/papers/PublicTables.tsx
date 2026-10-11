@@ -4,7 +4,7 @@ import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { type FilterDef, facetCounts, filterRows } from "@saas-maker/ui/lib/filters";
 import type { ReactNode } from "react";
-import { type Author, type CitedWork, formatYear, type ReadingPath } from "../../adapters/papers";
+import { type Author, type CitedWork, type Envelope, formatYear, type ReadingPath } from "../../adapters/papers";
 import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
 import type { ViewPath } from "../../lib/views";
@@ -56,9 +56,10 @@ const authorColumns: DataColumn<Author>[] = [
 const authorFilters: FilterDef<Author>[] = [
   { kind: "facet", id: "paper", label: "listed arXiv paper", value: (r) => r.top_arxiv_ids },
 ];
-export function PathsView() {
+export function PathsView({ initial }: { initial?: Envelope<{ rows: ReadingPath[] }> }) {
   return (
     <PublicTable
+      initial={initial}
       endpoint="paths"
       label="Reading paths"
       columns={pathColumns}
@@ -121,9 +122,10 @@ export function PathsView() {
     />
   );
 }
-export function CitedView() {
+export function CitedView({ initial }: { initial?: Envelope<{ rows: CitedWork[] }> }) {
   return (
     <PublicTable
+      initial={initial}
       endpoint="cited-works"
       label="Top cited works"
       columns={citedColumns}
@@ -155,9 +157,10 @@ export function CitedView() {
     />
   );
 }
-export function AuthorsView() {
+export function AuthorsView({ initial }: { initial?: Envelope<{ rows: Author[] }> }) {
   return (
     <PublicTable
+      initial={initial}
       endpoint="authors"
       label="Top authors"
       columns={authorColumns}
@@ -191,6 +194,7 @@ export function AuthorsView() {
 /** Small local composition of library controls shared only within this collection. */
 function PublicTable<T extends object>({
   endpoint,
+  initial,
   label,
   columns,
   defs,
@@ -199,6 +203,7 @@ function PublicTable<T extends object>({
   detail,
 }: {
   endpoint: string;
+  initial?: Envelope<{ rows: T[] }>;
   label: string;
   columns: DataColumn<T>[];
   defs: FilterDef<T>[];
@@ -206,7 +211,7 @@ function PublicTable<T extends object>({
   search: (r: T) => string;
   detail: (r: T) => ReactNode;
 }) {
-  const [state, retry] = usePapersApi<{ rows: T[] }>(endpoint);
+  const [state, retry] = usePapersApi<{ rows: T[] }>(endpoint, initial);
   const [filters, setFilters] = useUrlFilters(defs);
   const [id, setId] = useUrlParam("record");
   const [sortParam, setSort] = useUrlParam("sort");

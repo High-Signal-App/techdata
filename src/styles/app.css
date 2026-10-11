@@ -16,3 +16,36 @@
     min-height: 1.25rem;
   }
 }
+
+/* Keep the scroll viewport and pagination slot stable across resource states. */
+.resource-table {
+  min-width: 0;
+  flex: 1;
+}
+.resource-table > [data-slot] {
+  min-height: calc(min(68dvh, 46rem) + 6.5rem);
+}
+.resource-table > [data-slot] > [role="region"],
+.resource-table > [data-slot="data-table-skeleton"] > div:last-child {
+  height: min(68dvh, 46rem);
+}
+.resource-table > [data-slot] > div:first-of-type {
+  min-height: 4.5rem;
+}
+.resource-quotes {
+  height: min(68dvh, 46rem);
+  overflow: auto;
+}
+/* Calm placeholders; no pulse even when reduced motion is not enabled. */
+[data-slot="skeleton"] {
+  animation: none;
+}
+
+.capture-metadata {
+  min-height: 10rem;
+}
+@media (min-width: 640px) {
+  .capture-metadata {
+    min-height: 5rem;
+  }
+}

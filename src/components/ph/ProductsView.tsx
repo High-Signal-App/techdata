@@ -1,13 +1,16 @@
 import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { ActiveFilters, FacetFilter, FilterBar, FilterSearch, useUrlFilters } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, Provenance, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
+import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
 import { Button } from "@saas-maker/ui/components/button";
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import type { FilterDef, FilterState } from "@saas-maker/ui/lib/filters";
+import { createResourceClient, resourceClient, useResource } from "@saas-maker/ui/lib/use-resource";
 import * as React from "react";
 import { PH_META } from "../../adapters/ph/meta";
 import { loadPhQuery, type PhSort, type Product } from "../../adapters/ph/query";
-import { afterPhPaint, latestPhRead, type PhSummary, summaryPage } from "../../adapters/ph/summary";
+import { afterPhPaint, type PhSummary, summaryPage } from "../../adapters/ph/summary";
 import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
@@ -72,67 +75,57 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
   const page = Number.isFinite(requestedPage) ? Math.max(0, Math.trunc(requestedPage) - 1) : 0;
   const [id, direction] = (sortParam ?? "name:asc").split(":");
   const sort: PhSort = { id, desc: direction === "desc" };
-  const [state, setState] = React.useState<"loading" | "error" | "ready">("loading");
-  const [error, setError] = React.useState("");
-  const [result, setResult] = React.useState<Result>({
+  const key = JSON.stringify({ q: filters.q, categories: filters.facets.category, website: filters.facets.website });
+  const client = React.useMemo(() => (typeof window === "undefined" ? createResourceClient() : resourceClient), []);
+  const engine = useResource(
+    "ph-engine",
+    (signal) =>
+      new Promise<Awaited<ReturnType<typeof loadPhQuery>>>((resolve, reject) => {
+        const cancel = afterPhPaint(() => {
+          signal.removeEventListener("abort", abort);
+          void loadPhQuery().then(resolve, reject);
+        });
+        const abort = () => {
+          cancel();
+          reject(new DOMException("cancelled", "AbortError"));
+        };
+        signal.addEventListener("abort", abort, { once: true });
+      }),
+    { client, staleTime: 300_000, cacheTime: Infinity },
+  );
+  const query = engine.data;
+  const read = useResource<Result>(
+    `ph:${key}:${page}:${id}:${direction}:${slug ?? ""}:${!!query}`,
+    async () => {
+      if (!query) throw new Error("catalog is unavailable");
+      const filter = JSON.parse(key);
+      const sorting = { id, desc: direction === "desc" };
+      const unfiltered = !filter.q?.trim() && !filter.categories?.length && !filter.website?.length;
+      const [rows, total, categories, websites, detail] = await Promise.all([
+        query.rows(filter, sorting, page),
+        unfiltered ? Promise.resolve(summary.total) : query.count(filter),
+        unfiltered ? Promise.resolve(summary.categories) : query.facets(filter, "category"),
+        unfiltered ? Promise.resolve(summary.websites) : query.facets(filter, "website"),
+        slug ? query.record(slug) : Promise.resolve(null),
+      ]);
+      performance.mark("ph-query-ready");
+      return { rows, total, categories, websites, detail, provenance: query.provenance };
+    },
+    { client, staleTime: query ? 30_000 : Infinity },
+  );
+  const state = engine.status === "error" || read.status === "error" ? "error" : read.data ? "ready" : "loading";
+  const error = engine.error?.message ?? read.error?.message ?? "";
+  const result = read.data ?? {
     rows: summary.rows.slice(0, 50),
     total: summary.total,
     categories: summary.categories,
     websites: summary.websites,
     detail: null,
     provenance: summary.provenance,
-  });
-  const [query, setQuery] = React.useState<Awaited<ReturnType<typeof loadPhQuery>> | null>(null);
-  const [nonce, setNonce] = React.useState(0);
-  const key = JSON.stringify({ q: filters.q, categories: filters.facets.category, website: filters.facets.website });
-  React.useEffect(() => {
-    void nonce; // Retry a failed engine load without changing the URL.
-    let current = true;
-    const cancel = afterPhPaint(() => {
-      loadPhQuery()
-        .then((engine) => {
-          if (current) setQuery(engine);
-        })
-        .catch((e: unknown) => {
-          if (current) {
-            setError(e instanceof Error ? e.message : "Engine or Parquet file failed.");
-            setState("error");
-          }
-        });
-    });
-    return () => {
-      current = false;
-      cancel();
-    };
-  }, [nonce]);
-  React.useEffect(() => {
-    if (!query) return;
-    setState("loading");
-    const filter = JSON.parse(key);
-    const sorting = { id, desc: direction === "desc" };
-    return latestPhRead(
-      async () => {
-        const unfiltered = !filter.q?.trim() && !filter.categories?.length && !filter.website?.length;
-        const [rows, total, categories, websites, detail] = await Promise.all([
-          query.rows(filter, sorting, page),
-          unfiltered ? Promise.resolve(summary.total) : query.count(filter),
-          unfiltered ? Promise.resolve(summary.categories) : query.facets(filter, "category"),
-          unfiltered ? Promise.resolve(summary.websites) : query.facets(filter, "website"),
-          slug ? query.record(slug) : Promise.resolve(null),
-        ]);
-        return { rows, total, categories, websites, detail, provenance: query.provenance };
-      },
-      (next) => {
-        setResult(next);
-        setState("ready");
-        performance.mark("ph-query-ready");
-      },
-      (e) => {
-        setError(e instanceof Error ? e.message : "Engine or Parquet file failed.");
-        setState("error");
-      },
-    );
-  }, [query, key, page, id, direction, slug, summary]);
+  };
+  const retry = () => {
+    void (engine.status === "error" ? engine.retry() : read.retry());
+  };
   const preview = summaryPage(summary, JSON.parse(key), sort, page);
   const showingSummary = !query || state !== "ready";
   const visibleRows = showingSummary ? (preview ?? summary.rows.slice(0, 50)) : result.rows;
@@ -169,22 +162,9 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
         />
       </FilterBar>
       <ActiveFilters defs={defs} state={filters} onChange={update} className="my-3" />
-      <p className="ph-engine-status my-3 text-sm text-muted-foreground" role="status">
+      <div className="ph-engine-status my-3 text-sm text-muted-foreground" role="status">
         {state === "error" ? (
-          <>
-            Full catalog could not load: {error}{" "}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setQuery(null);
-                setState("loading");
-                setNonce((n) => n + 1);
-              }}
-            >
-              retry
-            </Button>
-          </>
+          <ErrorState title="full catalog could not load." description={null} onRetry={retry} />
         ) : showingSummary ? (
           <>
             Loading full catalog…{" "}
@@ -195,7 +175,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
         ) : (
           "Full catalog ready."
         )}
-      </p>
+      </div>
       <RecordLayout>
         <DataTable
           pin={pin}
@@ -206,7 +186,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
           getRowId={(p) => p.slug}
           status="ready"
           error={`PH Catalog could not load: ${error}`}
-          onRetry={() => setNonce((n) => n + 1)}
+          onRetry={retry}
           selectedId={slug}
           onRowClick={(p) => setSlug(p.slug)}
           pageSize={50}
@@ -248,9 +228,9 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
           className="lg:w-[28rem]"
         >
           {state === "loading" ? (
-            <p className="text-sm">Loading product…</p>
+            <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />
           ) : state === "error" ? (
-            <p className="text-sm">Product could not load. {error}</p>
+            <ErrorState title="product could not load." description={null} onRetry={retry} />
           ) : detail ? (
             <>
               <p className="text-sm leading-relaxed whitespace-pre-line">{detail.description || "not recorded"}</p>

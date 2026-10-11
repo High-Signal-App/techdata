@@ -12,6 +12,7 @@ import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import { facetCounts, filterRows, rangeBounds } from "@saas-maker/ui/lib/filters";
 import {
+  type Envelope,
   formatYear,
   type Paper,
   paperFilters,
@@ -131,17 +132,27 @@ export function paperDetailItems(p: Paper) {
     }));
 }
 
-export default function PapersView() {
+export default function PapersView({ initial }: { initial?: Envelope<{ rows: Paper[]; total: number }> }) {
   const [filters, setFilters] = useUrlFilters(paperFilters);
   const [sortParam, setSort] = useUrlParam("sort");
   const [paperId, setPaperId] = useUrlParam("paper");
   const [pageParam, setPage] = useUrlParam("page");
-  const [state, retry] = usePapersApi<{ rows: Paper[] }>("papers?limit=2000");
+  const [state, retry] = usePapersApi<{ rows: Paper[]; total: number }>("papers?limit=2000", initial);
   const all = state.value?.data.rows ?? [];
+  const total = Math.min(state.value?.data.total ?? all.length, 2000);
+  const pending = all.length < total;
+  // The seed is a complete first page, not the full client-side filter corpus.
+  const needsFullData = !!(
+    filters.q ||
+    sortParam ||
+    pageParam ||
+    Object.values(filters.facets).some((values) => values.length) ||
+    Object.values(filters.ranges).some((range) => range.min != null || range.max != null)
+  );
   const filtered = filterRows(all, paperFilters, filters, { search: paperSearchText });
   const rows = sortPapers(filtered, sortParam ?? undefined);
   const [sortId, direction] = (sortParam ?? "citation_count:desc").split(":");
-  const pageCount = Math.max(1, Math.ceil(rows.length / 50));
+  const pageCount = Math.max(1, Math.ceil((pending ? total : rows.length) / 50));
   const page = Math.min(pageCount - 1, Math.max(0, Number(pageParam ?? 1) - 1) || 0);
   const changeFilters: typeof setFilters = (next) => {
     setFilters(next);
@@ -199,7 +210,7 @@ export default function PapersView() {
           data={rows.slice(page * 50, (page + 1) * 50)}
           columns={paperColumns}
           getRowId={(p) => p.id}
-          status={state.status}
+          status={pending && needsFullData ? "loading" : state.status}
           onRetry={retry}
           error="The public papers exports did not load."
           selectedId={paperId}
@@ -210,13 +221,19 @@ export default function PapersView() {
             setPage(null);
           }}
           pageSize={50}
-          manual={{ rowCount: rows.length, page, onPageChange: (p) => setPage(p ? String(p + 1) : null) }}
+          manual={{
+            rowCount: pending ? total : rows.length,
+            page,
+            onPageChange: (p) => setPage(p ? String(p + 1) : null),
+          }}
           toolbar={() => (
             <>
               <p className="mr-auto text-sm text-muted-foreground tabular-nums" aria-live="polite">
-                {rows.length} of {all.length} publicly exported papers
+                {pending && needsFullData
+                  ? "loading papers…"
+                  : `${rows.length} of ${pending ? total : all.length} publicly exported papers`}
               </p>
-              {state.value && (
+              {state.value && !pending && (
                 <ExportMenu
                   rows={rows}
                   columns={[...paperExport, ...provenanceColumns<Paper>(state.value.provenance)]}
@@ -248,10 +265,10 @@ export default function PapersView() {
   );
 }
 function PaperDetail({ id }: { id: string }) {
-  const [state] = usePapersApi<{ paper: Paper; paths: ReadingPath[]; markdown: string | null }>(
+  const [state, retry] = usePapersApi<{ paper: Paper; paths: ReadingPath[]; markdown: string | null }>(
     `papers/${encodeURIComponent(id)}`,
   );
-  if (!state.value || state.status !== "ready") return <LoadingDetail error={state.status === "error"} />;
+  if (!state.value || state.status !== "ready") return <LoadingDetail error={state.status === "error"} retry={retry} />;
   const { paper: p, paths, markdown } = state.value.data;
   const arxiv = p.arxiv_id ?? (p.id.startsWith("arxiv:") ? p.id.slice(6) : null);
   return (

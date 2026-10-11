@@ -10,6 +10,7 @@ import {
 import { RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
 import { Button } from "@saas-maker/ui/components/button";
 import type { DataColumn, DataSort } from "@saas-maker/ui/components/data-table";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import { Pagination } from "@saas-maker/ui/components/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { ToggleGroup, ToggleGroupItem } from "@saas-maker/ui/components/toggle-group";
@@ -51,6 +52,7 @@ import {
 import type { PlacesSummary } from "../../adapters/nomad/summary";
 import { pinFromColumns } from "../../lib/compare";
 import { usePins } from "../../lib/local-lists";
+import { useJsonResource } from "../../lib/resource";
 import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
 import SaveView from "../views/SaveView";
@@ -184,19 +186,10 @@ function omit<V>(rec: Record<string, V>, key: string): Record<string, V> {
 }
 
 export default function PlacesExplorer({ initial }: { initial: PlacesSummary }) {
-  const [all, setAll] = React.useState<Place[] | null>(null);
-  const [failed, setFailed] = React.useState(false);
-  const load = React.useCallback(() => {
-    setFailed(false);
-    fetch(NOMAD_SNAPSHOT.file)
-      .then((r) => (r.ok ? (r.json() as Promise<Dataset>) : Promise.reject(new Error(String(r.status)))))
-      .then((d) => {
-        if (!Array.isArray(d.cities) || !d.cities.length) throw new Error("empty");
-        setAll(explorable(d.cities));
-      })
-      .catch(() => setFailed(true));
-  }, []);
-  React.useEffect(load, [load]);
+  const resource = useJsonResource<Dataset>(NOMAD_SNAPSHOT.file, undefined, false);
+  const all = React.useMemo(() => (resource.data ? explorable(resource.data.cities) : null), [resource.data]);
+  const failed = resource.status === "error";
+  const load = resource.retry;
 
   const places = all ?? initial.rows;
   const [profileParam, setProfileParam] = useUrlParam("profile");
@@ -467,12 +460,12 @@ export default function PlacesExplorer({ initial }: { initial: PlacesSummary }) 
                 />
               </div>
               {failed ? (
-                <div className="rounded-lg border border-border px-4 py-16 text-center text-sm">
-                  The places snapshot did not load.{" "}
-                  <Button variant="outline" size="sm" onClick={load}>
-                    try again
-                  </Button>
-                </div>
+                <ErrorState
+                  className="rounded-lg border border-border"
+                  title="the places snapshot did not load."
+                  description={null}
+                  onRetry={load}
+                />
               ) : rows.length === 0 && all ? (
                 <div className="rounded-lg border border-border px-4 py-16 text-center text-sm text-muted-foreground">
                   <EmptyState onReset={() => setFilters(emptyFilters())} />

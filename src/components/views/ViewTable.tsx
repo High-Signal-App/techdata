@@ -1,4 +1,11 @@
-import { type DataColumn, DataTable, type DataTableView } from "@saas-maker/ui/components/data-table";
+import {
+  type DataColumn,
+  DataTable,
+  DataTableSkeleton,
+  type DataTableView,
+} from "@saas-maker/ui/components/data-table";
+import { EmptyState } from "@saas-maker/ui/components/empty-state";
+import { ErrorState } from "@saas-maker/ui/components/error-state";
 import * as React from "react";
 import { type PinnedItem, pinKey } from "../../lib/compare";
 import { usePins } from "../../lib/local-lists";
@@ -46,37 +53,70 @@ export default function ViewTable<T extends object>(
       })
     : [];
   const selected = projected.filter(({ item }) => items.some((p) => pinKey(p) === pinKey(item))).map((p) => p.rowId);
+  const loading = props.loading || props.status === "loading";
   return (
-    <DataTable
-      {...rest}
-      columns={initial}
-      key={mounted ? columnsParam : "server"}
-      selection={
-        props.selection ??
-        (pin
-          ? {
-              selected,
-              rowLabel: (row) => pin(row)?.title ?? props.getRowId(row),
-              onChange: (ids) =>
-                update((old) => {
-                  const removed = projected
-                    .filter((p) => selected.includes(p.rowId) && !ids.includes(p.rowId))
-                    .map((p) => pinKey(p.item));
-                  const added = projected
-                    .filter((p) => ids.includes(p.rowId) && !selected.includes(p.rowId))
-                    .map((p) => p.item);
-                  return [...old.filter((p) => !removed.includes(pinKey(p))), ...added];
-                }),
-            }
-          : undefined)
-      }
-      toolbar={(view) => (
-        <>
-          {mounted && <ColumnUrl columns={view.columns} />}
-          {toolbar?.(view)}
-        </>
+    <div className={`resource-table ${props.className ?? ""}`}>
+      {loading ? (
+        <DataTableSkeleton
+          columns={initial.filter((c) => !c.hidden)}
+          rows={props.skeletonRows ?? 50}
+          selection={!!(pin || props.selection)}
+          label={props.label}
+          maxHeight={props.maxHeight}
+        />
+      ) : (
+        <DataTable
+          {...rest}
+          status="ready"
+          data={props.status === "error" ? [] : props.data}
+          empty={
+            props.status === "error" ? (
+              typeof props.error !== "string" && props.error ? (
+                props.error
+              ) : (
+                <ErrorState
+                  title={typeof props.error === "string" ? props.error.toLowerCase() : "this view could not load."}
+                  description={null}
+                  onRetry={props.onRetry}
+                />
+              )
+            ) : (
+              <EmptyState
+                title={typeof props.empty === "string" ? props.empty.toLowerCase() : "nothing matches."}
+                description={typeof props.empty === "string" ? undefined : props.empty}
+              />
+            )
+          }
+          columns={initial}
+          key={mounted ? columnsParam : "server"}
+          selection={
+            props.selection ??
+            (pin
+              ? {
+                  selected,
+                  rowLabel: (row) => pin(row)?.title ?? props.getRowId(row),
+                  onChange: (ids) =>
+                    update((old) => {
+                      const removed = projected
+                        .filter((p) => selected.includes(p.rowId) && !ids.includes(p.rowId))
+                        .map((p) => pinKey(p.item));
+                      const added = projected
+                        .filter((p) => ids.includes(p.rowId) && !selected.includes(p.rowId))
+                        .map((p) => p.item);
+                      return [...old.filter((p) => !removed.includes(pinKey(p))), ...added];
+                    }),
+                }
+              : undefined)
+          }
+          toolbar={(view) => (
+            <>
+              {mounted && <ColumnUrl columns={view.columns} />}
+              {props.status !== "error" && toolbar?.(view)}
+            </>
+          )}
+        />
       )}
-    />
+    </div>
   );
 }
 function ColumnUrl<T>({ columns }: Pick<DataTableView<T>, "columns">) {

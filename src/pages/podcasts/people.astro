@@ -1,6 +1,13 @@
 ---
+import { createPodcastsAdapter } from "../../adapters/podcasts";
 import PeopleView from "../../components/podcasts/PeopleView";
 import Console from "../../layouts/Console.astro";
+
+const initial = await createPodcastsAdapter({
+  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
+})
+  .people(new URLSearchParams({ limit: "50", offset: "0" }))
+  .catch(() => undefined);
 ---
 
 <Console
@@ -10,5 +17,5 @@ import Console from "../../layouts/Console.astro";
   nav="podcasts-people"
   breadcrumbs={[{ label: "podcasts", href: "/podcasts/claims/" }, { label: "people" }]}
 >
-  <PeopleView client:load />
+  <PeopleView initial={initial} client:load />
 </Console>
