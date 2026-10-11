@@ -1,6 +1,8 @@
 ---
 import { Button } from "@saas-maker/ui/components/button";
+import dataset from "../../../public/data/nomad/cities.json";
 import { NOMAD_SNAPSHOT } from "../../adapters/nomad/meta";
+import { placesSummary } from "../../adapters/nomad/summary";
 import PlacesExplorer from "../../components/nomad/PlacesExplorer";
 import Console from "../../layouts/Console.astro";
 ---
@@ -20,5 +22,5 @@ import Console from "../../layouts/Console.astro";
       <a href={NOMAD_SNAPSHOT.file} download="nomad-atlas-cities.json">original json</a>
     </Button>
   </Fragment>
-  <PlacesExplorer client:load />
+  <PlacesExplorer initial={placesSummary(dataset.cities)} client:load />
 </Console>

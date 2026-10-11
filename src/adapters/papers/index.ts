@@ -1,14 +1,16 @@
-/** Read-only public exports; operator ClickHouse and citation edges are out of scope. */
+/** Read-only public exports; operator ClickHouse stays private. */
 import { type FilterDef, facetCounts, filterRows, readFilters } from "@saas-maker/ui/lib/filters";
 import { fold } from "../nomad/model.js";
 import type { CollectionSummary, Provenance, SearchHit } from "../types";
 
 export const PAPERS_BASE = "https://papers.highsignal.app";
 export const PAPERS_SOURCE = "Research Papers (High Signal), CC-BY 4.0";
-export const EDGE_NOTE = "Citation edges are not in the public export (operator ClickHouse only).";
+export const EDGE_NOTE =
+  "Citation edges are not in the public export (operator ClickHouse only). Paper details separately show identifier-verified OpenAlex links within this collection.";
 export const PAPER_LISTS = ["top_papers", "hot", "sleepers", "review_top_papers"] as const;
 export type PaperList = (typeof PAPER_LISTS)[number];
 export type PublishedPaper = {
+  doi?: string;
   arxiv_id?: string;
   paper_id?: string;
   title: string;

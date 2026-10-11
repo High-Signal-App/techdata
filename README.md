@@ -154,9 +154,27 @@ URLs use the existing state hooks.
   papers and 8,981,698 paper edges), not the number of publicly browsable papers.
   Public paper counts are computed from the merged exports. Missing files are
   labelled explicitly; counts then cover only available files.
-- **Citation edges are not in the public export (operator ClickHouse only).**
-  References/citations here are published aggregate metrics, top cited works
-  and readings inside paths. No per-paper reference/citation lists are invented.
+- **Citation links on paper details** come from the separate OpenAlex (CC0)
+  snapshot, matched by DOI or API-verified arXiv location. References and cited-by
+  include only papers in the merged public collection; unmatched or conflicting
+  identifiers are labelled. This is separate from the operator corpus metrics.
+  Source and fetched date appear next to the links. The static JSON is fetched
+  only when a paper detail opens, never for list pages.
+
+Regenerate offline (or with the same command in a scheduler):
+
+```sh
+node scripts/papers-citations.mjs
+```
+
+The script reads all four public paper lists, batches up to 50 DOI filters,
+uses `mailto=techdata@users.noreply.github.com`, makes at most eight requests
+per second, and retries network/429/5xx failures with bounded backoff. It verifies
+DOI/arXiv identifiers in returned OpenAlex locations, never titles. Failed reads
+leave the existing file intact. Output ordering is deterministic for the same
+inputs and timestamp; `public/data/papers/citations.json` has a 1.5 MB cap.
+Home summaries and the first episode page are also read at build time, with their
+actual fetch dates; episodes revalidate through the live API after hydration.
 - Attribution: **Research Papers (High Signal), CC-BY 4.0**, via public JSON
   exports. Every API envelope and export carries source and fetched-at;
   collection date is null when unrecorded. Submitted dates, Markdown

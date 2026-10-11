@@ -169,7 +169,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
         />
       </FilterBar>
       <ActiveFilters defs={defs} state={filters} onChange={update} className="my-3" />
-      <p className="my-3 text-sm text-muted-foreground" role="status">
+      <p className="ph-engine-status my-3 text-sm text-muted-foreground" role="status">
         {state === "error" ? (
           <>
             Full catalog could not load: {error}{" "}
@@ -226,11 +226,15 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
             <>
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 {showingSummary
-                  ? `${summary.total.toLocaleString("en-US")} products · default view`
+                  ? `${summary.total.toLocaleString("en-US")} matching products`
                   : `${result.total.toLocaleString("en-US")} matching products`}
               </p>
-              {state === "ready" && query && (
+              {state === "ready" && query ? (
                 <PhExport key={`${key}:${id}:${direction}`} query={query} filters={JSON.parse(key)} sort={sort} />
+              ) : (
+                <Button variant="ghost" size="sm" disabled>
+                  prepare export
+                </Button>
               )}
             </>
           )}

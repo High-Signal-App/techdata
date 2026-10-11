@@ -48,6 +48,7 @@ import {
   WEATHER_FILTERS,
   writeSort,
 } from "../../adapters/nomad/places";
+import type { PlacesSummary } from "../../adapters/nomad/summary";
 import { pinFromColumns } from "../../lib/compare";
 import { usePins } from "../../lib/local-lists";
 import { today, useUrlParam } from "../../lib/url-state";
@@ -182,7 +183,7 @@ function omit<V>(rec: Record<string, V>, key: string): Record<string, V> {
   return rest;
 }
 
-export default function PlacesExplorer() {
+export default function PlacesExplorer({ initial }: { initial: PlacesSummary }) {
   const [all, setAll] = React.useState<Place[] | null>(null);
   const [failed, setFailed] = React.useState(false);
   const load = React.useCallback(() => {
@@ -197,7 +198,7 @@ export default function PlacesExplorer() {
   }, []);
   React.useEffect(load, [load]);
 
-  const places = all ?? EMPTY;
+  const places = all ?? initial.rows;
   const [profileParam, setProfileParam] = useUrlParam("profile");
   const profile: ProfileId = isProfile(profileParam) ? profileParam : "nomad";
   const defs = React.useMemo(() => placeFilters(profile), [profile]);
@@ -205,11 +206,8 @@ export default function PlacesExplorer() {
   const [sortParam, setSortParam] = useUrlParam("sort");
   const sort: PlaceSort = parseSort(sortParam);
   const [viewParam, setViewParam] = useUrlParam("view");
-  const [narrow, setNarrow] = React.useState(false);
-  React.useEffect(() => setNarrow(matchMedia("(max-width: 639px)").matches), []);
   // Phones default to cards (the table scrolls sideways there); desktop to the table.
-  const view: "table" | "cards" =
-    viewParam === "cards" || viewParam === "table" ? viewParam : narrow ? "cards" : "table";
+  const view = viewParam === "cards" || viewParam === "table" ? viewParam : "auto";
   const [openSlug, setOpenSlug] = useUrlParam("place");
   const [compareParam, setCompareParam] = useUrlParam("compare");
   const shortlist = React.useMemo(() => parseCompare(compareParam), [compareParam]);
@@ -225,10 +223,11 @@ export default function PlacesExplorer() {
   React.useEffect(() => setCardPage(0), [rows]);
 
   const bounds = React.useMemo(() => {
+    if (!all) return initial.bounds;
     const out: Record<string, { min: number; max: number } | null> = {};
     for (const d of defs) if (d.kind === "range") out[d.id] = rangeBounds(places, d.value);
     return out;
-  }, [places, defs]);
+  }, [places, defs, all, initial.bounds]);
   const bySlug = React.useMemo(() => new Map(places.map((p) => [p.slug, p])), [places]);
   const open = openSlug ? bySlug.get(openSlug) : undefined;
   const moreActive = [...MORE_IDS].filter((id) => filters.ranges[id]).length;
@@ -264,9 +263,9 @@ export default function PlacesExplorer() {
   const tableSort: DataSort = [sort];
   const facet = (id: string) => facetCounts(places, defs, filters, id, { search: placeSearchText });
   const activePreset = PRESETS.find((p) => sameFilters(p.apply(), filters))?.id ?? (isEmpty(filters) ? "all" : null);
-  const countries = new Set(rows.map((p) => p.country)).size;
-  const costMedian = median(rows.map((p) => costOf(p, profile)));
-  const netMedian = median(rows.map((p) => p.internet_mbps));
+  const countries = all ? new Set(rows.map((p) => p.country)).size : initial.countries;
+  const costMedian = all ? median(rows.map((p) => costOf(p, profile))) : initial.costMedian;
+  const netMedian = all ? median(rows.map((p) => p.internet_mbps)) : initial.netMedian;
 
   const filterControl = (d: FilterDef<Place>) => {
     if (d.kind === "facet")
@@ -274,7 +273,7 @@ export default function PlacesExplorer() {
         <FacetFilter
           key={d.id}
           label={d.label}
-          options={all ? facet(d.id) : []}
+          options={all ? facet(d.id) : (initial.facets[d.id] ?? [])}
           selected={filters.facets[d.id] ?? []}
           onChange={(v) => setFilters((s) => ({ ...s, facets: { ...s.facets, [d.id]: v } }))}
         />
@@ -396,7 +395,7 @@ export default function PlacesExplorer() {
         <ActiveFilters defs={defs} state={filters} onChange={setFilters} />
       </div>
 
-      {all && rows.length > 0 && (
+      {rows.length > 0 && (
         <dl className="mb-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
           <Stat
             label={`median ${profiles[profile].toLowerCase()} cost`}
@@ -409,52 +408,57 @@ export default function PlacesExplorer() {
 
       <RecordLayout>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
-          {view === "table" ? (
-            <DataTable
-              label="Places"
-              data={rows}
-              columns={columns}
-              getRowId={(p) => p.slug}
-              status={failed ? "error" : all ? "ready" : "loading"}
-              error="The places snapshot did not load."
-              onRetry={load}
-              onRowClick={(p) => setOpenSlug(p.slug)}
-              selectedId={openSlug}
-              selection={{
-                selected: shortlist,
-                onChange: (ids) => {
-                  setNotice(null);
-                  setCompareParam(ids.join(",") || null);
-                },
-                max: MAX_COMPARE,
-                onLimit: () => setNotice(LIMIT_NOTICE),
-                rowLabel: (p) => p.name,
-              }}
-              sort={tableSort}
-              onSortChange={(s) => setSort(s[0] ?? DEFAULT_SORT)}
-              empty={<EmptyState onReset={() => setFilters(emptyFilters())} />}
-              toolbar={(v) => (
-                <Toolbar
-                  count={v.rows.length}
-                  total={places.length}
-                  loaded={!!all}
-                  view={view}
-                  setView={setViewParam}
-                  sort={sort}
-                  setSort={setSort}
-                  rows={v.rows}
-                  profile={profile}
-                />
-              )}
-            />
-          ) : (
-            <>
+          {view !== "cards" && (
+            <div className={view === "auto" ? "hidden sm:block" : undefined}>
+              <DataTable
+                label="Places"
+                data={rows}
+                columns={columns}
+                getRowId={(p) => p.slug}
+                status={failed ? "error" : "ready"}
+                error="The places snapshot did not load."
+                onRetry={load}
+                onRowClick={(p) => setOpenSlug(p.slug)}
+                selectedId={openSlug}
+                selection={{
+                  selected: shortlist,
+                  onChange: (ids) => {
+                    setNotice(null);
+                    setCompareParam(ids.join(",") || null);
+                  },
+                  max: MAX_COMPARE,
+                  onLimit: () => setNotice(LIMIT_NOTICE),
+                  rowLabel: (p) => p.name,
+                }}
+                sort={tableSort}
+                onSortChange={(s) => setSort(s[0] ?? DEFAULT_SORT)}
+                empty={<EmptyState onReset={() => setFilters(emptyFilters())} />}
+                toolbar={(v) => (
+                  <Toolbar
+                    count={all ? v.rows.length : initial.total}
+                    total={all ? places.length : initial.total}
+                    loaded={true}
+                    exportReady={!!all}
+                    view="table"
+                    setView={setViewParam}
+                    sort={sort}
+                    setSort={setSort}
+                    rows={v.rows}
+                    profile={profile}
+                  />
+                )}
+              />
+            </div>
+          )}
+          {view !== "table" && (
+            <div className={view === "auto" ? "sm:hidden" : undefined}>
               <div className="flex min-h-8 flex-wrap items-center gap-2">
                 <Toolbar
-                  count={rows.length}
-                  total={places.length}
-                  loaded={!!all}
-                  view={view}
+                  count={all ? rows.length : initial.total}
+                  total={all ? places.length : initial.total}
+                  loaded={true}
+                  exportReady={!!all}
+                  view="cards"
                   setView={setViewParam}
                   sort={sort}
                   setSort={setSort}
@@ -488,11 +492,11 @@ export default function PlacesExplorer() {
                   ))}
                 </ul>
               )}
-              {rows.length > PAGE && (
+              {(all ? rows.length : initial.total) > PAGE && (
                 <Pagination
                   page={cardPage}
-                  pageCount={Math.ceil(rows.length / PAGE)}
-                  rowCount={rows.length}
+                  pageCount={Math.ceil((all ? rows.length : initial.total) / PAGE)}
+                  rowCount={all ? rows.length : initial.total}
                   pageSize={PAGE}
                   onPageChange={(n) => {
                     setCardPage(n);
@@ -500,7 +504,7 @@ export default function PlacesExplorer() {
                   }}
                 />
               )}
-            </>
+            </div>
           )}
           <p className="text-xs text-muted-foreground">
             * Unusual source estimate (under $100 or over $30,000), kept as published. Missing measurements are excluded
@@ -545,8 +549,6 @@ export default function PlacesExplorer() {
   );
 }
 
-const EMPTY: Place[] = [];
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline gap-2">
@@ -571,6 +573,7 @@ function Toolbar({
   count,
   total,
   loaded,
+  exportReady,
   view,
   setView,
   sort,
@@ -581,6 +584,7 @@ function Toolbar({
   count: number;
   total: number;
   loaded: boolean;
+  exportReady: boolean;
   view: "table" | "cards";
   setView: (v: "table" | "cards") => void;
   sort: PlaceSort;
@@ -609,7 +613,7 @@ function Toolbar({
         }}
       >
         <SelectTrigger size="sm" className="ui-case h-8 w-auto gap-1.5 text-muted-foreground" aria-label="Sort places">
-          <SelectValue placeholder="custom order" />
+          <SelectValue>{SORT_OPTIONS.find((o) => o.id === sortValue)?.label ?? "custom order"}</SelectValue>
         </SelectTrigger>
         <SelectContent align="end">
           {SORT_OPTIONS.map((o) => (
@@ -634,19 +638,17 @@ function Toolbar({
           <LayoutGridIcon />
         </ToggleGroupItem>
       </ToggleGroup>
-      {loaded && (
-        <ExportMenu
-          rows={rows}
-          columns={exportColumns}
-          filename={`nomad-atlas-${rows.length}-places-${today()}`}
-          meta={{
-            collection: "nomad",
-            ...nomadProvenance,
-            profile,
-            filters: typeof location === "undefined" ? null : location.search || null,
-          }}
-        />
-      )}
+      <ExportMenu
+        rows={exportReady ? rows : []}
+        columns={exportColumns}
+        filename={`nomad-atlas-${rows.length}-places-${today()}`}
+        meta={{
+          collection: "nomad",
+          ...nomadProvenance,
+          profile,
+          filters: typeof location === "undefined" ? null : location.search || null,
+        }}
+      />
     </>
   );
 }

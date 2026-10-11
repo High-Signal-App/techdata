@@ -12,7 +12,6 @@ import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import { facetCounts, filterRows, rangeBounds } from "@saas-maker/ui/lib/filters";
 import {
-  EDGE_NOTE,
   formatYear,
   type Paper,
   paperFilters,
@@ -27,6 +26,7 @@ import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
 import SaveView from "../views/SaveView";
 import DataTable from "../views/ViewTable";
+import Citations from "./Citations";
 import { LoadingDetail, MissingExports, PublicProvenance, provenanceColumns, showValue, usePapersApi } from "./shared";
 
 export const paperColumns: DataColumn<Paper>[] = paperSortFields.map((id) => ({
@@ -257,7 +257,7 @@ function PaperDetail({ id }: { id: string }) {
   return (
     <>
       <KeyValueList items={paperDetailItems(p)} />
-      <p className="text-sm text-muted-foreground">{EDGE_NOTE}</p>
+      <Citations id={id} />
       <div className="flex flex-wrap gap-4 text-sm">
         {arxiv && (
           <a
