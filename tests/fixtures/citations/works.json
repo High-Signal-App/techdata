@@ -1,0 +1,33 @@
+[
+  {
+    "id": "https://openalex.org/W1",
+    "doi": "https://doi.org/10.1234/alternate",
+    "locations": [
+      { "landing_page_url": "https://arxiv.org/abs/1706.03762v5", "doi": "https://doi.org/10.48550/arxiv.1706.03762" }
+    ],
+    "referenced_works": [
+      "https://openalex.org/W2",
+      "https://openalex.org/W2",
+      "https://openalex.org/W999",
+      "https://openalex.org/W1"
+    ]
+  },
+  {
+    "id": "https://openalex.org/W2",
+    "doi": "https://doi.org/10.1234/verified",
+    "locations": [],
+    "referenced_works": []
+  },
+  {
+    "id": "https://openalex.org/W3",
+    "doi": "https://doi.org/10.48550/arxiv.2000.00001",
+    "locations": [],
+    "referenced_works": ["https://openalex.org/W1"]
+  },
+  {
+    "id": "https://openalex.org/W4",
+    "doi": "https://doi.org/10.48550/arxiv.2000.00001",
+    "locations": [],
+    "referenced_works": ["https://openalex.org/W1"]
+  }
+]

@@ -1,10 +1,8 @@
-import { Skeleton } from "@saas-maker/ui/components/skeleton";
 import { ArrowUpRightIcon } from "lucide-react";
-import * as React from "react";
 import type { CollectionSummary } from "../adapters/types";
 import { formatDate } from "../lib/url-state";
 
-type Row = CollectionSummary | { id: string; error: string };
+export type OverviewRow = CollectionSummary | { id: string; error: string };
 
 const VIEWS: Record<string, { label: string; href: string }[]> = {
   ph: [{ label: "products", href: "/ph/" }],
@@ -39,24 +37,7 @@ const NAMES: Record<string, string> = {
 };
 
 /** One row per collection: what it holds, where it comes from, how fresh it is. */
-export default function Overview() {
-  const [rows, setRows] = React.useState<Row[] | null>(null);
-  React.useEffect(() => {
-    fetch("/api/collections")
-      .then((r) => (r.ok ? (r.json() as Promise<{ collections: Row[] }>) : Promise.reject(new Error())))
-      .then((d) => setRows(d.collections))
-      .catch(() => setRows([]));
-  }, []);
-
-  if (!rows)
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-36 w-full" />
-        <Skeleton className="h-36 w-full" />
-      </div>
-    );
-  if (!rows.length) return <p className="text-sm">The collections list did not load. Refresh to try again.</p>;
-
+export default function Overview({ rows }: { rows: OverviewRow[] }) {
   return (
     <ul className="flex max-w-4xl flex-col divide-y divide-border border-y border-border">
       {rows.map((c) => (
@@ -114,7 +95,7 @@ export default function Overview() {
                 c.provenance.fetchedAt && (
                   <>
                     <dt className="text-muted-foreground">read</dt>
-                    <dd>live, {formatDate(c.provenance.fetchedAt)}</dd>
+                    <dd>{formatDate(c.provenance.fetchedAt)}</dd>
                   </>
                 )
               )}

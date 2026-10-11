@@ -18,6 +18,25 @@ export default function ViewTable<T extends object>(
   const visible = columnsParam === null ? null : new Set(columnsParam.split(","));
   const initial = columns.map((c) => ({
     ...c,
+    // Keep the initial HTML and browser locale identical for numeric cells.
+    cell:
+      c.cell ??
+      ((row: T) => {
+        const value = c.value(row);
+        return typeof value === "number" ? (
+          value.toLocaleString("en-US")
+        ) : value == null || value === "" ? (
+          <span className="text-muted-foreground/60">—</span>
+        ) : typeof value === "boolean" ? (
+          value ? (
+            "yes"
+          ) : (
+            "no"
+          )
+        ) : (
+          value
+        );
+      }),
     hidden: c.hideable === false ? false : visible ? !visible.has(c.id) : c.hidden,
   }));
   const projected = pin

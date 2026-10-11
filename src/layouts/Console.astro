@@ -1,5 +1,7 @@
 ---
 import { ConsolePage } from "@saas-maker/templates/console-page";
+import figtreeFont from "@saas-maker/ui/fonts/figtree-latin-normal.woff2?url";
+import geistFont from "@saas-maker/ui/fonts/geist-latin-normal.woff2?url";
 import GlobalSearch from "../components/GlobalSearch";
 import CompareTray from "../components/views/CompareTray";
 import SavedViews from "../components/views/SavedViews";
@@ -16,6 +18,10 @@ interface Props {
 }
 
 const { title, heading, description, nav, breadcrumbs } = Astro.props;
+const metaDescription =
+  description.length > 160
+    ? "Cost of living, internet and everyday-life scores for 1,374 places in 205 countries and territories, from the Nomad Atlas snapshot."
+    : description;
 const documentTitle = `${title} · techdata`;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 ---
@@ -26,11 +32,14 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
+    <link rel="preload" href={geistFont} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={figtreeFont} as="font" type="font/woff2" crossorigin />
+    <script type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: documentTitle, description: metaDescription, ...(canonical ? { url: canonical } : {}) })} />
     <title>{documentTitle}</title>
-    <meta name="description" content={description} />
+    <meta name="description" content={metaDescription} />
     {canonical && <link rel="canonical" href={canonical} />}
     <meta property="og:title" content={documentTitle} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={metaDescription} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="techdata" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

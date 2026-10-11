@@ -1,3 +1,18 @@
 /* SaaS Maker UI theme plus every class the ui and templates packages use;
    this app's own files are scanned automatically. */
 /* ConsolePage imports its own scoped console.css (one Tailwind entry per page). */
+
+/* Match the ready table viewport while the live episode page revalidates. */
+.stable-episode-table > [role="region"] {
+  height: min(68dvh, 46rem);
+}
+
+/* Loading/ready copy occupies the same lines above the PH table. */
+.ph-engine-status {
+  min-height: 2.5rem;
+}
+@media (min-width: 640px) {
+  .ph-engine-status {
+    min-height: 1.25rem;
+  }
+}

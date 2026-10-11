@@ -5,7 +5,7 @@ import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { Skeleton } from "@saas-maker/ui/components/skeleton";
 import * as React from "react";
-import { type Claim, type Episode, type Show, transcriptLabel } from "../../adapters/podcasts";
+import { type Claim, type Envelope, type Episode, type Show, transcriptLabel } from "../../adapters/podcasts";
 import { pinFromColumns } from "../../lib/compare";
 import { formatDate, today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
@@ -46,7 +46,9 @@ const columns: DataColumn<Episode>[] = [
 ];
 
 /** Episodes with published claims, newest first, paged on the server. */
-export default function EpisodesView() {
+type EpisodePage = { sources: Episode[]; total: number; publishers: Show[] };
+
+export default function EpisodesView({ initial }: { initial?: Envelope<EpisodePage> }) {
   const [q, setQ] = useUrlParam("q");
   const [show, setShow] = useUrlParam("show");
   const [pageParam, setPageParam] = useUrlParam("page");
@@ -69,12 +71,10 @@ export default function EpisodesView() {
   if (show) params.set("show", show);
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  const [state, retry] = useApi<{ sources: Episode[]; total: number; publishers: Show[] }>(
-    mounted ? `episodes?${params}` : null,
-  );
+  const [state, retry] = useApi<EpisodePage>(mounted ? `episodes?${params}` : null, initial);
   const rows = state.status === "ready" ? state.value.data.sources : [];
   const total = state.status === "ready" ? state.value.data.total : 0;
-  const [publishers, setPublishers] = React.useState<Show[]>([]);
+  const [publishers, setPublishers] = React.useState<Show[]>(initial?.data.publishers ?? []);
   const pin = (e: Episode) =>
     pinFromColumns(
       "/podcasts/",
@@ -105,7 +105,7 @@ export default function EpisodesView() {
             }}
           >
             <SelectTrigger size="sm" className="ui-case h-8 w-auto gap-1.5" aria-label="Show">
-              <SelectValue />
+              <SelectValue>{show ? (publishers.find((p) => p.slug === show)?.name ?? show) : "all shows"}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all" className="ui-case">
@@ -123,7 +123,7 @@ export default function EpisodesView() {
       <RecordLayout>
         <DataTable
           pin={pin}
-          className="flex-1"
+          className="flex-1 stable-episode-table"
           label="Episodes"
           data={rows}
           columns={columns}
@@ -134,7 +134,11 @@ export default function EpisodesView() {
           onRowClick={(e) => setEpisodeId(e.id)}
           selectedId={episodeId}
           pageSize={PAGE}
-          manual={{ rowCount: total, page, onPageChange: (p) => setPageParam(p ? String(p + 1) : null) }}
+          manual={{
+            rowCount: mounted ? total : rows.length,
+            page,
+            onPageChange: (p) => setPageParam(p ? String(p + 1) : null),
+          }}
           empty="No episodes with published claims match."
           toolbar={(view) => (
             <>

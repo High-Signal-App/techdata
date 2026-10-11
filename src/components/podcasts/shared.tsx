@@ -22,14 +22,18 @@ import PinButton from "../views/PinButton";
 export type Loadable<T> = { status: "loading" } | { status: "error" } | { status: "ready"; value: Envelope<T> };
 
 /** GET /api/podcasts/… with abort on change; `key` null skips the request. */
-export function useApi<T>(key: string | null): [Loadable<T>, () => void] {
-  const [state, setState] = React.useState<Loadable<T>>({ status: "loading" });
+export function useApi<T>(key: string | null, initial?: Envelope<T>): [Loadable<T>, () => void] {
+  const [state, setState] = React.useState<Loadable<T>>(
+    initial ? { status: "ready", value: initial } : { status: "loading" },
+  );
   const [nonce, setNonce] = React.useState(0);
+  const loadedKey = React.useRef<string | null>(null);
   React.useEffect(() => {
     if (key === null) return;
     void nonce;
     const ctrl = new AbortController();
-    setState({ status: "loading" });
+    if (!initial || loadedKey.current !== null) setState({ status: "loading" });
+    loadedKey.current = key;
     fetch(`/api/podcasts/${key}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? (r.json() as Promise<Envelope<T>>) : Promise.reject(new Error(String(r.status)))))
       .then((value) => setState({ status: "ready", value }))
@@ -37,7 +41,7 @@ export function useApi<T>(key: string | null): [Loadable<T>, () => void] {
         if (!(e instanceof DOMException && e.name === "AbortError")) setState({ status: "error" });
       });
     return () => ctrl.abort();
-  }, [key, nonce]);
+  }, [key, nonce, initial]);
   return [state, () => setNonce((n) => n + 1)];
 }
 

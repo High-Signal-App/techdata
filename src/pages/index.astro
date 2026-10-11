@@ -1,6 +1,26 @@
 ---
+import { nomadSummary } from "../adapters/nomad/meta";
+import { createPapersAdapter } from "../adapters/papers";
+import { phAdapter } from "../adapters/ph";
+import { createPodcastsAdapter } from "../adapters/podcasts";
+import { createRedditAdapter } from "../adapters/reddit";
 import Overview from "../components/Overview";
 import Console from "../layouts/Console.astro";
+
+// Snapshot the real summaries at build time: first paint needs no API waterfall.
+const results = await Promise.allSettled([
+  Promise.resolve(nomadSummary),
+  createPodcastsAdapter({
+    fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
+  }).summary(),
+  createRedditAdapter({ fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }) }).summary(),
+  phAdapter.summary(),
+  createPapersAdapter({ fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }) }).summary(),
+]);
+const ids = ["nomad", "podcasts", "reddit", "ph", "papers"];
+const rows = results.map((result, i) =>
+  result.status === "fulfilled" ? result.value : { id: ids[i], error: "The source did not answer at build time." },
+);
 ---
 
 <Console
@@ -10,5 +30,5 @@ import Console from "../layouts/Console.astro";
   nav="overview"
   breadcrumbs={[{ label: "overview" }]}
 >
-  <Overview client:load />
+  <Overview rows={rows} />
 </Console>
