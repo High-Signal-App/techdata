@@ -21,7 +21,10 @@ export default function ProductsPreview({ preview }: { preview: PhPreview }) {
         !Array.isArray(summary.categories)
       )
         throw new Error("initial summary identity mismatch");
-      return summary;
+      // Equal metadata from the same checked-in summary does not change pins.
+      return JSON.stringify(summary.provenance) === JSON.stringify(preview.provenance)
+        ? { ...summary, provenance: preview.provenance }
+        : summary;
     },
     { client, staleTime: 300_000 },
   );

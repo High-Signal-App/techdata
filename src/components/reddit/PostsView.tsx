@@ -13,7 +13,14 @@ import type { DataColumn, DataTableView } from "@saas-maker/ui/components/data-t
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { SkeletonText } from "@saas-maker/ui/components/skeleton";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
-import { type FilterDef, facetCounts, filterRows, rangeBounds, readFilters } from "@saas-maker/ui/lib/filters";
+import {
+  type FilterDef,
+  type FilterState,
+  facetCounts,
+  filterRows,
+  rangeBounds,
+  readFilters,
+} from "@saas-maker/ui/lib/filters";
 import * as React from "react";
 import {
   ATTRIBUTION,
@@ -168,7 +175,8 @@ export default function PostsView({
   );
   const [clientFilters, setFilters] = useUrlFilters(defs);
   const serverFilters = React.useMemo(() => readFilters(defs, initialQuery), [initialQuery]);
-  const filters = mounted ? clientFilters : serverFilters;
+  const filterKey = JSON.stringify(mounted ? clientFilters : serverFilters);
+  const filters = React.useMemo<FilterState>(() => JSON.parse(filterKey), [filterKey]);
   const sort = useSort("score", params.get("sort"));
   // Persist the resolved identity so a copied detail URL never drifts to another revision.
   React.useEffect(() => {
