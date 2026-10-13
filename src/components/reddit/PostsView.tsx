@@ -9,15 +9,31 @@ import {
 } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
 import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
-import type { DataColumn } from "@saas-maker/ui/components/data-table";
+import type { DataColumn, DataTableView } from "@saas-maker/ui/components/data-table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { SkeletonText } from "@saas-maker/ui/components/skeleton";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
-import { type FilterDef, facetCounts, filterRows, rangeBounds } from "@saas-maker/ui/lib/filters";
+import {
+  type FilterDef,
+  type FilterState,
+  facetCounts,
+  filterRows,
+  rangeBounds,
+  readFilters,
+} from "@saas-maker/ui/lib/filters";
 import * as React from "react";
-import { ATTRIBUTION, type Catalog, type Comment, type Post, type Snapshot, snapshotHref } from "../../adapters/reddit";
+import {
+  ATTRIBUTION,
+  type Catalog,
+  type Comment,
+  type Envelope,
+  type Post,
+  type Snapshot,
+  snapshotHref,
+} from "../../adapters/reddit";
 import type { Provenance } from "../../adapters/types";
 import { pinFromColumns } from "../../lib/compare";
+import type { CaptureMetadata } from "../../lib/reddit-initial";
 import { useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
 import SaveView from "../views/SaveView";
@@ -28,6 +44,9 @@ const defs: FilterDef<Post>[] = [
   { kind: "facet", id: "label", label: "post label", value: (p) => p.flair || "not recorded" },
   { kind: "range", id: "score", label: "recorded score", value: (p) => p.score },
 ];
+const noPosts: Post[] = [];
+const postRowId = (post: Post) => post.id;
+const searchPost = (post: Post) => `${post.title} ${post.body}`;
 const columns: DataColumn<Post>[] = [
   {
     id: "title",
@@ -103,7 +122,7 @@ function Picker({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger size="sm" className="h-8 w-auto max-w-full" aria-label={label}>
-        <SelectValue placeholder={label} />
+        <SelectValue placeholder={label}>{value || label}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {options.map((v) => (
@@ -115,12 +134,23 @@ function Picker({
     </Select>
   );
 }
-export default function PostsView() {
-  const [catalog, retryCatalog] = useApi<Catalog>("catalog");
-  const [subreddit, setSubreddit] = useUrlParam("subreddit");
-  const [date, setDate] = useUrlParam("date");
-  const [version, setVersion] = useUrlParam("v");
-  const [postId, setPostId] = useUrlParam("post");
+export default function PostsView({
+  initialCatalog,
+  initialMetadata,
+  initialBounds,
+  initialQuery = "",
+}: {
+  initialCatalog?: Envelope<Catalog>;
+  initialMetadata?: Envelope<CaptureMetadata>;
+  initialBounds?: { min: number; max: number } | null;
+  initialQuery?: string;
+}) {
+  const params = new URLSearchParams(initialQuery);
+  const [catalog, retryCatalog] = useApi<Catalog>("catalog", initialCatalog);
+  const [subreddit, setSubreddit] = useUrlParam("subreddit", params.get("subreddit"));
+  const [date, setDate] = useUrlParam("date", params.get("date"));
+  const [version, setVersion] = useUrlParam("v", params.get("v"));
+  const [postId, setPostId] = useUrlParam("post", params.get("post"));
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
   const entries =
@@ -130,13 +160,24 @@ export default function PostsView() {
   const community = subreddit ?? entries[0]?.subreddit;
   const dates = [...new Set(entries.filter((e) => e.subreddit === community).map((e) => e.date))].sort().reverse();
   const day = date ?? dates[0];
+  const seed =
+    initialMetadata &&
+    initialMetadata.data.subreddit === community &&
+    initialMetadata.data.date === day &&
+    (!version || initialMetadata.data.source.revision.startsWith(version))
+      ? initialMetadata
+      : undefined;
+  const servingVersion = version ?? seed?.data.source.revision.slice(0, 12);
   const [state, retry] = useApi<Snapshot>(
     mounted && community && day
-      ? `snapshots/${day}/${encodeURIComponent(community)}${version ? `?v=${encodeURIComponent(version)}` : ""}`
+      ? `snapshots/${day}/${encodeURIComponent(community)}${servingVersion ? `?v=${encodeURIComponent(servingVersion)}` : ""}`
       : null,
   );
-  const [filters, setFilters] = useUrlFilters(defs);
-  const sort = useSort("score");
+  const [clientFilters, setFilters] = useUrlFilters(defs);
+  const serverFilters = React.useMemo(() => readFilters(defs, initialQuery), [initialQuery]);
+  const filterKey = JSON.stringify(mounted ? clientFilters : serverFilters);
+  const filters = React.useMemo<FilterState>(() => JSON.parse(filterKey), [filterKey]);
+  const sort = useSort("score", params.get("sort"));
   // Persist the resolved identity so a copied detail URL never drifts to another revision.
   React.useEffect(() => {
     if (
@@ -150,34 +191,79 @@ export default function PostsView() {
     if (!version) setVersion(state.value.data.source.revision.slice(0, 12));
   }, [state, subreddit, date, version, setSubreddit, setDate, setVersion, community, day]);
   const snapshot = state.status === "ready" ? state.value.data : null;
-  const all = snapshot?.posts ?? [];
-  const search = (p: Post) => `${p.title} ${p.body}`;
-  const rows = filterRows(all, defs, filters, { search });
-  const bounds = rangeBounds(all, (p) => p.score);
+  const all = snapshot?.posts ?? noPosts;
+  const rows = React.useMemo(() => filterRows(all, defs, filters, { search: searchPost }), [all, filters]);
+  const labels = React.useMemo(() => facetCounts(all, defs, filters, "label", { search: searchPost }), [all, filters]);
+  const recordedBounds = React.useMemo(() => rangeBounds(all, (p) => p.score), [all]);
+  const bounds = snapshot ? recordedBounds : seed ? initialBounds : null;
+  const metadata = snapshot ?? (seed && Date.parse(seed.data.expiresAt) > Date.now() ? seed.data : null);
+  React.useEffect(() => {
+    if (state.status === "ready") performance.mark("reddit-query-ready");
+  }, [state.status]);
   const post = all.find((p) => p.id === postId);
-  const pin = (p: Post) =>
-    pinFromColumns(
-      "/reddit/posts/",
-      p.id,
-      p.title,
-      p,
-      columns,
-      state.status === "ready" ? state.value.provenance : undefined,
-      "post",
-      snapshot ? { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision.slice(0, 12) } : {},
-      `https://www.reddit.com${p.permalink}`,
-    );
-  const meta =
-    state.status === "ready"
-      ? {
-          collection: "reddit",
-          ...state.value.provenance,
-          attribution: ATTRIBUTION,
-          window: state.value.data.window,
-          coverage: state.value.data.coverage,
-          filters,
-        }
-      : undefined;
+  const sourceInfo = state.status === "ready" ? state.value.provenance : undefined;
+  const openPost = React.useCallback((post: Post) => setPostId(post.id), [setPostId]);
+  const pin = React.useCallback(
+    (p: Post) =>
+      pinFromColumns(
+        "/reddit/posts/",
+        p.id,
+        p.title,
+        p,
+        columns,
+        sourceInfo,
+        "post",
+        snapshot
+          ? { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision.slice(0, 12) }
+          : {},
+        `https://www.reddit.com${p.permalink}`,
+      ),
+    [sourceInfo, snapshot],
+  );
+  const meta = React.useMemo(
+    () =>
+      snapshot && sourceInfo
+        ? {
+            collection: "reddit",
+            ...sourceInfo,
+            attribution: ATTRIBUTION,
+            window: snapshot.window,
+            coverage: snapshot.coverage,
+            filters,
+          }
+        : undefined,
+    [snapshot, sourceInfo, filters],
+  );
+  const toolbar = React.useCallback(
+    (view: DataTableView<Post>) => (
+      <>
+        <span className="text-sm text-muted-foreground">{rows.length} threads</span>
+        {snapshot && (
+          <>
+            <ExportMenu
+              label="export posts"
+              rows={view.rows}
+              columns={exportColumns(postFields, snapshot)}
+              filename={`reddit-${snapshot.subreddit}-${snapshot.date}-posts`}
+              meta={meta}
+            />
+            <ExportMenu
+              label="export comments"
+              rows={snapshot.comments}
+              columns={exportColumns(commentFields, snapshot)}
+              filename={`reddit-${snapshot.subreddit}-${snapshot.date}-comments`}
+              meta={{
+                ...meta,
+                filters: { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision },
+                scope: "all retained comments in the selected snapshot",
+              }}
+            />
+          </>
+        )}
+      </>
+    ),
+    [rows.length, snapshot, meta],
+  );
   return (
     <div className="flex flex-col gap-4">
       <FilterBar>
@@ -210,7 +296,7 @@ export default function PostsView() {
         />
         <FacetFilter
           label="post label"
-          options={facetCounts(all, defs, filters, "label", { search })}
+          options={labels}
           selected={filters.facets.label ?? []}
           onChange={(v) => setFilters({ ...filters, facets: { ...filters.facets, label: v } })}
         />
@@ -228,10 +314,10 @@ export default function PostsView() {
       </FilterBar>
       <ActiveFilters defs={defs} state={filters} onChange={setFilters} />
       <div className="capture-metadata">
-        {snapshot ? (
+        {metadata ? (
           <>
-            <Freshness snapshot={snapshot} />
-            <p className="text-sm text-muted-foreground">{snapshot.coverage.note}</p>
+            <Freshness snapshot={metadata} />
+            <p className="text-sm text-muted-foreground">{metadata.coverage.note}</p>
           </>
         ) : state.status === "loading" &&
           catalog.status !== "error" &&
@@ -243,9 +329,10 @@ export default function PostsView() {
         <DataTable
           pin={pin}
           label="Captured threads"
+          initialColumns={params.get("columns")}
           data={rows}
           columns={columns}
-          getRowId={(p) => p.id}
+          getRowId={postRowId}
           status={!community || !day ? catalog.status : state.status}
           {...sort}
           onRetry={!community || !day ? retryCatalog : retry}
@@ -256,36 +343,10 @@ export default function PostsView() {
               <ReadError error={state.error} retry={retry} />
             ) : undefined
           }
-          onRowClick={(p) => setPostId(p.id)}
+          onRowClick={openPost}
           selectedId={postId}
           empty="No captured threads match."
-          toolbar={(view) => (
-            <>
-              <span className="text-sm text-muted-foreground">{rows.length} threads</span>
-              {snapshot && (
-                <>
-                  <ExportMenu
-                    label="export posts"
-                    rows={view.rows}
-                    columns={exportColumns(postFields, snapshot)}
-                    filename={`reddit-${snapshot.subreddit}-${snapshot.date}-posts`}
-                    meta={meta}
-                  />
-                  <ExportMenu
-                    label="export comments"
-                    rows={snapshot.comments}
-                    columns={exportColumns(commentFields, snapshot)}
-                    filename={`reddit-${snapshot.subreddit}-${snapshot.date}-comments`}
-                    meta={{
-                      ...meta,
-                      filters: { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision },
-                      scope: "all retained comments in the selected snapshot",
-                    }}
-                  />
-                </>
-              )}
-            </>
-          )}
+          toolbar={toolbar}
         />
         <RecordDetail
           actions={post && <PinButton item={pin(post)} />}

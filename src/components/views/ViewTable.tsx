@@ -11,47 +11,59 @@ import { type PinnedItem, pinKey } from "../../lib/compare";
 import { usePins } from "../../lib/local-lists";
 import { setParam, useUrlParam } from "../../lib/url-state";
 
+const numbers = new Intl.NumberFormat("en-US");
+
 /** Library visibility is internal; initialise it from the URL and observe its toolbar view. */
-export default function ViewTable<T extends object>(
+function ViewTable<T extends object>(
   props: React.ComponentProps<typeof DataTable<T>> & {
     pin?: (row: T) => PinnedItem | null;
+    initialColumns?: string | null;
   },
 ) {
-  const [columnsParam] = useUrlParam("columns");
-  const [mounted, mount] = React.useState(false);
-  React.useEffect(() => mount(true), []);
+  const [columnsParam] = useUrlParam("columns", props.initialColumns ?? null);
   const { items, update } = usePins();
-  const { pin, toolbar, columns, ...rest } = props;
-  const visible = columnsParam === null ? null : new Set(columnsParam.split(","));
-  const initial = columns.map((c) => ({
-    ...c,
-    // Keep the initial HTML and browser locale identical for numeric cells.
-    cell:
-      c.cell ??
-      ((row: T) => {
-        const value = c.value(row);
-        return typeof value === "number" ? (
-          value.toLocaleString("en-US")
-        ) : value == null || value === "" ? (
-          <span className="text-muted-foreground/60">—</span>
-        ) : typeof value === "boolean" ? (
-          value ? (
-            "yes"
+  const { pin, toolbar, columns, initialColumns: _initialColumns, ...rest } = props;
+  const requested = columnsParam === null ? null : new Set(columnsParam.split(","));
+  const visibility = JSON.stringify(
+    columns.filter((c) => c.hideable === false || (requested ? requested.has(c.id) : !c.hidden)).map((c) => c.id),
+  );
+  const initial = React.useMemo(() => {
+    const visible = new Set<string>(JSON.parse(visibility));
+    return columns.map((c) => ({
+      ...c,
+      // Keep the initial HTML and browser locale identical for numeric cells.
+      cell:
+        c.cell ??
+        ((row: T) => {
+          const value = c.value(row);
+          return typeof value === "number" ? (
+            numbers.format(value)
+          ) : value == null || value === "" ? (
+            <span className="text-muted-foreground/60">—</span>
+          ) : typeof value === "boolean" ? (
+            value ? (
+              "yes"
+            ) : (
+              "no"
+            )
           ) : (
-            "no"
-          )
-        ) : (
-          value
-        );
-      }),
-    hidden: c.hideable === false ? false : visible ? !visible.has(c.id) : c.hidden,
-  }));
-  const projected = pin
-    ? props.data.flatMap((row) => {
-        const item = pin(row);
-        return item ? [{ rowId: props.getRowId(row), item }] : [];
-      })
-    : [];
+            value
+          );
+        }),
+      hidden: !visible.has(c.id),
+    }));
+  }, [columns, visibility]);
+  const projected = React.useMemo(
+    () =>
+      pin
+        ? props.data.flatMap((row) => {
+            const item = pin(row);
+            return item ? [{ rowId: props.getRowId(row), item }] : [];
+          })
+        : [],
+    [pin, props.data, props.getRowId],
+  );
+  const pinLabels = new Map(projected.map(({ rowId, item }) => [rowId, item.title]));
   const selected = projected.filter(({ item }) => items.some((p) => pinKey(p) === pinKey(item))).map((p) => p.rowId);
   const loading = props.loading || props.status === "loading";
   return (
@@ -59,7 +71,7 @@ export default function ViewTable<T extends object>(
       {loading ? (
         <DataTableSkeleton
           columns={initial.filter((c) => !c.hidden)}
-          rows={props.skeletonRows ?? 50}
+          rows={props.skeletonRows ?? 20}
           selection={!!(pin || props.selection)}
           label={props.label}
           maxHeight={props.maxHeight}
@@ -88,13 +100,13 @@ export default function ViewTable<T extends object>(
             )
           }
           columns={initial}
-          key={mounted ? columnsParam : "server"}
+          key={visibility}
           selection={
             props.selection ??
             (pin
               ? {
                   selected,
-                  rowLabel: (row) => pin(row)?.title ?? props.getRowId(row),
+                  rowLabel: (row) => pinLabels.get(props.getRowId(row)) ?? props.getRowId(row),
                   onChange: (ids) =>
                     update((old) => {
                       const removed = projected
@@ -110,7 +122,7 @@ export default function ViewTable<T extends object>(
           }
           toolbar={(view) => (
             <>
-              {mounted && <ColumnUrl columns={view.columns} />}
+              <ColumnUrl columns={view.columns} />
               {props.status !== "error" && toolbar?.(view)}
             </>
           )}
@@ -119,10 +131,15 @@ export default function ViewTable<T extends object>(
     </div>
   );
 }
+export default React.memo(ViewTable) as typeof ViewTable;
+
 function ColumnUrl<T>({ columns }: Pick<DataTableView<T>, "columns">) {
   const value = columns.map((c: DataColumn<T>) => c.id).join(",");
   React.useEffect(() => {
-    setParam("columns", value);
+    // The parent first reads an explicit URL view in its mount effect. Writing
+    // sooner would replace that requested view with the server's defaults.
+    const frame = requestAnimationFrame(() => setParam("columns", value));
+    return () => cancelAnimationFrame(frame);
   }, [value]);
   return null;
 }

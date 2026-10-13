@@ -1,4 +1,9 @@
-import { SearchPalette, type SearchResult, type SearchSource } from "@saas-maker/ui/blocks/search-palette";
+import {
+  openSearchPalette,
+  SearchPalette,
+  type SearchResult,
+  type SearchSource,
+} from "@saas-maker/ui/blocks/search-palette";
 import * as React from "react";
 import { pinKey } from "../lib/compare";
 import { usePins } from "../lib/local-lists";
@@ -13,6 +18,13 @@ type QueryResult = {
 /** Collection groups share one server request; PH loads only on an open-palette query. */
 export default function GlobalSearch() {
   const { items: pins } = usePins();
+  React.useEffect(() => {
+    const island = document.querySelector<HTMLElement>("astro-island[data-search-requested]");
+    if (island) {
+      delete island.dataset.searchRequested;
+      openSearchPalette();
+    }
+  }, []);
   const cache = React.useRef(new Map<string, QueryResult>());
   const open = React.useRef(false);
   const [revision, refresh] = React.useReducer((n: number) => n + 1, 0);

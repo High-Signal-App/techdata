@@ -13,10 +13,83 @@ Collectors stay in their own repos; techdata only reads until parity is proven.
 | Collection | Source | Read via | Freshness |
 | --- | --- | --- | --- |
 | Nomad Atlas places | Nomads.com, via `Significant-Hobbies/nomad-data-adventure` | Bundled `public/data/nomad/cities.json` (byte-identical, sha256-checked) and Atlas's `model.js` copied unchanged | Snapshot collected 2026-09-07, published 2026-09-13 (`517cbeb`) |
-| High Signal Podcasts | `Significant-Hobbies/on-record` | Public API `api.podcasts.highsignal.app/api` (read-only) | Live; every response records when it was read |
+| High Signal Podcasts | `Significant-Hobbies/on-record` | Public API `api.podcasts.highsignal.app/api` (read-only) | API read-time provenance; collection cadence is separate (below) |
 | Reddit Insights | Reddit, via `High-Signal-App/research-subreddit` | Public Snapshot API `reddit-insights.highsignal.app/api/snapshots` (GET only) | Capture windows and revision on every snapshot; 24-hour serving leases |
 | PH Catalog | Product Hunt public pages, via `Significant-Hobbies/ph-catalog` | Browser DuckDB-WASM over private R2 Parquet via the Worker | ph-catalog catalog-state, published/exported 2026-10-10; 575,479 products, 93,897 with categories |
 | Research Papers | `High-Signal-App/research-papers` | Public GET JSON exports at `papers.highsignal.app` (CC-BY 4.0) | Response Date/Last-Modified or read time; collection date not recorded |
+
+## Collector ownership and refresh workflows (source evidence)
+
+This inventory is the portable documentation portion of [#12](https://github.com/High-Signal-App/techdata/issues/12),
+based on public checked-in source/docs reviewed on 2026-10-13. The
+[owner recommendation](https://github.com/High-Signal-App/techdata/issues/12#issuecomment-6100217087)
+is a recommendation, not finalized approval of a collector architecture.
+techdata currently reads through adapters; collector code and writes remain in
+the source repos. Repository ownership below means responsibility in checked-in
+code/docs, not a verified on-call assignment or proof that a job is enabled.
+Configured schedules, suggested cadences, serving leases and successful live
+refreshes are different kinds of evidence.
+
+| Collection | Owning source repo | Evidenced refresh cadence/workflow | Export path and techdata handoff |
+| --- | --- | --- | --- |
+| Nomad Atlas | [Significant-Hobbies/nomad-data-adventure](https://github.com/Significant-Hobbies/nomad-data-adventure) | Completed saved-snapshot experiment; source README states no active collection or expansion roadmap. No recurring refresh is evidenced. | Source `data/nomads_cities.json` and public `cities.json` are byte-identical. techdata bundles `public/data/nomad/cities.json` and the unchanged source `model.js`; local hash/parity tests pin these copies. Current bundled collection date is 2026-09-07. |
+| High Signal Podcasts | [Significant-Hobbies/on-record](https://github.com/Significant-Hobbies/on-record) | Checked-in `cron-ingest.yml`: discovery/transcripts daily at 06:00 UTC (11:30 IST), plus Sunday 07:00 UTC (12:30 IST) discovery/transcripts and claim extraction; manual dispatch also exists. These are configured triggers, not verified active runs. | Python ingest writes through the source Worker publication gate; D1 holds records and R2 holds raw material. techdata reads the public `api.podcasts.highsignal.app/api/{stats,episodes,people,claims}` routes, not raw storage or a database dump. Published API data needs no source SSR rebuild. |
+| Reddit Insights | [High-Signal-App/research-subreddit](https://github.com/High-Signal-App/research-subreddit) | Historical ingest/analyze/UI pipeline is documented as manual. The daily Worker is explicitly an **undeployed scaffold**, despite its configured 02:17 UTC (07:47 IST) cron. Current forward-collector activation/cutover and actual publication/lease-renewal cadence are unknown from the reviewed evidence. | Daily-v2 archive import verifies source packs and writes minimized gzip derivatives in `artifacts/daily-snapshots/`; publication writes `reddit-insights/exports/v1/index.json` and catalogued derivatives to private storage. techdata reads public `/api/snapshots/catalog` and `/api/snapshots/:date/:subreddit?v=` at `reddit-insights.highsignal.app`, never raw archives. A 24-hour serving lease is an expiry rule, not proof of daily collection. |
+| Research Papers | [High-Signal-App/research-papers](https://github.com/High-Signal-App/research-papers) | Operations docs **suggest** daily arXiv/OpenReview, weekly citation graph, and daily overlay/export jobs via host `launchd`. Installed jobs, host timezone, latest successful run and current cadence are unverified. | `papers export-ch` regenerates `web/public/data/*.json` from ClickHouse; docs describe `papers warm-update --build-web` and a subsequent static rebuild/publication. techdata reads public `/data/{top_papers,hot,sleepers,review_top_papers,top_cited_works,top_authors,summary}.json`, `/paths.json` and supported `/paper/:arxiv_id.md` routes at `papers.highsignal.app`, not operator ClickHouse/API state. |
+| PH Catalog | [Significant-Hobbies/ph-catalog](https://github.com/Significant-Hobbies/ph-catalog) | Checked-in `daily.yml`: daily 21:47 UTC (03:17 IST next day), self-hosted macOS/ARM64 runner, bounded `daily --limit 500 --workers 2 --rps 0.25`, verification and release export. Enabled scheduler, runner health and successful private export are unverified. | Source generates `producthunt-full.parquet` (seven-field product table) and `ph-catalog-full.tar.zst` (portable catalogue/provenance archive), uploaded to mutable private `catalog-state` release. techdata's allowlisted R2 read path is `/api/files/ph/producthunt-full.parquet`; `public/data/ph/summary.json` is a derived first-paint summary. A source daily release does **not** automatically update either techdata copy. |
+
+### Evidence and unresolved details
+
+The links below pin the reviewed source revisions; they are source evidence,
+not new production receipts or instructions to run the collectors.
+
+- **Nomad:** [README at `32ad9ff`](https://github.com/Significant-Hobbies/nomad-data-adventure/blob/32ad9ff23f769483debb023e9a1467ed5a44196d/README.md)
+  states the completed/snapshot-only status. [techdata snapshot metadata](src/adapters/nomad/meta.ts)
+  retains the original collection date/revision. A future recollection or copy
+  refresh needs a separate decision; this inventory does not schedule one.
+- **Podcasts:** [workflow at `752b16e`](https://github.com/Significant-Hobbies/on-record/blob/752b16ebf3a954865248596be7fc7ea4756293cf/.github/workflows/cron-ingest.yml),
+  [ingest runbook](https://github.com/Significant-Hobbies/on-record/blob/752b16ebf3a954865248596be7fc7ea4756293cf/docs/operations/ingest.md)
+  and [README](https://github.com/Significant-Hobbies/on-record/blob/752b16ebf3a954865248596be7fc7ea4756293cf/README.md).
+  The runbook's daily `--focus recs` description disagrees with the workflow's
+  weekly `--focus all --max-segments 40` extraction step; the table reports the
+  checked-in workflow. README also labels the project inactive. Neither cron
+  syntax nor an HTTP read timestamp establishes active ingestion or publication.
+- **Reddit:** [README at `2c3abee`](https://github.com/High-Signal-App/research-subreddit/blob/2c3abee96e1ec9628c17508821fe30d67b4d272e/README.md),
+  [collector activation gate](https://github.com/High-Signal-App/research-subreddit/blob/2c3abee96e1ec9628c17508821fe30d67b4d272e/workers/daily-collector/README.md),
+  [scaffold cron](https://github.com/High-Signal-App/research-subreddit/blob/2c3abee96e1ec9628c17508821fe30d67b4d272e/workers/daily-collector/wrangler.jsonc)
+  and [ownership/handoff contract](https://github.com/High-Signal-App/research-subreddit/blob/2c3abee96e1ec9628c17508821fe30d67b4d272e/docs/high-signal-integration.md).
+  The docs assign canonical collector/archive responsibility to Reddit Insights
+  and describe transition from a High Signal-hosted archive. They do not establish
+  completed cutover here. The documented publisher renews leases only after an
+  authoritative manifest reread; private archive/redaction/renewal receipts remain
+  an operator gate. No duplicate collector activation is implied.
+- **Papers:** [suggested jobs at `ef940e9`](https://github.com/High-Signal-App/research-papers/blob/ef940e90968391c5f0db624f3468ce23af87fd8f/docs/operations/jobs.md),
+  [data/export map](https://github.com/High-Signal-App/research-papers/blob/ef940e90968391c5f0db624f3468ce23af87fd8f/docs/operations/data-map.md)
+  and [refresh quality manifest](https://github.com/High-Signal-App/research-papers/blob/ef940e90968391c5f0db624f3468ce23af87fd8f/docs/operations/refresh-manifest.md).
+  Suggested host times are 03:00 arXiv, 04:00 OpenReview, 05:00 weekly graph,
+  06:00 overlay/export; timezone/installation are not evidenced. Actual watermarks,
+  output counts and failures live in the gitignored operator refresh manifest,
+  which was not read. techdata's separate `scripts/papers-citations.mjs` produces
+  `public/data/papers/citations.json` from public paper lists/OpenAlex; no recurring
+  schedule is checked in for that supplemental snapshot, and none is added here.
+- **PH:** [daily workflow at `13d3167`](https://github.com/Significant-Hobbies/ph-catalog/blob/13d3167a141f8784d7e350f4000882676871cda8/.github/workflows/daily.yml),
+  [README](https://github.com/Significant-Hobbies/ph-catalog/blob/13d3167a141f8784d7e350f4000882676871cda8/README.md)
+  and [portable handoff docs](https://github.com/Significant-Hobbies/ph-catalog/blob/13d3167a141f8784d7e350f4000882676871cda8/docs/machine-handoff.md).
+  The immutable `catalog-handoff-v1` archive is a separate documented boundary
+  from the mutable `catalog-state` release; private assets/checksum receipts were
+  not fetched. A [03:15 host-local launchd template](https://github.com/Significant-Hobbies/ph-catalog/blob/13d3167a141f8784d7e350f4000882676871cda8/launchd/local.ph-catalog.daily.plist)
+  also exists, but installation and coexistence with Actions are unknown. It is
+  not evidence of a second active scheduler. techdata summary generation and
+  approved R2 replacement remain separate maintenance steps described below.
+
+**Open gates:** the keep-versus-relocate architecture decision in #12 remains
+with the owner, as does any source-site retirement decision in #13. Current
+operator/on-call assignments, enabled schedules, private manifests/releases,
+credential readiness, last successful collection/publication and live export
+freshness remain unverified. A fetched date records a read, not collector success;
+missing upstream collection dates stay missing. This documentation phase adds
+no freshness enforcement, collector relocation, job activation, schedule/resource/
+configuration change, credential provisioning or retirement approval.
 
 ## Nomad Atlas parity
 
