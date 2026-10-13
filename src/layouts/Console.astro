@@ -44,6 +44,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="techdata" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {Astro.url.pathname === "/" && <link rel="alternate" type="text/markdown" href="/index.md" />}
   </head>
   <body>
     <a

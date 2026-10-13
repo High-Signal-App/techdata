@@ -78,7 +78,12 @@ export default function SavedViews() {
             })}
           </ul>
         ) : (
-          <p className="text-xs text-muted-foreground">save a collection’s filters, sort and columns here.</p>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">save a collection’s filters, sort and columns here.</p>
+            <a className="inline-block text-xs underline underline-offset-4" href="/nomad/">
+              explore places
+            </a>
+          </div>
         )}
       </div>
       {!persistent && (
