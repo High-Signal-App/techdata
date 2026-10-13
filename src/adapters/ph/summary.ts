@@ -16,7 +16,7 @@ export type PhSummary = {
 export type PhPreview = Omit<PhSummary, "categories">;
 export function phPreview(summary: PhSummary): PhPreview {
   const { categories: _categories, ...preview } = summary;
-  return { ...preview, rows: summary.rows.slice(0, 50) };
+  return { ...preview, rows: summary.rows.slice(0, 20) };
 }
 
 /** Only complete unfiltered pages can be answered by this prefix of the export. */

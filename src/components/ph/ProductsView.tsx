@@ -153,13 +153,7 @@ export default function ProductsView({
   const visibleRows = showingSummary ? (preview ?? prefix) : result.rows;
   // The fixed viewport never displays more than 20 rows. Restore the complete
   // established page at hydration; no summary rows or full-catalog counts change.
-  const paintedRows = React.useMemo(() => (mounted ? visibleRows : visibleRows.slice(0, 20)), [mounted, visibleRows]);
-  // The fetched summary repeats this verified prefix. Preserve the table's
-  // inputs when every product field agrees, while actual query changes redraw.
-  const rowsKey = JSON.stringify(paintedRows);
-  const [retained, retain] = React.useState({ key: rowsKey, rows: paintedRows });
-  const tableRows = retained.key === rowsKey ? retained.rows : paintedRows;
-  if (retained.key !== rowsKey) retain({ key: rowsKey, rows: paintedRows });
+  const paintedRows = mounted ? visibleRows : visibleRows.slice(0, 20);
   const update = (next: FilterState) => {
     setFilters(next);
     setPage(null);
@@ -240,7 +234,7 @@ export default function ProductsView({
           <>
             Loading full catalog…{" "}
             {previewOnly
-              ? "Showing initial products."
+              ? "Showing 20 initial products."
               : preview
                 ? "You can browse the first 100 products by name."
                 : "Your view is queued; showing the first 50 products by name until ready."}
@@ -254,7 +248,7 @@ export default function ProductsView({
           pin={pin}
           className="flex-1"
           label="PH products"
-          data={tableRows}
+          data={paintedRows}
           columns={columns}
           getRowId={productRowId}
           status="ready"

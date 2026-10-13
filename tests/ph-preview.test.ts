@@ -8,7 +8,7 @@ import ProductsPreview from "../src/components/ph/ProductsPreview";
 describe("PH first paint", () => {
   it("retains real prefix rows, counts and provenance without pretending missing facets are empty", () => {
     const preview = phPreview(summary);
-    expect(preview.rows).toEqual(summary.rows.slice(0, 50));
+    expect(preview.rows).toEqual(summary.rows.slice(0, 20));
     expect(preview.total).toBe(summary.total);
     expect(preview.withCategories).toBe(summary.withCategories);
     expect(preview.provenance).toEqual(summary.provenance);
@@ -17,7 +17,7 @@ describe("PH first paint", () => {
   it("renders the declared real prefix in a fixed table and keeps incomplete controls disabled", () => {
     const html = renderToStaticMarkup(createElement(ProductsPreview, { preview: phPreview(summary) }));
     expect(html.match(/<tr\b[^>]*data-row=/g)).toHaveLength(20);
-    expect(html).toContain("Showing initial products.");
+    expect(html).toContain("Showing 20 initial products.");
     expect(html).toContain(summary.total.toLocaleString("en-US"));
     expect(html).toContain('<fieldset disabled=""');
     expect(html).toContain('class="resource-table');
