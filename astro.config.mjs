@@ -13,7 +13,6 @@ export default defineConfig({
   trailingSlash: "ignore",
   adapter: cloudflare({ imageService: "passthrough" }),
   session: false,
-  build: { inlineStylesheets: "always" },
   integrations: [react(), searchHydration()],
   vite: { plugins: [tailwindcss()] },
 });

@@ -14,7 +14,7 @@ import { setParam, useUrlParam } from "../../lib/url-state";
 const numbers = new Intl.NumberFormat("en-US");
 
 /** Library visibility is internal; initialise it from the URL and observe its toolbar view. */
-export default function ViewTable<T extends object>(
+function ViewTable<T extends object>(
   props: React.ComponentProps<typeof DataTable<T>> & {
     pin?: (row: T) => PinnedItem | null;
     initialColumns?: string | null;
@@ -131,6 +131,8 @@ export default function ViewTable<T extends object>(
     </div>
   );
 }
+export default React.memo(ViewTable) as typeof ViewTable;
+
 function ColumnUrl<T>({ columns }: Pick<DataTableView<T>, "columns">) {
   const value = columns.map((c: DataColumn<T>) => c.id).join(",");
   React.useEffect(() => {

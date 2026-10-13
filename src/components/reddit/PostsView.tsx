@@ -9,7 +9,7 @@ import {
 } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
 import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
-import type { DataColumn } from "@saas-maker/ui/components/data-table";
+import type { DataColumn, DataTableView } from "@saas-maker/ui/components/data-table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import { SkeletonText } from "@saas-maker/ui/components/skeleton";
 import type { ExportColumn } from "@saas-maker/ui/lib/export";
@@ -38,6 +38,7 @@ const defs: FilterDef<Post>[] = [
   { kind: "range", id: "score", label: "recorded score", value: (p) => p.score },
 ];
 const noPosts: Post[] = [];
+const postRowId = (post: Post) => post.id;
 const searchPost = (post: Post) => `${post.title} ${post.body}`;
 const columns: DataColumn<Post>[] = [
   {
@@ -192,29 +193,69 @@ export default function PostsView({
     if (state.status === "ready") performance.mark("reddit-query-ready");
   }, [state.status]);
   const post = all.find((p) => p.id === postId);
-  const pin = (p: Post) =>
-    pinFromColumns(
-      "/reddit/posts/",
-      p.id,
-      p.title,
-      p,
-      columns,
-      state.status === "ready" ? state.value.provenance : undefined,
-      "post",
-      snapshot ? { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision.slice(0, 12) } : {},
-      `https://www.reddit.com${p.permalink}`,
-    );
-  const meta =
-    state.status === "ready"
-      ? {
-          collection: "reddit",
-          ...state.value.provenance,
-          attribution: ATTRIBUTION,
-          window: state.value.data.window,
-          coverage: state.value.data.coverage,
-          filters,
-        }
-      : undefined;
+  const sourceInfo = state.status === "ready" ? state.value.provenance : undefined;
+  const openPost = React.useCallback((post: Post) => setPostId(post.id), [setPostId]);
+  const pin = React.useCallback(
+    (p: Post) =>
+      pinFromColumns(
+        "/reddit/posts/",
+        p.id,
+        p.title,
+        p,
+        columns,
+        sourceInfo,
+        "post",
+        snapshot
+          ? { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision.slice(0, 12) }
+          : {},
+        `https://www.reddit.com${p.permalink}`,
+      ),
+    [sourceInfo, snapshot],
+  );
+  const meta = React.useMemo(
+    () =>
+      snapshot && sourceInfo
+        ? {
+            collection: "reddit",
+            ...sourceInfo,
+            attribution: ATTRIBUTION,
+            window: snapshot.window,
+            coverage: snapshot.coverage,
+            filters,
+          }
+        : undefined,
+    [snapshot, sourceInfo, filters],
+  );
+  const toolbar = React.useCallback(
+    (view: DataTableView<Post>) => (
+      <>
+        <span className="text-sm text-muted-foreground">{rows.length} threads</span>
+        {snapshot && (
+          <>
+            <ExportMenu
+              label="export posts"
+              rows={view.rows}
+              columns={exportColumns(postFields, snapshot)}
+              filename={`reddit-${snapshot.subreddit}-${snapshot.date}-posts`}
+              meta={meta}
+            />
+            <ExportMenu
+              label="export comments"
+              rows={snapshot.comments}
+              columns={exportColumns(commentFields, snapshot)}
+              filename={`reddit-${snapshot.subreddit}-${snapshot.date}-comments`}
+              meta={{
+                ...meta,
+                filters: { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision },
+                scope: "all retained comments in the selected snapshot",
+              }}
+            />
+          </>
+        )}
+      </>
+    ),
+    [rows.length, snapshot, meta],
+  );
   return (
     <div className="flex flex-col gap-4">
       <FilterBar>
@@ -283,7 +324,7 @@ export default function PostsView({
           initialColumns={params.get("columns")}
           data={rows}
           columns={columns}
-          getRowId={(p) => p.id}
+          getRowId={postRowId}
           status={!community || !day ? catalog.status : state.status}
           {...sort}
           onRetry={!community || !day ? retryCatalog : retry}
@@ -294,36 +335,10 @@ export default function PostsView({
               <ReadError error={state.error} retry={retry} />
             ) : undefined
           }
-          onRowClick={(p) => setPostId(p.id)}
+          onRowClick={openPost}
           selectedId={postId}
           empty="No captured threads match."
-          toolbar={(view) => (
-            <>
-              <span className="text-sm text-muted-foreground">{rows.length} threads</span>
-              {snapshot && (
-                <>
-                  <ExportMenu
-                    label="export posts"
-                    rows={view.rows}
-                    columns={exportColumns(postFields, snapshot)}
-                    filename={`reddit-${snapshot.subreddit}-${snapshot.date}-posts`}
-                    meta={meta}
-                  />
-                  <ExportMenu
-                    label="export comments"
-                    rows={snapshot.comments}
-                    columns={exportColumns(commentFields, snapshot)}
-                    filename={`reddit-${snapshot.subreddit}-${snapshot.date}-comments`}
-                    meta={{
-                      ...meta,
-                      filters: { subreddit: snapshot.subreddit, date: snapshot.date, v: snapshot.source.revision },
-                      scope: "all retained comments in the selected snapshot",
-                    }}
-                  />
-                </>
-              )}
-            </>
-          )}
+          toolbar={toolbar}
         />
         <RecordDetail
           actions={post && <PinButton item={pin(post)} />}

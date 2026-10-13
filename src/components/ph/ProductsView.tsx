@@ -52,6 +52,7 @@ const columns: DataColumn<Product>[] = [
   },
   { id: "website_url", header: "website host", value: (p) => host(p.website_url) },
 ];
+const productRowId = (product: Product) => product.slug;
 const exportColumns = ["slug", "name", "tagline", "description", "website_url", "categories", "producthunt_url"].map(
   (id) => ({ id, value: (p: Product) => p[id as keyof Product] }),
 );
@@ -84,7 +85,8 @@ export default function ProductsView({
   const requestedPage = Number(pageParam ?? 1);
   const page = Number.isFinite(requestedPage) ? Math.max(0, Math.trunc(requestedPage) - 1) : 0;
   const [id, direction] = (sortParam ?? "name:asc").split(":");
-  const sort: PhSort = { id, desc: direction === "desc" };
+  const sort = React.useMemo<PhSort>(() => ({ id, desc: direction === "desc" }), [id, direction]);
+  const sorting = React.useMemo(() => [sort], [sort]);
   const key = JSON.stringify({ q: filters.q, categories: filters.facets.category, website: filters.facets.website });
   const client = React.useMemo(() => (typeof window === "undefined" ? createResourceClient() : resourceClient), []);
   const engine = useResource(
@@ -132,7 +134,6 @@ export default function ProductsView({
       : read.data
         ? "ready"
         : "loading";
-  const error = engine.error?.message ?? read.error?.message ?? "";
   const prefix = React.useMemo(() => summary.rows.slice(0, 50), [summary]);
   const result = read.data ?? {
     rows: prefix,
@@ -142,9 +143,8 @@ export default function ProductsView({
     detail: null,
     provenance: summary.provenance,
   };
-  const retry = () => {
-    void (engine.status === "error" ? engine.retry() : read.retry());
-  };
+  const retryTarget = engine.status === "error" ? engine.retry : read.retry;
+  const retry = React.useCallback(() => void retryTarget(), [retryTarget]);
   const preview = React.useMemo(
     () => summaryPage(summary, JSON.parse(key), { id, desc: direction === "desc" }, page),
     [summary, key, id, direction, page],
@@ -162,8 +162,44 @@ export default function ProductsView({
     update({ ...filters, facets: { ...filters.facets, [name]: values } });
   const detail = state === "ready" ? result?.detail : null;
   const provenance = showingSummary ? summary.provenance : result.provenance;
-  const pin = (p: Product) =>
-    pinFromColumns("/ph/", p.slug, p.name, p, columns, provenance, "product", {}, p.producthunt_url ?? undefined);
+  const pin = React.useCallback(
+    (p: Product) =>
+      pinFromColumns("/ph/", p.slug, p.name, p, columns, provenance, "product", {}, p.producthunt_url ?? undefined),
+    [provenance],
+  );
+  const openProduct = React.useCallback((product: Product) => setSlug(product.slug), [setSlug]);
+  const changeSort = React.useCallback(
+    (next: PhSort[]) => {
+      setSort(next[0] ? `${next[0].id}:${next[0].desc ? "desc" : "asc"}` : null);
+      setPage(null);
+    },
+    [setSort, setPage],
+  );
+  const rowCount = mounted ? (showingSummary ? summary.total : result.total) : paintedRows.length;
+  const tablePage = showingSummary && !preview ? 0 : page;
+  const manual = React.useMemo(
+    () => ({ rowCount, page: tablePage, onPageChange: (next: number) => setPage(next ? String(next + 1) : null) }),
+    [rowCount, tablePage, setPage],
+  );
+  const matchingTotal = showingSummary ? summary.total : result.total;
+  const exportQuery = state === "ready" ? query : undefined;
+  const toolbar = React.useCallback(
+    () => (
+      <>
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {`${matchingTotal.toLocaleString("en-US")} matching products`}
+        </p>
+        {exportQuery ? (
+          <PhExport key={`${key}:${id}:${direction}`} query={exportQuery} filters={JSON.parse(key)} sort={sort} />
+        ) : (
+          <Button variant="ghost" size="sm" disabled>
+            prepare export
+          </Button>
+        )}
+      </>
+    ),
+    [matchingTotal, exportQuery, key, id, direction, sort],
+  );
   return (
     <>
       <FilterBar>
@@ -214,41 +250,16 @@ export default function ProductsView({
           label="PH products"
           data={paintedRows}
           columns={columns}
-          getRowId={(p) => p.slug}
+          getRowId={productRowId}
           status="ready"
-          error={`PH Catalog could not load: ${error}`}
-          onRetry={retry}
           selectedId={slug}
-          onRowClick={(p) => setSlug(p.slug)}
+          onRowClick={openProduct}
           pageSize={mounted ? 50 : 20}
-          sort={[sort]}
-          onSortChange={(s) => {
-            setSort(s[0] ? `${s[0].id}:${s[0].desc ? "desc" : "asc"}` : null);
-            setPage(null);
-          }}
-          manual={{
-            // Library pagination uses the runtime locale; render it only after hydration.
-            rowCount: mounted ? (showingSummary ? summary.total : result.total) : paintedRows.length,
-            page: showingSummary && !preview ? 0 : page,
-            onPageChange: (p) => setPage(p ? String(p + 1) : null),
-          }}
+          sort={sorting}
+          onSortChange={changeSort}
+          manual={manual}
           empty="No products match these filters."
-          toolbar={() => (
-            <>
-              <p className="text-sm text-muted-foreground" aria-live="polite">
-                {showingSummary
-                  ? `${summary.total.toLocaleString("en-US")} matching products`
-                  : `${result.total.toLocaleString("en-US")} matching products`}
-              </p>
-              {state === "ready" && query ? (
-                <PhExport key={`${key}:${id}:${direction}`} query={query} filters={JSON.parse(key)} sort={sort} />
-              ) : (
-                <Button variant="ghost" size="sm" disabled>
-                  prepare export
-                </Button>
-              )}
-            </>
-          )}
+          toolbar={toolbar}
         />
         <RecordDetail
           actions={detail && <PinButton item={pin(detail)} />}

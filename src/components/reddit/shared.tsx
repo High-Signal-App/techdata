@@ -1,6 +1,6 @@
 import { Provenance } from "@saas-maker/ui/blocks/record-detail";
 import { ErrorState } from "@saas-maker/ui/components/error-state";
-import { useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import type { Envelope, Snapshot } from "../../adapters/reddit";
 import type { Provenance as ProvenanceInfo } from "../../adapters/types";
 import { useJsonResource } from "../../lib/resource";
@@ -78,9 +78,13 @@ export function useSort(defaultId: string, initial: string | null = null) {
   const [sort, setSort] = useUrlParam("sort", initial);
   const [id, dir] = (sort ?? `${defaultId}:desc`).split(":");
   const sorting = useMemo(() => [{ id: id ?? defaultId, desc: dir !== "asc" }], [id, dir, defaultId]);
+  const change = useCallback(
+    (next: { id: string; desc: boolean }[]) =>
+      setSort(next[0] ? `${next[0].id}:${next[0].desc ? "desc" : "asc"}` : null),
+    [setSort],
+  );
   return {
     sort: sorting,
-    onSortChange: (next: { id: string; desc: boolean }[]) =>
-      setSort(next[0] ? `${next[0].id}:${next[0].desc ? "desc" : "asc"}` : null),
+    onSortChange: change,
   };
 }
