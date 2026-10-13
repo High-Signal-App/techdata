@@ -1,7 +1,14 @@
 ---
+import { env } from "cloudflare:workers";
 import PostsView from "../../../components/reddit/PostsView";
 import Console from "../../../layouts/Console.astro";
+import { redditInitial } from "../../../lib/reddit-initial";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "no-store");
+const initial = await redditInitial(Astro.url.searchParams, {
+  base: (env as { REDDIT_INSIGHTS_API_BASE?: string }).REDDIT_INSIGHTS_API_BASE,
+});
 ---
 <Console title="threads · reddit insights" heading="threads" description="Recorded scores and retained discussion in a selected capture. Comments are filtered; authors are omitted." nav="reddit-posts" breadcrumbs={[{ label: "reddit insights", href: "/reddit/" }, { label: "threads" }]}>
-  <PostsView client:load />
+  <PostsView initialCatalog={initial.catalog} initialMetadata={initial.metadata} initialBounds={initial.bounds} initialQuery={Astro.url.search} client:idle />
 </Console>

@@ -1,6 +1,6 @@
 import { Provenance } from "@saas-maker/ui/blocks/record-detail";
 import { ErrorState } from "@saas-maker/ui/components/error-state";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import type { Envelope, Snapshot } from "../../adapters/reddit";
 import type { Provenance as ProvenanceInfo } from "../../adapters/types";
 import { useJsonResource } from "../../lib/resource";
@@ -66,7 +66,7 @@ export function CaptureProvenance({ info }: { info: ProvenanceInfo }) {
     />
   );
 }
-export function Freshness({ snapshot: s }: { snapshot: Snapshot }) {
+export function Freshness({ snapshot: s }: { snapshot: Pick<Snapshot, "capturedAt" | "window" | "coverage"> }) {
   return (
     <p className="text-sm text-muted-foreground break-words">
       captured {s.capturedAt}, window {s.window.start}–{s.window.end} (UTC, start inclusive, end exclusive) · coverage:{" "}
@@ -74,11 +74,12 @@ export function Freshness({ snapshot: s }: { snapshot: Snapshot }) {
     </p>
   );
 }
-export function useSort(defaultId: string) {
-  const [sort, setSort] = useUrlParam("sort");
+export function useSort(defaultId: string, initial: string | null = null) {
+  const [sort, setSort] = useUrlParam("sort", initial);
   const [id, dir] = (sort ?? `${defaultId}:desc`).split(":");
+  const sorting = useMemo(() => [{ id: id ?? defaultId, desc: dir !== "asc" }], [id, dir, defaultId]);
   return {
-    sort: [{ id: id ?? defaultId, desc: dir !== "asc" }],
+    sort: sorting,
     onSortChange: (next: { id: string; desc: boolean }[]) =>
       setSort(next[0] ? `${next[0].id}:${next[0].desc ? "desc" : "asc"}` : null),
   };

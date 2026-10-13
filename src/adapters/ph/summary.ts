@@ -12,8 +12,15 @@ export type PhSummary = {
   provenance: Provenance & { sha256: string; exportedAt: string; releaseUrl: string };
 };
 
+/** Real first-paint rows/counts; full facets and remaining rows load from the same checked-in file. */
+export type PhPreview = Omit<PhSummary, "categories">;
+export function phPreview(summary: PhSummary): PhPreview {
+  const { categories: _categories, ...preview } = summary;
+  return { ...preview, rows: summary.rows.slice(0, 20) };
+}
+
 /** Only complete unfiltered pages can be answered by this prefix of the export. */
-export function summaryPage(summary: PhSummary, filters: PhFilters, sort: PhSort, page: number) {
+export function summaryPage(summary: PhSummary | PhPreview, filters: PhFilters, sort: PhSort, page: number) {
   if (
     filters.q?.trim() ||
     filters.categories?.length ||

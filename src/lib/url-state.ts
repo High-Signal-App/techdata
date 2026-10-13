@@ -1,8 +1,11 @@
 import * as React from "react";
 
 /** Reads one query param, follows back/forward and same-page palette jumps. */
-export function useUrlParam(key: string): [string | null, (value: string | null) => void] {
-  const [value, setValue] = React.useState<string | null>(null);
+export function useUrlParam(
+  key: string,
+  initial: string | null = null,
+): [string | null, (value: string | null) => void] {
+  const [value, setValue] = React.useState<string | null>(initial);
   React.useEffect(() => {
     const read = () => setValue(new URLSearchParams(location.search).get(key));
     read();

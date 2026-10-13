@@ -10,7 +10,7 @@ import { createResourceClient, resourceClient, useResource } from "@saas-maker/u
 import * as React from "react";
 import { PH_META } from "../../adapters/ph/meta";
 import { loadPhQuery, type PhSort, type Product } from "../../adapters/ph/query";
-import { afterPhPaint, type PhSummary, summaryPage } from "../../adapters/ph/summary";
+import { afterPhPaint, type PhPreview, type PhSummary, summaryPage } from "../../adapters/ph/summary";
 import { pinFromColumns } from "../../lib/compare";
 import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
@@ -64,7 +64,17 @@ type Result = {
   provenance: PhSummary["provenance"] | Awaited<ReturnType<typeof loadPhQuery>>["provenance"];
 };
 
-export default function ProductsView({ summary }: { summary: PhSummary }) {
+export default function ProductsView({
+  summary,
+  previewOnly = false,
+  previewError,
+  retryPreview,
+}: {
+  summary: PhSummary | PhPreview;
+  previewOnly?: boolean;
+  previewError?: string;
+  retryPreview?: () => void;
+}) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
   const [filters, setFilters] = useUrlFilters(defs);
@@ -78,7 +88,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
   const key = JSON.stringify({ q: filters.q, categories: filters.facets.category, website: filters.facets.website });
   const client = React.useMemo(() => (typeof window === "undefined" ? createResourceClient() : resourceClient), []);
   const engine = useResource(
-    "ph-engine",
+    previewOnly ? "ph-engine-preview" : "ph-engine",
     (signal) =>
       new Promise<Awaited<ReturnType<typeof loadPhQuery>>>((resolve, reject) => {
         const cancel = afterPhPaint(() => {
@@ -91,7 +101,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
         };
         signal.addEventListener("abort", abort, { once: true });
       }),
-    { client, staleTime: 300_000, cacheTime: Infinity },
+    { client, staleTime: previewOnly ? Infinity : 300_000, cacheTime: Infinity },
   );
   const query = engine.data;
   const read = useResource<Result>(
@@ -104,21 +114,30 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
       const [rows, total, categories, websites, detail] = await Promise.all([
         query.rows(filter, sorting, page),
         unfiltered ? Promise.resolve(summary.total) : query.count(filter),
-        unfiltered ? Promise.resolve(summary.categories) : query.facets(filter, "category"),
+        unfiltered
+          ? Promise.resolve("categories" in summary ? summary.categories : [])
+          : query.facets(filter, "category"),
         unfiltered ? Promise.resolve(summary.websites) : query.facets(filter, "website"),
         slug ? query.record(slug) : Promise.resolve(null),
       ]);
       performance.mark("ph-query-ready");
       return { rows, total, categories, websites, detail, provenance: query.provenance };
     },
-    { client, staleTime: query ? 30_000 : Infinity },
+    { client, staleTime: query && !previewOnly ? 30_000 : Infinity },
   );
-  const state = engine.status === "error" || read.status === "error" ? "error" : read.data ? "ready" : "loading";
+  const state = previewOnly
+    ? "loading"
+    : engine.status === "error" || read.status === "error"
+      ? "error"
+      : read.data
+        ? "ready"
+        : "loading";
   const error = engine.error?.message ?? read.error?.message ?? "";
+  const prefix = React.useMemo(() => summary.rows.slice(0, 50), [summary]);
   const result = read.data ?? {
-    rows: summary.rows.slice(0, 50),
+    rows: prefix,
     total: summary.total,
-    categories: summary.categories,
+    categories: "categories" in summary ? summary.categories : [],
     websites: summary.websites,
     detail: null,
     provenance: summary.provenance,
@@ -126,9 +145,15 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
   const retry = () => {
     void (engine.status === "error" ? engine.retry() : read.retry());
   };
-  const preview = summaryPage(summary, JSON.parse(key), sort, page);
-  const showingSummary = !query || state !== "ready";
-  const visibleRows = showingSummary ? (preview ?? summary.rows.slice(0, 50)) : result.rows;
+  const preview = React.useMemo(
+    () => summaryPage(summary, JSON.parse(key), { id, desc: direction === "desc" }, page),
+    [summary, key, id, direction, page],
+  );
+  const showingSummary = previewOnly || !query || state !== "ready";
+  const visibleRows = showingSummary ? (preview ?? prefix) : result.rows;
+  // The fixed viewport never displays more than 20 rows. Restore the complete
+  // established page at hydration; no summary rows or full-catalog counts change.
+  const paintedRows = mounted ? visibleRows : visibleRows.slice(0, 20);
   const update = (next: FilterState) => {
     setFilters(next);
     setPage(null);
@@ -143,34 +168,40 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
     <>
       <FilterBar>
         <SaveView />
-        <FilterSearch
-          value={filters.q ?? ""}
-          onChange={(q) => update({ ...filters, q })}
-          placeholder="Name, tagline or description…"
-        />
-        <FacetFilter
-          label="category"
-          options={showingSummary ? summary.categories : result.categories}
-          selected={filters.facets.category ?? []}
-          onChange={(v) => facet("category", v)}
-        />
-        <FacetFilter
-          label="has website"
-          options={showingSummary ? summary.websites : result.websites}
-          selected={filters.facets.website ?? []}
-          onChange={(v) => facet("website", v)}
-        />
+        <fieldset disabled={previewOnly} className="contents">
+          <FilterSearch
+            value={filters.q ?? ""}
+            onChange={(q) => update({ ...filters, q })}
+            placeholder="Name, tagline or description…"
+          />
+          <FacetFilter
+            label="category"
+            options={showingSummary ? ("categories" in summary ? summary.categories : []) : result.categories}
+            selected={filters.facets.category ?? []}
+            onChange={(v) => facet("category", v)}
+          />
+          <FacetFilter
+            label="has website"
+            options={showingSummary ? summary.websites : result.websites}
+            selected={filters.facets.website ?? []}
+            onChange={(v) => facet("website", v)}
+          />
+        </fieldset>
       </FilterBar>
       <ActiveFilters defs={defs} state={filters} onChange={update} className="my-3" />
       <div className="ph-engine-status my-3 text-sm text-muted-foreground" role="status">
-        {state === "error" ? (
+        {previewError ? (
+          <ErrorState title="initial catalog could not refresh." description={null} onRetry={retryPreview} />
+        ) : state === "error" ? (
           <ErrorState title="full catalog could not load." description={null} onRetry={retry} />
         ) : showingSummary ? (
           <>
             Loading full catalog…{" "}
-            {preview
-              ? "You can browse the first 100 products by name."
-              : "Your view is queued; showing the first 50 products by name until ready."}
+            {previewOnly
+              ? "Showing 20 initial products."
+              : preview
+                ? "You can browse the first 100 products by name."
+                : "Your view is queued; showing the first 50 products by name until ready."}
           </>
         ) : (
           "Full catalog ready."
@@ -181,7 +212,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
           pin={pin}
           className="flex-1"
           label="PH products"
-          data={visibleRows}
+          data={paintedRows}
           columns={columns}
           getRowId={(p) => p.slug}
           status="ready"
@@ -189,7 +220,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
           onRetry={retry}
           selectedId={slug}
           onRowClick={(p) => setSlug(p.slug)}
-          pageSize={50}
+          pageSize={mounted ? 50 : 20}
           sort={[sort]}
           onSortChange={(s) => {
             setSort(s[0] ? `${s[0].id}:${s[0].desc ? "desc" : "asc"}` : null);
@@ -197,7 +228,7 @@ export default function ProductsView({ summary }: { summary: PhSummary }) {
           }}
           manual={{
             // Library pagination uses the runtime locale; render it only after hydration.
-            rowCount: mounted ? (showingSummary ? summary.total : result.total) : visibleRows.length,
+            rowCount: mounted ? (showingSummary ? summary.total : result.total) : paintedRows.length,
             page: showingSummary && !preview ? 0 : page,
             onPageChange: (p) => setPage(p ? String(p + 1) : null),
           }}

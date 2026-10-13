@@ -61,12 +61,12 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
       search={{ label: "Search collections…" }}
     >
       <div slot="sidebarFooter">
-        <SavedViews client:load />
+        <SavedViews client:visible />
         <p class="mt-3">public workbench · read-only, with sources and collection dates.</p>
       </div>
       <slot name="actions" slot="actions" />
       <slot />
-      <CompareTray client:load />
+      <CompareTray client:visible />
       <footer class="mt-10 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span>sources</span>
         <a class="underline underline-offset-4" href="https://nomad.significanthobbies.com/">Nomad Atlas</a>
@@ -79,7 +79,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
         <a class="underline underline-offset-4" href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0 (Research Papers)</a>
       </footer>
     </ConsolePage>
-    <GlobalSearch client:idle />
+    <GlobalSearch client:search />
     <ResourcePrefetch client:idle />
   </body>
 </html>
