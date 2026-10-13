@@ -26,6 +26,9 @@ function localList<T>(key: string, parse: (raw: string | null) => T[]) {
     } catch {
       snapshot = { items: parse(session), persistent: false };
     }
+    // An available, empty store agrees with the server snapshot. Keep that
+    // identity so subscribers do not synchronously redraw unchanged tables.
+    if (!snapshot.items.length && snapshot.persistent) snapshot = server;
     addEventListener("storage", (e) => {
       if (e.key !== key && e.key !== null) return;
       snapshot = { items: parse(e.key === null ? null : e.newValue), persistent: snapshot.persistent };

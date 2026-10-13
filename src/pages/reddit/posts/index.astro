@@ -10,5 +10,5 @@ const initial = await redditInitial(Astro.url.searchParams, {
 });
 ---
 <Console title="threads · reddit insights" heading="threads" description="Recorded scores and retained discussion in a selected capture. Comments are filtered; authors are omitted." nav="reddit-posts" breadcrumbs={[{ label: "reddit insights", href: "/reddit/" }, { label: "threads" }]}>
-  <PostsView initialCatalog={initial.catalog} initialMetadata={initial.metadata} initialBounds={initial.bounds} initialQuery={Astro.url.search} client:idle />
+  <PostsView initialCatalog={initial.catalog} initialMetadata={initial.metadata} initialBounds={initial.bounds} initialQuery={Astro.url.search} client:paint />
 </Console>

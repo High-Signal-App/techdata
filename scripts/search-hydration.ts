@@ -10,6 +10,10 @@ export default function searchHydration(): AstroIntegration {
           name: "search",
           entrypoint: fileURLToPath(new URL("../src/client/search.ts", import.meta.url)),
         });
+        addClientDirective({
+          name: "paint",
+          entrypoint: fileURLToPath(new URL("../src/client/paint.ts", import.meta.url)),
+        });
       },
     },
   };
