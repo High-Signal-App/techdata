@@ -1,4 +1,5 @@
 ---
+import { buttonVariants } from "@saas-maker/ui/components/button";
 import { nomadSummary } from "../adapters/nomad/meta";
 import { createPapersAdapter } from "../adapters/papers";
 import { phAdapter } from "../adapters/ph";
@@ -26,9 +27,12 @@ const rows = results.map((result, i) =>
 <Console
   title="overview"
   heading="collections"
-  description="Each collection keeps its own shape and its own collector. techdata reads them, with the source and collection date on every record."
+  description="Search and compare five public data collections in one read-only workbench, with source provenance kept in view."
   nav="overview"
   breadcrumbs={[{ label: "overview" }]}
 >
+  <Fragment slot="actions">
+    <a href="/nomad/" class={buttonVariants({ size: "lg", className: "min-h-11" })}>Explore places</a>
+  </Fragment>
   <Overview rows={rows} client:load />
 </Console>
