@@ -311,14 +311,14 @@ Deploy is manual and owner-approved only (`.github/workflows/deploy.yml`,
 `workflow_dispatch`). The Worker is public and requires no authentication.
 The R2 bucket stays private: do not enable a public bucket endpoint.
 
-Set `PUBLIC_SITE_URL` at build time to the deployment origin, for example
-`https://techdata.<account-subdomain>.workers.dev`. The manual workflow reads
-it from the repository Actions variable `PUBLIC_SITE_URL`. Astro's `site`
-setting uses this value to build self-canonicals without query strings; when
-unset, pages omit canonicals rather than using a placeholder host.
-`/robots.txt` and `/sitemap.xml` run in the Worker and use the request origin,
-including when the build variable is unset. Robots allows pages and disallows
-`/api/`; JSON and file responses have no robots header.
+The selected canonical host is `https://data.highsignal.app`. The manual
+workflow pins `PUBLIC_SITE_URL` to that origin at build time; local builds can
+set it explicitly. Astro's `site` setting gives each page a query-free canonical.
+The Worker serves both the custom domain and the existing workers.dev host;
+`/robots.txt` and `/sitemap.xml` advertise the configured canonical origin on
+either host. Without `PUBLIC_SITE_URL`, local builds use the request origin for
+those two dynamic crawl endpoints and omit page canonicals. Robots allows pages
+and disallows `/api/`; JSON and file responses have no robots header.
 
 Content duplicates the five live source sites: [Nomad Atlas](https://nomad.significanthobbies.com/)
 ([Nomads.com](https://nomads.com/)), [High Signal Podcasts](https://podcasts.highsignal.app/),
@@ -359,6 +359,6 @@ Content-Type metadata and adds `nosniff`; keep upload metadata correct.
 
 ## What's next
 
-1. Owner decisions: deployment origin (`PUBLIC_SITE_URL`), deploy approval.
+1. Qualify the custom domain's HTTPS, indexing and collection links in issue #24.
 2. DuckDB-WASM vs D1 benchmark.
 3. Parity sign-off per collection, then decide the public sites' fate.

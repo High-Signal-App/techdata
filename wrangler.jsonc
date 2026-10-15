@@ -7,6 +7,8 @@
   "compatibility_date": "2026-09-30",
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "binding": "ASSETS" },
+  "workers_dev": true,
+  "routes": [{ "pattern": "data.highsignal.app", "custom_domain": true }],
   "r2_buckets": [{ "binding": "DATA", "bucket_name": "techdata-data" }],
   "observability": { "enabled": true },
   "vars": {
