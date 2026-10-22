@@ -32,6 +32,15 @@
 .resource-table > [data-slot] > div:first-of-type {
   min-height: 4.5rem;
 }
+/* Recovery belongs to the visible scrollport, not the full column width. */
+.resource-table > [data-slot] > [role="region"] {
+  container-type: inline-size;
+}
+.resource-table td[colspan] > :is([data-slot="empty-state"], [data-slot="error-state"]) {
+  position: sticky;
+  left: 1rem;
+  width: calc(100cqw - 2rem);
+}
 .resource-quotes {
   height: min(68dvh, 46rem);
   overflow: auto;
