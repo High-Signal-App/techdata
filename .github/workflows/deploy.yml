@@ -54,10 +54,10 @@ jobs:
             jq -e '{id, created_on: .metadata.created_on, tag: .annotations["workers/tag"]}' > "$proof/previous-version.json"
           jq -e --arg version "$current" '.id == $version and (.tag | type == "string" and test("^[0-9a-f]{40}$"))' "$proof/current-version.json"
           jq -e --arg version "$previous" '.id == $version and (.tag | type == "string" and test("^[0-9a-f]{40}$"))' "$proof/previous-version.json"
-          jq -n --arg observedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          jq -n --arg observedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg workflowSha "$GITHUB_SHA" \
             --slurpfile deployments "$proof/deployments.json" --slurpfile current "$proof/current-version.json" \
             --slurpfile previous "$proof/previous-version.json" \
-            '{observedAt: $observedAt, worker: "techdata", current: {deploymentId: $deployments[0][0].id, deploymentCreatedAt: $deployments[0][0].created_on, versionId: $current[0].id, versionCreatedAt: $current[0].created_on, sourceCommit: $current[0].tag, trafficPercent: $deployments[0][0].versions[0].percentage}, previous: {deploymentId: $deployments[0][1].id, deploymentCreatedAt: $deployments[0][1].created_on, versionId: $previous[0].id, versionCreatedAt: $previous[0].created_on, sourceCommit: $previous[0].tag, trafficPercent: $deployments[0][1].versions[0].percentage}}' > "$proof/receipt.json"
+            '{observedAt: $observedAt, worker: "techdata", workflowCommit: $workflowSha, current: {deploymentId: $deployments[0][0].id, deploymentCreatedAt: $deployments[0][0].created_on, versionId: $current[0].id, versionCreatedAt: $current[0].created_on, sourceCommit: $current[0].tag, trafficPercent: $deployments[0][0].versions[0].percentage}, previous: {deploymentId: $deployments[0][1].id, deploymentCreatedAt: $deployments[0][1].created_on, versionId: $previous[0].id, versionCreatedAt: $previous[0].created_on, sourceCommit: $previous[0].tag, trafficPercent: $deployments[0][1].versions[0].percentage}}' > "$proof/receipt.json"
           cat "$proof/receipt.json"
       - name: Preserve current Worker identity proof
         if: always()
