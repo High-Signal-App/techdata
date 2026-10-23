@@ -107,7 +107,8 @@ export default function PeopleView({ initial }: { initial?: Envelope<{ people: P
               <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
                 {state.status === "ready" ? (
                   <>
-                    <span className="text-foreground">{total.toLocaleString("en-US")}</span> verified speakers
+                    <span className="text-foreground">{total.toLocaleString("en-US")}</span> verified{" "}
+                    {total === 1 ? "speaker" : "speakers"}
                   </>
                 ) : (
                   "loading people…"
