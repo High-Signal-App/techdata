@@ -149,8 +149,8 @@ export default function EpisodesView({ initial }: { initial?: Envelope<EpisodePa
               <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
                 {state.status === "ready" ? (
                   <>
-                    <span className="text-foreground">{total.toLocaleString("en-US")}</span> episodes with published
-                    claims
+                    <span className="text-foreground">{total.toLocaleString("en-US")}</span>{" "}
+                    {total === 1 ? "episode with a published claim" : "episodes with published claims"}
                   </>
                 ) : (
                   "loading episodes…"
