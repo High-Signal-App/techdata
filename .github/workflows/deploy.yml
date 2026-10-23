@@ -6,9 +6,16 @@ name: Deploy (manual)
 on:
   workflow_dispatch:
     inputs:
+      inspect_only:
+        description: Read back the current Worker identity without deploying
+        type: boolean
+        required: true
+        default: false
       confirm:
         description: Type "deploy techdata" to confirm
-        required: true
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -18,8 +25,53 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  inspect:
+    if: ${{ inputs.inspect_only == true || inputs.confirm == 'deploy techdata' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Read current Worker identity (read only)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          proof="$RUNNER_TEMP/techdata-provider-proof"
+          mkdir -p "$proof"
+          pnpm exec wrangler deployments list --name techdata --json |
+            jq -e 'sort_by(.created_on) | reverse | .[:2] | map({id, created_on, versions: [.versions[] | {version_id, percentage}]}) | select(length == 2)' > "$proof/deployments.json"
+          current="$(jq -er '.[0].versions | select(length == 1 and .[0].percentage == 100) | .[0].version_id' "$proof/deployments.json")"
+          previous="$(jq -er '.[1].versions | select(length == 1 and .[0].percentage == 100) | .[0].version_id' "$proof/deployments.json")"
+          pnpm exec wrangler versions view "$current" --name techdata --json |
+            jq -e '{id, created_on: .metadata.created_on, tag: .annotations["workers/tag"]}' > "$proof/current-version.json"
+          pnpm exec wrangler versions view "$previous" --name techdata --json |
+            jq -e '{id, created_on: .metadata.created_on, tag: .annotations["workers/tag"]}' > "$proof/previous-version.json"
+          jq -e --arg version "$current" '.id == $version and (.tag | type == "string" and test("^[0-9a-f]{40}$"))' "$proof/current-version.json"
+          jq -e --arg version "$previous" '.id == $version and (.tag | type == "string" and test("^[0-9a-f]{40}$"))' "$proof/previous-version.json"
+          jq -n --arg observedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg workflowSha "$GITHUB_SHA" \
+            --slurpfile deployments "$proof/deployments.json" --slurpfile current "$proof/current-version.json" \
+            --slurpfile previous "$proof/previous-version.json" \
+            '{observedAt: $observedAt, worker: "techdata", workflowCommit: $workflowSha, current: {deploymentId: $deployments[0][0].id, deploymentCreatedAt: $deployments[0][0].created_on, versionId: $current[0].id, versionCreatedAt: $current[0].created_on, sourceCommit: $current[0].tag, trafficPercent: $deployments[0][0].versions[0].percentage}, previous: {deploymentId: $deployments[0][1].id, deploymentCreatedAt: $deployments[0][1].created_on, versionId: $previous[0].id, versionCreatedAt: $previous[0].created_on, sourceCommit: $previous[0].tag, trafficPercent: $deployments[0][1].versions[0].percentage}}' > "$proof/receipt.json"
+          cat "$proof/receipt.json"
+      - name: Preserve current Worker identity proof
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: techdata-provider-identity-inspect-${{ github.run_id }}
+          path: ${{ runner.temp }}/techdata-provider-proof/*.json
+          retention-days: 14
+          if-no-files-found: warn
+
   deploy:
-    if: ${{ inputs.confirm == 'deploy techdata' }}
+    if: ${{ inputs.inspect_only != true && inputs.confirm == 'deploy techdata' }}
+    needs: inspect
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -37,3 +89,29 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Read back and verify deployed Worker identity
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          proof="$RUNNER_TEMP/techdata-provider-proof"
+          mkdir -p "$proof"
+          pnpm exec wrangler deployments list --name techdata --json |
+            jq -e 'max_by(.created_on) | {id, created_on, versions: [.versions[] | {version_id, percentage}]}' > "$proof/deployment.json"
+          version="$(jq -er '.versions | select(length == 1 and .[0].percentage == 100) | .[0].version_id' "$proof/deployment.json")"
+          pnpm exec wrangler versions view "$version" --name techdata --json |
+            jq -e '{id, created_on: .metadata.created_on, tag: .annotations["workers/tag"]}' > "$proof/version.json"
+          jq -e --arg sha "$GITHUB_SHA" --arg version "$version" '.id == $version and .tag == $sha' "$proof/version.json"
+          jq -n --arg observedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg expectedSha "$GITHUB_SHA" \
+            --slurpfile deployment "$proof/deployment.json" --slurpfile version "$proof/version.json" \
+            '{observedAt: $observedAt, worker: "techdata", deploymentId: $deployment[0].id, deploymentCreatedAt: $deployment[0].created_on, versionId: $version[0].id, versionCreatedAt: $version[0].created_on, sourceCommit: $version[0].tag, expectedCommit: $expectedSha, trafficPercent: $deployment[0].versions[0].percentage}' > "$proof/receipt.json"
+          jq -e --arg sha "$GITHUB_SHA" '.sourceCommit == $sha and .expectedCommit == $sha and .trafficPercent == 100' "$proof/receipt.json"
+      - name: Preserve deployed Worker identity proof
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: techdata-provider-identity-deploy-${{ github.run_id }}
+          path: ${{ runner.temp }}/techdata-provider-proof/*.json
+          retention-days: 14
+          if-no-files-found: warn
