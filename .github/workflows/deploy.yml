@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   inspect:
-    if: ${{ inputs.inspect_only == true }}
+    if: ${{ inputs.inspect_only == true || inputs.confirm == 'deploy techdata' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -42,6 +42,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          set -euo pipefail
           proof="$RUNNER_TEMP/techdata-provider-proof"
           mkdir -p "$proof"
           pnpm exec wrangler deployments list --name techdata --json |
@@ -63,13 +64,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: techdata-provider-identity-${{ github.run_id }}
+          name: techdata-provider-identity-inspect-${{ github.run_id }}
           path: ${{ runner.temp }}/techdata-provider-proof/*.json
           retention-days: 14
           if-no-files-found: warn
 
   deploy:
     if: ${{ inputs.inspect_only != true && inputs.confirm == 'deploy techdata' }}
+    needs: inspect
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -92,6 +94,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          set -euo pipefail
           proof="$RUNNER_TEMP/techdata-provider-proof"
           mkdir -p "$proof"
           pnpm exec wrangler deployments list --name techdata --json |
@@ -108,7 +111,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: techdata-provider-identity-${{ github.run_id }}
+          name: techdata-provider-identity-deploy-${{ github.run_id }}
           path: ${{ runner.temp }}/techdata-provider-proof/*.json
           retention-days: 14
           if-no-files-found: warn
