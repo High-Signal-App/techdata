@@ -1,6 +1,7 @@
 import { createResourceClient, resourceClient, useResource } from "@saas-maker/ui/lib/use-resource";
 import * as React from "react";
 import type { PhPreview, PhSummary } from "../../adapters/ph/summary";
+import { recordResearchEvent } from "../../lib/research-trace";
 import { fetchJson } from "../../lib/resource";
 import ProductsView from "./ProductsView";
 
@@ -25,6 +26,12 @@ export default function ProductsPreview({ preview }: { preview: PhPreview }) {
     },
     { client, staleTime: 300_000 },
   );
+  React.useEffect(() => recordResearchEvent({ type: "preview_ready" }), []);
+  React.useEffect(() => {
+    if (full.status === "error") {
+      recordResearchEvent({ type: "stage_failed", stage: "summary_load" });
+    }
+  }, [full.status]);
   return (
     <ProductsView
       summary={full.data ?? preview}
