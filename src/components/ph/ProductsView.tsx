@@ -5,6 +5,7 @@ import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
 import { Button } from "@saas-maker/ui/components/button";
 import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { ErrorState } from "@saas-maker/ui/components/error-state";
+import type { ExportColumn } from "@saas-maker/ui/lib/export";
 import type { FilterDef, FilterState } from "@saas-maker/ui/lib/filters";
 import { createResourceClient, resourceClient, useResource } from "@saas-maker/ui/lib/use-resource";
 import * as React from "react";
@@ -12,6 +13,12 @@ import { PH_META } from "../../adapters/ph/meta";
 import { loadPhQuery, type PhSort, type Product } from "../../adapters/ph/query";
 import { afterPhPaint, type PhPreview, type PhSummary, summaryPage } from "../../adapters/ph/summary";
 import { pinFromColumns } from "../../lib/compare";
+import {
+  getResearchTrace,
+  type ResearchEvent,
+  recordResearchEvent,
+  subscribeResearchTrace,
+} from "../../lib/research-trace";
 import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
 import SaveView from "../views/SaveView";
@@ -56,6 +63,24 @@ const productRowId = (product: Product) => product.slug;
 const exportColumns = ["slug", "name", "tagline", "description", "website_url", "categories", "producthunt_url"].map(
   (id) => ({ id, value: (p: Product) => p[id as keyof Product] }),
 );
+const traceColumns: ExportColumn<ResearchEvent>[] = [
+  { id: "occurredAt", value: (event) => event.occurredAt },
+  { id: "type", value: (event) => event.type },
+  { id: "stage", value: (event) => (event.type === "stage_failed" ? event.stage : null) },
+  { id: "queryPresent", value: (event) => (event.type === "search_result" ? event.queryPresent : null) },
+  { id: "filtersActive", value: (event) => (event.type === "search_result" ? event.filtersActive : null) },
+  { id: "resultCount", value: (event) => (event.type === "search_result" ? event.resultCount : null) },
+  { id: "rowCount", value: (event) => (event.type === "export_prepared" ? event.rowCount : null) },
+  { id: "format", value: (event) => (event.type === "download_requested" ? event.format : null) },
+];
+async function observeFailure<T>(stage: "search_query" | "detail_lookup", pending: Promise<T>): Promise<T> {
+  try {
+    return await pending;
+  } catch (error) {
+    recordResearchEvent({ type: "stage_failed", stage });
+    throw error;
+  }
+}
 type Result = {
   rows: Product[];
   total: number;
@@ -78,6 +103,7 @@ export default function ProductsView({
 }) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
+  const trace = React.useSyncExternalStore(subscribeResearchTrace, getResearchTrace, getResearchTrace);
   const [filters, setFilters] = useUrlFilters(defs);
   const [pageParam, setPage] = useUrlParam("page");
   const [sortParam, setSort] = useUrlParam("sort");
@@ -114,13 +140,15 @@ export default function ProductsView({
       const sorting = { id, desc: direction === "desc" };
       const unfiltered = !filter.q?.trim() && !filter.categories?.length && !filter.website?.length;
       const [rows, total, categories, websites, detail] = await Promise.all([
-        query.rows(filter, sorting, page),
-        unfiltered ? Promise.resolve(summary.total) : query.count(filter),
+        observeFailure("search_query", query.rows(filter, sorting, page)),
+        unfiltered ? Promise.resolve(summary.total) : observeFailure("search_query", query.count(filter)),
         unfiltered
           ? Promise.resolve("categories" in summary ? summary.categories : [])
-          : query.facets(filter, "category"),
-        unfiltered ? Promise.resolve(summary.websites) : query.facets(filter, "website"),
-        slug ? query.record(slug) : Promise.resolve(null),
+          : observeFailure("search_query", query.facets(filter, "category")),
+        unfiltered
+          ? Promise.resolve(summary.websites)
+          : observeFailure("search_query", query.facets(filter, "website")),
+        slug ? observeFailure("detail_lookup", query.record(slug)) : Promise.resolve(null),
       ]);
       performance.mark("ph-query-ready");
       return { rows, total, categories, websites, detail, provenance: query.provenance };
@@ -134,6 +162,21 @@ export default function ProductsView({
       : read.data
         ? "ready"
         : "loading";
+  const lastSearchFingerprint = React.useRef<string | null>(null);
+  const lastInspectionSlug = React.useRef<string | null>(null);
+  const fullReadyReported = React.useRef(false);
+  React.useEffect(() => {
+    if (previewOnly) return;
+    if (engine.status === "error") {
+      recordResearchEvent({ type: "stage_failed", stage: "full_catalog_load" });
+      fullReadyReported.current = false;
+      return;
+    }
+    if (state === "ready" && !fullReadyReported.current) {
+      recordResearchEvent({ type: "full_catalog_ready" });
+      fullReadyReported.current = true;
+    }
+  }, [engine.status, previewOnly, state]);
   const prefix = React.useMemo(() => summary.rows.slice(0, 50), [summary]);
   const result = read.data ?? {
     rows: prefix,
@@ -161,13 +204,51 @@ export default function ProductsView({
   const facet = (name: string, values: string[]) =>
     update({ ...filters, facets: { ...filters.facets, [name]: values } });
   const detail = state === "ready" ? result?.detail : null;
+  const searchIsActive = Boolean(
+    filters.q?.trim() || filters.facets.category?.length || filters.facets.website?.length,
+  );
+  const searchFingerprint = JSON.stringify({
+    query: filters.q ?? "",
+    categories: filters.facets.category ?? [],
+    websites: filters.facets.website ?? [],
+  });
+  React.useEffect(() => {
+    if (read.status !== "success" && read.status !== "empty") return;
+    if (lastSearchFingerprint.current === searchFingerprint) return;
+    const hadPreviousSearch = lastSearchFingerprint.current !== null;
+    lastSearchFingerprint.current = searchFingerprint;
+    if (searchIsActive || hadPreviousSearch) {
+      recordResearchEvent({
+        type: "search_result",
+        queryPresent: Boolean(filters.q?.trim()),
+        filtersActive: searchIsActive,
+        resultCount: result.total,
+      });
+    }
+  }, [filters.q, read.status, result.total, searchFingerprint, searchIsActive]);
+  React.useEffect(() => {
+    if (!slug) {
+      lastInspectionSlug.current = null;
+      return;
+    }
+    if (detail && detail.slug === slug && lastInspectionSlug.current !== slug) {
+      recordResearchEvent({ type: "detail_inspected" });
+      lastInspectionSlug.current = slug;
+    }
+  }, [detail, slug]);
   const provenance = showingSummary ? summary.provenance : result.provenance;
   const pin = React.useCallback(
     (p: Product) =>
       pinFromColumns("/ph/", p.slug, p.name, p, columns, provenance, "product", {}, p.producthunt_url ?? undefined),
     [provenance],
   );
-  const openProduct = React.useCallback((product: Product) => setSlug(product.slug), [setSlug]);
+  const openProduct = React.useCallback(
+    (product: Product) => {
+      recordResearchEvent({ type: "result_selected" });
+      setSlug(product.slug);
+    },
+    [setSlug],
+  );
   const changeSort = React.useCallback(
     (next: PhSort[]) => {
       setSort(next[0] ? `${next[0].id}:${next[0].desc ? "desc" : "asc"}` : null);
@@ -196,9 +277,27 @@ export default function ProductsView({
             prepare export
           </Button>
         )}
+        {trace.trafficLabel === "test" && trace.events.length > 0 && (
+          <ExportMenu
+            rows={trace.events}
+            columns={traceColumns}
+            filename={`techdata-ph-trace-${today()}`}
+            label="trace"
+            meta={{
+              schemaVersion: trace.schemaVersion,
+              projectId: trace.projectId,
+              workflow: trace.workflow,
+              trafficLabel: trace.trafficLabel,
+              startedAt: trace.startedAt,
+              endedAt: trace.endedAt,
+              droppedCount: trace.droppedCount,
+              complete: trace.complete,
+            }}
+          />
+        )}
       </>
     ),
-    [matchingTotal, exportQuery, key, id, direction, sort],
+    [matchingTotal, exportQuery, key, id, direction, sort, trace],
   );
   return (
     <>
@@ -264,7 +363,12 @@ export default function ProductsView({
         <RecordDetail
           actions={detail && <PinButton item={pin(detail)} />}
           open={!!slug}
-          onOpenChange={(open) => !open && setSlug(null)}
+          onOpenChange={(open) => {
+            if (!open && slug) {
+              recordResearchEvent({ type: "inspection_closed" });
+              setSlug(null);
+            }
+          }}
           title={detail?.name ?? "product"}
           subtitle={detail?.tagline ?? undefined}
           className="lg:w-[28rem]"
@@ -325,6 +429,7 @@ function PhExport({
   filters: Parameters<typeof query.export>[0];
   sort: PhSort;
 }) {
+  const menuRoot = React.useRef<HTMLDivElement>(null);
   const [exported, setExported] = React.useState<Awaited<ReturnType<typeof query.export>> | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -335,20 +440,38 @@ function PhExport({
       active.current = false;
     };
   }, []);
+  React.useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (!(event.target instanceof Element)) return;
+      const item = event.target.closest('[role="menuitem"]');
+      const trigger = menuRoot.current?.querySelector<HTMLElement>('[aria-haspopup="menu"]');
+      const menuId = trigger?.getAttribute("aria-controls");
+      const menu = menuId ? document.getElementById(menuId) : null;
+      if (!item || !menu?.contains(item) || trigger?.getAttribute("aria-expanded") !== "true") {
+        return;
+      }
+      const format = item.textContent?.trim().toLowerCase().startsWith("csv") ? "csv" : "json";
+      recordResearchEvent({ type: "download_requested", format });
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
   if (exported)
     return (
-      <ExportMenu
-        rows={exported.rows}
-        columns={[
-          ...exportColumns,
-          { id: "source", value: () => exported.source },
-          { id: "collectedAt", value: () => exported.collectedAt },
-          { id: "fetchedAt", value: () => exported.provenance.fetchedAt },
-          { id: "revision", value: () => PH_META.revision },
-        ]}
-        filename={`ph-products-${today()}`}
-        meta={{ ...exported, rows: undefined }}
-      />
+      <div ref={menuRoot}>
+        <ExportMenu
+          rows={exported.rows}
+          columns={[
+            ...exportColumns,
+            { id: "source", value: () => exported.source },
+            { id: "collectedAt", value: () => exported.collectedAt },
+            { id: "fetchedAt", value: () => exported.provenance.fetchedAt },
+            { id: "revision", value: () => PH_META.revision },
+          ]}
+          filename={`ph-products-${today()}`}
+          meta={{ ...exported, rows: undefined }}
+        />
+      </div>
     );
   return (
     <>
@@ -361,9 +484,15 @@ function PhExport({
           setError("");
           try {
             const value = await query.export(filters, sort);
-            if (active.current) setExported(value);
+            if (active.current) {
+              recordResearchEvent({ type: "export_prepared", rowCount: value.rows.length });
+              setExported(value);
+            }
           } catch (e) {
-            if (active.current) setError(e instanceof Error ? e.message : "Export failed.");
+            if (active.current) {
+              recordResearchEvent({ type: "stage_failed", stage: "export_prepare" });
+              setError(e instanceof Error ? e.message : "Export failed.");
+            }
           } finally {
             if (active.current) setBusy(false);
           }
