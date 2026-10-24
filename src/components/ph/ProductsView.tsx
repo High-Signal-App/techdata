@@ -86,7 +86,6 @@ type Result = {
   total: number;
   categories: { value: string; count: number }[];
   websites: { value: string; count: number }[];
-  detail: Product | null;
   provenance: PhSummary["provenance"] | Awaited<ReturnType<typeof loadPhQuery>>["provenance"];
 };
 
@@ -133,13 +132,13 @@ export default function ProductsView({
   );
   const query = engine.data;
   const read = useResource<Result>(
-    `ph:${key}:${page}:${id}:${direction}:${slug ?? ""}:${!!query}`,
+    `ph:${key}:${page}:${id}:${direction}:${!!query}`,
     async () => {
       if (!query) throw new Error("catalog is unavailable");
       const filter = JSON.parse(key);
       const sorting = { id, desc: direction === "desc" };
       const unfiltered = !filter.q?.trim() && !filter.categories?.length && !filter.website?.length;
-      const [rows, total, categories, websites, detail] = await Promise.all([
+      const [rows, total, categories, websites] = await Promise.all([
         observeFailure("search_query", query.rows(filter, sorting, page)),
         unfiltered ? Promise.resolve(summary.total) : observeFailure("search_query", query.count(filter)),
         unfiltered
@@ -148,10 +147,17 @@ export default function ProductsView({
         unfiltered
           ? Promise.resolve(summary.websites)
           : observeFailure("search_query", query.facets(filter, "website")),
-        slug ? observeFailure("detail_lookup", query.record(slug)) : Promise.resolve(null),
       ]);
       performance.mark("ph-query-ready");
-      return { rows, total, categories, websites, detail, provenance: query.provenance };
+      return { rows, total, categories, websites, provenance: query.provenance };
+    },
+    { client, staleTime: query && !previewOnly ? 30_000 : Infinity },
+  );
+  const detailRead = useResource<Product | null>(
+    `ph-detail:${slug ?? ""}:${!!query}`,
+    async () => {
+      if (!slug || !query) return null;
+      return observeFailure("detail_lookup", query.record(slug));
     },
     { client, staleTime: query && !previewOnly ? 30_000 : Infinity },
   );
@@ -183,7 +189,6 @@ export default function ProductsView({
     total: summary.total,
     categories: "categories" in summary ? summary.categories : [],
     websites: summary.websites,
-    detail: null,
     provenance: summary.provenance,
   };
   const retryTarget = engine.status === "error" ? engine.retry : read.retry;
@@ -203,7 +208,9 @@ export default function ProductsView({
   };
   const facet = (name: string, values: string[]) =>
     update({ ...filters, facets: { ...filters.facets, [name]: values } });
-  const detail = state === "ready" ? result?.detail : null;
+  const detailEngineError = !!slug && !query && engine.status === "error";
+  const detailPending = !!slug && !detailEngineError && (!query || detailRead.status === "loading");
+  const detail = query && detailRead.status !== "error" && detailRead.data?.slug === slug ? detailRead.data : null;
   const searchIsActive = Boolean(
     filters.q?.trim() || filters.facets.category?.length || filters.facets.website?.length,
   );
@@ -373,10 +380,12 @@ export default function ProductsView({
           subtitle={detail?.tagline ?? undefined}
           className="lg:w-[28rem]"
         >
-          {state === "loading" ? (
+          {detailPending ? (
             <RecordDetailSkeleton className="border-0 rounded-none max-w-none" />
-          ) : state === "error" ? (
-            <ErrorState title="product could not load." description={null} onRetry={retry} />
+          ) : detailEngineError ? (
+            <ErrorState title="full catalog could not load." description={null} onRetry={() => void engine.retry()} />
+          ) : detailRead.status === "error" ? (
+            <ErrorState title="product could not load." description={null} onRetry={() => void detailRead.retry()} />
           ) : detail ? (
             <>
               <p className="text-sm leading-relaxed whitespace-pre-line">{detail.description || "not recorded"}</p>
