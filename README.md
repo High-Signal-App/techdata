@@ -125,7 +125,14 @@ combinations and all presets through Atlas's own `selectCities` and through
 techdata, and requires identical slugs in identical order.
 
 Left out on purpose (public-site chrome, not data features): hero art,
-newsletter capture, project strip, Ask-AI footer and App Health tracking.
+newsletter capture, project strip and Ask-AI footer.
+
+App Health browser analytics runs only on `https://data.highsignal.app` and is
+skipped for `fleet_qa=1`, local development and preview origins. It records
+page views and active sessions using a first-party browser ID that can persist
+for up to 90 days; search text is excluded. Bot filtering is enabled, but manual
+QA and other automation may still be counted. No core action or account identity
+is inferred from page views.
 
 ## Podcasts coverage (read-only)
 

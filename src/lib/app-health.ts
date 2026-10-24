@@ -1,9 +1,8 @@
+import { APP_HEALTH_PUBLIC_KEY } from "./app-health-config";
 import { createPingWeb } from "./ping-web";
 import type { ResearchEvent, ResearchTrafficLabel } from "./research-trace";
 
-// Public and pinned to https://data.highsignal.app; never use an ingest key here.
-const publicKey = "ahk_pub_c6f412f471a92d82cc6a6ea1aa9f8cc17146d7fda01c0333fd08756de9bf6860";
-const client = createPingWeb({ publicKey, environment: "production" });
+const client = createPingWeb({ publicKey: APP_HEALTH_PUBLIC_KEY, environment: "production" });
 
 /** Send only content-free research outcomes. The random trace id lives in page memory only. */
 export function sendResearchLog(event: ResearchEvent, traceId: string, trafficLabel: ResearchTrafficLabel): void {

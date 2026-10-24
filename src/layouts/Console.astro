@@ -44,6 +44,19 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <meta property="og:site_name" content="techdata" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     {Astro.url.pathname === "/" && <link rel="alternate" type="text/markdown" href="/index.md" />}
+    <script>
+      import { APP_HEALTH_PUBLIC_KEY, shouldCollectBrowserAnalytics } from "../lib/app-health-config";
+
+      if (shouldCollectBrowserAnalytics(new URL(window.location.href))) {
+        const tracker = document.createElement("script");
+        tracker.src = "https://health.sassmaker.com/tracker.js";
+        tracker.dataset.key = APP_HEALTH_PUBLIC_KEY;
+        tracker.dataset.project = "app-6e8591c2-a780-4de5-8360-4461ad3d1f33";
+        tracker.dataset.identity = "persistent";
+        tracker.dataset.endpoint = "https://ingest.sassmaker.com/v1/browser";
+        document.head.appendChild(tracker);
+      }
+    </script>
   </head>
   <body>
     <a
@@ -76,6 +89,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
         <a class="underline underline-offset-4" href="https://github.com/Significant-Hobbies/ph-catalog">PH Catalog</a>
         <a class="underline underline-offset-4" href="https://papers.highsignal.app/">Research Papers</a>
         <a class="underline underline-offset-4" href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0 (Research Papers)</a>
+        <p class="basis-full">Usage measurement records page views with a first-party browser ID that can persist for up to 90 days. Search text is excluded.</p>
       </footer>
     </ConsolePage>
     <GlobalSearch client:search />
