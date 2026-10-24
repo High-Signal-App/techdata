@@ -1,3 +1,5 @@
+import { sendResearchLog } from "./app-health";
+
 export type ResearchTrafficLabel = "test" | "unclassified";
 
 type TraceFailure = {
@@ -89,6 +91,8 @@ export function createResearchTrace(
   getSearch: () => string,
   now: () => Date = () => new Date(),
   maxEvents = MAX_RESEARCH_TRACE_EVENTS,
+  onEvent?: (event: ResearchEvent, traceId: string, trafficLabel: ResearchTrafficLabel) => void,
+  traceId = "",
 ) {
   const eventLimit = Math.max(1, Math.min(MAX_RESEARCH_TRACE_EVENTS, Math.trunc(maxEvents) || 1));
   let snapshot: ResearchTrace = {
@@ -120,6 +124,13 @@ export function createResearchTrace(
       droppedCount,
       complete: droppedCount === 0,
     };
+    if (onEvent) {
+      try {
+        onEvent({ ...payload, occurredAt } as ResearchEvent, traceId, snapshot.trafficLabel);
+      } catch {
+        // Outcome logging must never interrupt the research workflow.
+      }
+    }
     for (const subscriber of subscribers) subscriber();
   }
 
@@ -133,7 +144,17 @@ export function createResearchTrace(
   };
 }
 
-const pageTrace = createResearchTrace(() => (typeof window === "undefined" ? "" : window.location.search));
+const pageTraceId =
+  typeof window !== "undefined" && typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : "";
+const pageTrace = createResearchTrace(
+  () => (typeof window === "undefined" ? "" : window.location.search),
+  undefined,
+  MAX_RESEARCH_TRACE_EVENTS,
+  (event, traceId, trafficLabel) => sendResearchLog(event, traceId, trafficLabel),
+  pageTraceId,
+);
 
 export const recordResearchEvent = pageTrace.record;
 export const getResearchTrace = pageTrace.getSnapshot;

@@ -50,6 +50,41 @@ describe("content-free Product Hunt research trace", () => {
     expect(JSON.stringify(trace.getSnapshot())).not.toContain("private");
   });
 
+  it("sends sanitized outcomes with an ephemeral trace id and traffic label", () => {
+    const sent: unknown[] = [];
+    const trace = createResearchTrace(
+      () => "?fleet_qa=1",
+      () => new Date("2026-10-24T00:00:00.000Z"),
+      200,
+      (event, traceId, trafficLabel) => sent.push({ event, traceId, trafficLabel }),
+      "ephemeral-test-id",
+    );
+
+    trace.record({
+      type: "search_result",
+      queryPresent: true,
+      filtersActive: false,
+      resultCount: 3,
+      query: "private search text",
+      rowSlug: "private-row-id",
+    } as ResearchEventInput);
+
+    expect(sent).toEqual([
+      {
+        event: {
+          type: "search_result",
+          queryPresent: true,
+          filtersActive: false,
+          resultCount: 3,
+          occurredAt: "2026-10-24T00:00:00.000Z",
+        },
+        traceId: "ephemeral-test-id",
+        trafficLabel: "test",
+      },
+    ]);
+    expect(JSON.stringify(sent)).not.toContain("private");
+  });
+
   it("marks a capped trace incomplete and counts every omitted event", () => {
     const trace = createResearchTrace(
       () => "",
