@@ -1,19 +1,19 @@
 ---
-import { createPapersAdapter } from "../../adapters/papers";
+import { publicBuildSnapshot } from "../../lib/public-build-snapshot";
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/papers/paths/"];
+
 import { PathsView } from "../../components/papers/PublicTables";
 import Console from "../../layouts/Console.astro";
 
-const initial = await createPapersAdapter({
-  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
-})
-  .paths()
-  .catch(() => undefined);
+const initial = publicBuildSnapshot.paths ?? undefined;
 ---
 
 <Console
-  title="reading paths · research papers"
-  heading="reading paths"
-  description="Attributed reading paths, in published order, with their source and trust notes. Research Papers (High Signal), CC-BY 4.0."
+  title={publicPage.title}
+  heading={publicPage.heading}
+  description={publicPage.description}
   nav="papers-paths"
   breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "reading paths" }]}
 >

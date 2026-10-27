@@ -1,19 +1,19 @@
 ---
-import { createPodcastsAdapter } from "../../adapters/podcasts";
+import { publicBuildSnapshot } from "../../lib/public-build-snapshot";
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/podcasts/"];
+
 import EpisodesView from "../../components/podcasts/EpisodesView";
 import Console from "../../layouts/Console.astro";
 
-const initial = await createPodcastsAdapter({
-  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
-})
-  .episodes(new URLSearchParams({ limit: "50" }))
-  .catch(() => undefined);
+const initial = publicBuildSnapshot.episodes ?? undefined;
 ---
 
 <Console
-  title="episodes · podcasts"
-  heading="episodes"
-  description="Podcast episodes with at least one published claim, newest first. Read live from the High Signal Podcasts public API."
+  title={publicPage.title}
+  heading={publicPage.heading}
+  description={publicPage.description}
   nav="podcasts-episodes"
   breadcrumbs={[{ label: "podcasts", href: "/podcasts/claims/" }, { label: "episodes" }]}
 >

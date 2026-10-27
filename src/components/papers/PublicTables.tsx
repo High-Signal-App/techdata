@@ -13,7 +13,7 @@ import SaveView from "../views/SaveView";
 import DataTable from "../views/ViewTable";
 import { MissingExports, PublicProvenance, provenanceColumns, showValue, usePapersApi } from "./shared";
 
-const pathColumns: DataColumn<ReadingPath>[] = [
+export const pathColumns: DataColumn<ReadingPath>[] = [
   { id: "title", header: "reading path", value: (r) => r.title, minWidth: "16rem", hideable: false },
   { id: "difficulty", header: "difficulty", value: (r) => r.difficulty },
   { id: "status", header: "attribution status", value: (r) => r.status },
@@ -26,7 +26,7 @@ const pathFilters: FilterDef<ReadingPath>[] = [
   { kind: "facet", id: "tag", label: "tag", value: (r) => r.tags },
   { kind: "facet", id: "track", label: "track", value: (r) => r.tracks },
 ];
-const citedColumns: DataColumn<CitedWork>[] = [
+export const citedColumns: DataColumn<CitedWork>[] = [
   { id: "title", header: "cited work", value: (r) => r.title, minWidth: "18rem", hideable: false },
   {
     id: "publication_year",
@@ -47,7 +47,7 @@ const citedFilters: FilterDef<CitedWork>[] = [
     value: (r) => (r.publication_year == null ? null : formatYear(r.publication_year)),
   },
 ];
-const authorColumns: DataColumn<Author>[] = [
+export const authorColumns: DataColumn<Author>[] = [
   { id: "author", header: "author", value: (r) => r.author, minWidth: "12rem", hideable: false },
   { id: "n_papers", header: "papers", value: (r) => r.n_papers, align: "right" },
   { id: "sum_citations", header: "citations", value: (r) => r.sum_citations, align: "right" },

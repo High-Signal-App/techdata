@@ -7,7 +7,7 @@ import { formatDate } from "../lib/url-state";
 
 export type OverviewRow = CollectionSummary | { id: string; error: string };
 
-const VIEWS: Record<string, { label: string; href: string }[]> = {
+export const VIEWS: Record<string, { label: string; href: string }[]> = {
   ph: [{ label: "products", href: "/ph/" }],
   reddit: [
     { label: "subreddits", href: "/reddit/" },
@@ -31,7 +31,7 @@ const VIEWS: Record<string, { label: string; href: string }[]> = {
   ],
 };
 
-const NAMES: Record<string, string> = {
+export const NAMES: Record<string, string> = {
   ph: "PH Catalog",
   reddit: "Reddit Insights",
   nomad: "Nomad Atlas",

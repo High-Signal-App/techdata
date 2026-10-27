@@ -1,4 +1,8 @@
 ---
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/nomad/"];
+
 import { Button } from "@saas-maker/ui/components/button";
 import dataset from "../../../public/data/nomad/cities.json";
 import { NOMAD_SNAPSHOT } from "../../adapters/nomad/meta";
@@ -8,9 +12,9 @@ import Console from "../../layouts/Console.astro";
 ---
 
 <Console
-  title="places · nomad atlas"
-  heading="places"
-  description={`Cost of living, internet and everyday-life scores for ${NOMAD_SNAPSHOT.explorable.toLocaleString("en-US")} places in ${NOMAD_SNAPSHOT.countries} countries and territories, from the Nomads.com snapshot Nomad Atlas saved on 7 Sep 2026.`}
+  title={publicPage.title}
+  heading={publicPage.heading}
+  description={publicPage.description}
   nav="nomad-places"
   breadcrumbs={[{ label: "nomad atlas", href: "/nomad/" }, { label: "places" }]}
 >

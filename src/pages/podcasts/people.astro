@@ -1,19 +1,19 @@
 ---
-import { createPodcastsAdapter } from "../../adapters/podcasts";
+import { publicBuildSnapshot } from "../../lib/public-build-snapshot";
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/podcasts/people/"];
+
 import PeopleView from "../../components/podcasts/PeopleView";
 import Console from "../../layouts/Console.astro";
 
-const initial = await createPodcastsAdapter({
-  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
-})
-  .people(new URLSearchParams({ limit: "50", offset: "0" }))
-  .catch(() => undefined);
+const initial = publicBuildSnapshot.people ?? undefined;
 ---
 
 <Console
-  title="people · podcasts"
-  heading="people"
-  description="Verified speakers with published claims, most claims first. Unverified speakers are labelled on their claims and never listed here."
+  title={publicPage.title}
+  heading={publicPage.heading}
+  description={publicPage.description}
   nav="podcasts-people"
   breadcrumbs={[{ label: "podcasts", href: "/podcasts/claims/" }, { label: "people" }]}
 >

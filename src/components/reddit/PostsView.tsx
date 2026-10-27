@@ -33,6 +33,7 @@ import {
 } from "../../adapters/reddit";
 import type { Provenance } from "../../adapters/types";
 import { pinFromColumns } from "../../lib/compare";
+import { publicPostColumns } from "../../lib/public-reddit-view";
 import type { CaptureMetadata } from "../../lib/reddit-initial";
 import { useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
@@ -47,25 +48,18 @@ const defs: FilterDef<Post>[] = [
 const noPosts: Post[] = [];
 const postRowId = (post: Post) => post.id;
 const searchPost = (post: Post) => `${post.title} ${post.body}`;
-const columns: DataColumn<Post>[] = [
-  {
-    id: "title",
-    header: "thread",
-    value: (p) => p.title,
-    hideable: false,
-    minWidth: "18rem",
-    cell: (p) => <span className="block max-w-[34rem] truncate font-medium">{p.title}</span>,
-  },
-  { id: "score", header: "recorded score", value: (p) => p.score, align: "right" },
-  { id: "commentCount", header: "reported replies", value: (p) => p.commentCount, align: "right" },
-  { id: "flair", header: "post label", value: (p) => p.flair ?? "not recorded" },
-  {
-    id: "createdUtc",
-    header: "created (UTC)",
-    value: (p) => p.createdUtc,
-    cell: (p) => new Date(p.createdUtc * 1000).toISOString(),
-  },
-];
+const columns: DataColumn<Post>[] = publicPostColumns.map((column) =>
+  column.id === "title"
+    ? {
+        ...column,
+        hideable: false,
+        minWidth: "18rem",
+        cell: (post: Post) => <span className="block max-w-[34rem] truncate font-medium">{post.title}</span>,
+      }
+    : column.id === "score" || column.id === "commentCount"
+      ? { ...column, align: "right" }
+      : column,
+);
 const postFields: (keyof Post)[] = [
   "id",
   "title",

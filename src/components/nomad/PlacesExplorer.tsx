@@ -76,7 +76,7 @@ const PAGE = 48;
 const LIMIT_NOTICE = `Compare up to ${MAX_COMPARE} places. Remove one to add another.`;
 const MORE_IDS = new Set<string>([...LIFESTYLE_FILTERS, ...WEATHER_FILTERS]);
 
-function columnsFor(profile: ProfileId): DataColumn<Place>[] {
+export function columnsFor(profile: ProfileId): DataColumn<Place>[] {
   return [
     {
       id: "name",

@@ -1,24 +1,9 @@
 import type { APIRoute } from "astro";
+import { publicPaths } from "../lib/public-readability";
 
 export const prerender = false;
 
-const paths = [
-  "/",
-  "/compare/",
-  "/nomad/",
-  "/nomad/compare/",
-  "/nomad/notes/",
-  "/podcasts/claims/",
-  "/podcasts/",
-  "/podcasts/people/",
-  "/reddit/",
-  "/reddit/posts/",
-  "/papers/",
-  "/papers/paths/",
-  "/papers/cited/",
-  "/papers/authors/",
-  "/ph/",
-];
+const paths = publicPaths;
 const escapeXml = (value: string) =>
   value
     .replace(/&/g, "&amp;")
