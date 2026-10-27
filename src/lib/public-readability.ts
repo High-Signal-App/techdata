@@ -54,6 +54,8 @@ export async function publicReadability(
       const body = path.startsWith("/reddit/")
         ? await redditMarkdown(path, { base: options.redditBase })
         : (documents as Partial<Record<PublicPath, string>>)[path as PublicPath];
+      // Reddit cells are untrusted plain text; its authored source URLs are already absolute.
+      if (path.startsWith("/reddit/")) return body ?? null;
       return body == null ? null : absoluteMarkdownLinks(body, new URL(path, origin).href);
     },
   });

@@ -53,6 +53,12 @@ describe("public source-backed documents", () => {
     expect(full).toContain("Included 11 of 13");
     expect(full).toContain(publicBuildSnapshot.capturedAt);
     expect(full).not.toContain("CANARY");
+    const papers = await (await get("/papers.md")).text();
+    if (publicBuildSnapshot.papers) {
+      expect(papers).toContain(
+        `${publicBuildSnapshot.papers.data.total} records · first ${publicBuildSnapshot.papers.data.rows.length} shown.`,
+      );
+    }
     const people = await (await get("/podcasts/people.md")).text();
     for (const person of publicBuildSnapshot.people?.data.people ?? []) expect(people).toContain(person.name);
     const home = await (await get("/index.md")).text();

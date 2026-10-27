@@ -66,7 +66,7 @@ export function provenance(info: Provenance | undefined) {
   return `\n\nSource: [${info.source}](${info.sourceUrl})\n\nVia: ${info.via}${info.viaUrl ? ` (${info.viaUrl})` : ""}\n\nCollected: ${info.collectedAt ?? "not recorded"}${info.fetchedAt ? ` · fetched ${info.fetchedAt}` : ""}${info.revision ? ` · revision ${info.revision}` : ""}\n\n${info.note ?? ""}\n`;
 }
 function rowsBlock<T>(
-  value: { data: { rows: T[] }; provenance: Provenance; missing?: string[] } | null,
+  value: { data: { rows: T[]; total?: number }; provenance: Provenance; missing?: string[] } | null,
   columns: DataColumn<T>[],
   sort = true,
 ) {
@@ -76,7 +76,7 @@ function rowsBlock<T>(
         String(columns[0].value(a) ?? "").localeCompare(String(columns[0].value(b) ?? "")),
       )
     : value.data.rows;
-  return `${all.length} records · first ${Math.min(50, all.length)} shown.\n\n${table(all.slice(0, 50), columns)}${provenance(value.provenance)}${value.missing?.length ? `\nUnavailable exports: ${value.missing.join(", ")}\n` : ""}`;
+  return `${value.data.total ?? all.length} records · first ${Math.min(50, all.length)} shown.\n\n${table(all.slice(0, 50), columns)}${provenance(value.provenance)}${value.missing?.length ? `\nUnavailable exports: ${value.missing.join(", ")}\n` : ""}`;
 }
 export function buildPublicMarkdown(snapshot: PublicBuildSnapshot, notes: string) {
   const body: Partial<Record<PublicPath, string>> = {};
@@ -99,7 +99,11 @@ export function buildPublicMarkdown(snapshot: PublicBuildSnapshot, notes: string
   body["/ph/"] =
     `Showing ${preview.rows.length} initial products of ${preview.total.toLocaleString("en-US")}. No votes or launch dates.\n\n${table(preview.rows, productColumns)}${provenance(preview.provenance)}\nExported ${preview.provenance.exportedAt} · [source release](${preview.provenance.releaseUrl})\n`;
   body["/papers/"] = snapshot.papers
-    ? rowsBlock({ ...snapshot.papers, data: { rows: sortPapers(snapshot.papers.data.rows) } }, paperColumns, false)
+    ? rowsBlock(
+        { ...snapshot.papers, data: { ...snapshot.papers.data, rows: sortPapers(snapshot.papers.data.rows) } },
+        paperColumns,
+        false,
+      )
     : rowsBlock(null, paperColumns);
   body["/papers/paths/"] = rowsBlock(snapshot.paths, pathColumns);
   body["/papers/cited/"] = rowsBlock(snapshot.cited, citedColumns);

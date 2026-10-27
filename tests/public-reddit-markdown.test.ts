@@ -68,6 +68,20 @@ describe("fresh public Reddit exports", () => {
     }
     expect(read).toHaveBeenCalledTimes(2);
   });
+  it("keeps hostile Markdown syntax in upstream titles as plain text", async () => {
+    const text = await redditMarkdown("/reddit/posts/", {
+      adapter: {
+        catalog,
+        snapshot: async () => ({
+          data: { ...snapshot, posts: [{ ...snapshot.posts[0], title: "[x](http://[) <script> |" }] },
+          provenance,
+        }),
+      },
+      now: () => now,
+    });
+    expect(text).toContain(String.raw`\[x\]\(http://\[\) \<script\> \|`);
+    expect(text).toContain("Default public capture");
+  });
   it("fails closed on expired or changed revisions instead of returning cached data", async () => {
     for (const data of [
       { ...snapshot, expiresAt: "2026-10-26T00:00:00Z" },

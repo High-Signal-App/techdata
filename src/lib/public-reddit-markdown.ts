@@ -4,7 +4,7 @@ import { communityColumns, publicCommunities, publicPostColumns } from "./public
 
 const safe = (value: unknown) =>
   String(value ?? "—")
-    .replaceAll("|", "\\|")
+    .replace(/[\\[\]()*_`<>|]/g, "\\$&")
     .replace(/\s*\n\s*/g, " ");
 export async function redditMarkdown(
   path: string,
@@ -18,7 +18,7 @@ export async function redditMarkdown(
       fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(5000) }),
     });
   const page = publicPageCopy[path as "/reddit/" | "/reddit/posts/"];
-  const intro = `# ${page.heading}\n\n${page.description}\n\n${ATTRIBUTION}\n\n`;
+  const intro = `# ${page.heading}\n\n${page.description}\n\n${ATTRIBUTION}\n\nDefault public capture; interactive community, date, and filter selections are not included.\n\n`;
   const catalog = await adapter.catalog();
   const entries = catalog.data.entries.filter((entry) => Date.parse(entry.expiresAt) > now());
   if (path === "/reddit/") {
