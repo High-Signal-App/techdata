@@ -16,7 +16,7 @@ import { ClaimDetail, ClaimList, ExternalLink, LiveProvenance, useApi } from "./
 
 const PAGE = 50;
 
-const columns: DataColumn<Person>[] = [
+export const columns: DataColumn<Person>[] = [
   {
     id: "name",
     header: "person",

@@ -1,19 +1,19 @@
 ---
-import { createPapersAdapter } from "../../adapters/papers";
+import { publicBuildSnapshot } from "../../lib/public-build-snapshot";
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/papers/cited/"];
+
 import { CitedView } from "../../components/papers/PublicTables";
 import Console from "../../layouts/Console.astro";
 
-const initial = await createPapersAdapter({
-  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
-})
-  .citedWorks()
-  .catch(() => undefined);
+const initial = publicBuildSnapshot.cited ?? undefined;
 ---
 
 <Console
-  title="cited works · research papers"
-  heading="cited works"
-  description="Most-cited external works from the public corpus export; aggregate counts only. Research Papers (High Signal), CC-BY 4.0."
+  title={publicPage.title}
+  heading={publicPage.heading}
+  description={publicPage.description}
   nav="papers-cited"
   breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "cited works" }]}
 >

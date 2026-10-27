@@ -1,5 +1,8 @@
 import type { APIRoute } from "astro";
-import { agentIndex } from "../lib/agent-surfaces";
-
-export const GET: APIRoute = () =>
-  new Response(agentIndex(true), { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+import { publicReadability } from "../lib/public-readability";
+export const prerender = false;
+export const GET: APIRoute = async ({ request, site }) =>
+  (await publicReadability(request, site?.origin ?? new URL(request.url).origin)) ??
+  new Response(null, { status: 404 });
+export const HEAD = GET;
+export const OPTIONS = GET;

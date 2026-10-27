@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!public/data", "!src/adapters/nomad/model.js", "!pnpm-lock.yaml"]
+    "includes": [
+      "**",
+      "!public/data",
+      "!src/adapters/nomad/model.js",
+      "!pnpm-lock.yaml",
+      "!src/lib/agent-surfaces",
+      "!src/generated"
+    ]
   },
   "formatter": {
     "enabled": true,

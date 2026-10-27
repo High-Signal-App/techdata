@@ -6,6 +6,7 @@ import GlobalSearch from "../components/GlobalSearch";
 import CompareTray from "../components/views/CompareTray";
 import SavedViews from "../components/views/SavedViews";
 import { consoleNav, type NavKey } from "../lib/nav";
+import { type PublicPath, publicPageCopy } from "../lib/public-page-copy";
 import "../styles/app.css";
 
 interface Props {
@@ -23,6 +24,9 @@ const metaDescription =
     ? "Cost of living, internet and everyday-life scores for 1,374 places in 205 countries and territories, from the Nomad Atlas snapshot."
     : description;
 const documentTitle = `${title} · techdata`;
+const publicPage =
+  publicPageCopy[(Astro.url.pathname === "/" ? "/" : Astro.url.pathname.replace(/\/$/, "") + "/") as PublicPath];
+const markdownHref = Astro.url.pathname === "/" ? "/index.md" : Astro.url.pathname.replace(/\/$/, "") + ".md";
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 ---
 
@@ -43,7 +47,8 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="techdata" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    {Astro.url.pathname === "/" && <link rel="alternate" type="text/markdown" href="/index.md" />}
+    {publicPage && <><meta name="ai-summary" content={description} /><link rel="alternate" type="text/markdown" href={markdownHref} /></>}
+    {Astro.url.pathname === "/" && <script type="application/ld+json" set:html={JSON.stringify({"@context":"https://schema.org","@type":"WebSite",name:"techdata",...(Astro.site?{url:Astro.site.origin}:{})})} />}
     <script>
       import { APP_HEALTH_PUBLIC_KEY, shouldCollectBrowserAnalytics } from "../lib/app-health-config";
 

@@ -2,47 +2,28 @@ import { ExportMenu } from "@saas-maker/ui/blocks/export-menu";
 import { ActiveFilters, FacetFilter, FilterBar, FilterSearch, useUrlFilters } from "@saas-maker/ui/blocks/filter-bar";
 import { KeyValueList, RecordDetail, RecordLayout } from "@saas-maker/ui/blocks/record-detail";
 import { RecordDetailSkeleton } from "@saas-maker/ui/blocks/skeletons";
-import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { SkeletonText } from "@saas-maker/ui/components/skeleton";
 import { type FilterDef, facetCounts, filterRows } from "@saas-maker/ui/lib/filters";
-import type { Catalog, CatalogEntry, Snapshot } from "../../adapters/reddit";
+import type { Catalog, Snapshot } from "../../adapters/reddit";
 import { snapshotHref } from "../../adapters/reddit";
 import { pinFromColumns } from "../../lib/compare";
+import { type Community, communityColumns as columns, publicCommunities } from "../../lib/public-reddit-view";
 import { useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
 import SaveView from "../views/SaveView";
 import DataTable from "../views/ViewTable";
 import { CaptureProvenance, Freshness, ReadError, useApi, useSort } from "./shared";
 
-type Community = CatalogEntry & { dates: string[] };
 const defs: FilterDef<Community>[] = [
   { kind: "facet", id: "coverage", label: "coverage", value: (e) => e.coverage.status },
   { kind: "facet", id: "date", label: "date available", value: (e) => e.dates },
-];
-const columns: DataColumn<Community>[] = [
-  { id: "subreddit", header: "subreddit", value: (e) => e.subreddit, hideable: false },
-  { id: "posts", header: "latest posts", value: (e) => e.coverage.posts, align: "right" },
-  { id: "comments", header: "retained comments", value: (e) => e.coverage.comments, align: "right" },
-  { id: "coverage", header: "latest coverage", value: (e) => e.coverage.status },
-  { id: "date", header: "latest date", value: (e) => e.date },
-  { id: "dates", header: "dates available", value: (e) => e.dates.join(", ") },
 ];
 export default function CommunitiesView() {
   const [state, retry] = useApi<Catalog>("catalog");
   const [filters, setFilters] = useUrlFilters(defs);
   const [community, setCommunity] = useUrlParam("community");
   const sort = useSort("subreddit");
-  const map = new Map<string, Community>();
-  if (state.status === "ready")
-    for (const e of state.value.data.entries
-      .filter((entry) => Date.parse(entry.expiresAt) > Date.now())
-      .sort((a, b) => b.date.localeCompare(a.date) || b.capturedAt.localeCompare(a.capturedAt))) {
-      const existing = map.get(e.subreddit);
-      if (existing) {
-        if (!existing.dates.includes(e.date)) existing.dates.push(e.date);
-      } else map.set(e.subreddit, { ...e, dates: [e.date] });
-    }
-  const all = [...map.values()];
+  const all = publicCommunities(state.status === "ready" ? state.value.data.entries : []);
   const search = (e: Community) => e.subreddit;
   const rows = filterRows(all, defs, filters, { search });
   const selected = all.find((e) => e.subreddit === community);

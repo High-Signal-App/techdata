@@ -1,13 +1,15 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "node_modules"],
+  "exclude": ["dist", "node_modules", "src/lib/agent-surfaces/**/*.mjs", ".astro/public-readability-build.mjs"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "allowJs": true,
     "types": ["@cloudflare/workers-types", "node"],
     "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "paths": {
+      "@/*": ["src/*"]
+    }
   }
 }

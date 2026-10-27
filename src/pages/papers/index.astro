@@ -1,22 +1,19 @@
 ---
-import { createPapersAdapter } from "../../adapters/papers";
+import { publicBuildSnapshot } from "../../lib/public-build-snapshot";
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/papers/"];
+
 import PapersView from "../../components/papers/PapersView";
 import Console from "../../layouts/Console.astro";
 
-const initial = await createPapersAdapter({
-  fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(15000) }),
-})
-  // Only seed the visible rows. Astro serializes props before the table markup;
-  // a full page duplicates offscreen records in both HTML and hydration data.
-  .papers(new URLSearchParams({ limit: "10" }))
-  .then(({ data, ...metadata }) => ({ ...metadata, data: { rows: data.rows, total: data.total } }))
-  .catch(() => undefined);
+const initial = publicBuildSnapshot.papers ?? undefined;
 ---
 
 <Console
-  title="papers · research papers"
-  heading="papers"
-  description="Selected public arXiv and OpenReview papers with citation metrics and review signals. Research Papers (High Signal), CC-BY 4.0."
+  title={publicPage.title}
+  heading={publicPage.heading}
+  description={publicPage.description}
   nav="papers-papers"
   breadcrumbs={[{ label: "research papers", href: "/papers/" }, { label: "papers" }]}
 >

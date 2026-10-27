@@ -1,13 +1,17 @@
 ---
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/nomad/notes/"];
+
 import { KeyValueList, Provenance } from "@saas-maker/ui/blocks/record-detail";
 import { NOMAD_SNAPSHOT, nomadProvenanceInfo } from "../../adapters/nomad/meta";
 import Console from "../../layouts/Console.astro";
 ---
 
 <Console
-  title="data notes · nomad atlas"
-  heading="data notes"
-  description="What the Nomad Atlas numbers are, and what they are not."
+  title={publicPage.title}
+  heading={publicPage.heading}
+  description={publicPage.description}
   nav="nomad-notes"
   breadcrumbs={[{ label: "nomad atlas", href: "/nomad/" }, { label: "data notes" }]}
 >

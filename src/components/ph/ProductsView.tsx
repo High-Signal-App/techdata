@@ -43,7 +43,7 @@ function link(url: string | null, label: string) {
     </a>
   );
 }
-const columns: DataColumn<Product>[] = [
+export const columns: DataColumn<Product>[] = [
   { id: "name", header: "name", value: (p) => p.name, hideable: false, minWidth: "12rem" },
   {
     id: "tagline",

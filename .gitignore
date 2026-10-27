@@ -11,3 +11,7 @@ dist/
 *.db
 *.db-journal
 /screenshots/
+
+# Public adapter snapshots generated before build; shared by HTML and Markdown.
+/src/generated/public-build.mjs
+/src/generated/public-markdown.json

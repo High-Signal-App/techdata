@@ -1,7 +1,11 @@
 ---
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const publicPage = publicPageCopy["/reddit/"];
+
 import CommunitiesView from "../../components/reddit/CommunitiesView";
 import Console from "../../layouts/Console.astro";
 ---
-<Console title="subreddits · reddit insights" heading="subreddits" description="Captured communities, available collection dates and coverage. Read from the public Reddit Insights Snapshot API." nav="reddit-communities" breadcrumbs={[{ label: "reddit insights" }, { label: "subreddits" }]}>
+<Console title={publicPage.title} heading={publicPage.heading} description={publicPage.description} nav="reddit-communities" breadcrumbs={[{ label: "reddit insights" }, { label: "subreddits" }]}>
   <CommunitiesView client:load />
 </Console>
