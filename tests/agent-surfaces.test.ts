@@ -1,5 +1,6 @@
 import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { buildPublicMarkdown } from "../src/lib/public-build-markdown";
 import { publicBuildSnapshot } from "../src/lib/public-build-snapshot";
 import { htmlDiscovery, publicPaths, publicReadability } from "../src/lib/public-readability";
 
@@ -64,6 +65,27 @@ describe("public source-backed documents", () => {
     const home = await (await get("/index.md")).text();
     for (const row of publicBuildSnapshot.overview)
       expect(home).toContain("error" in row ? row.error : row.description);
+  });
+  it("keeps upstream static titles literal", () => {
+    const hostile: Parameters<typeof buildPublicMarkdown>[0] = {
+      ...publicBuildSnapshot,
+      papers: {
+        missing: [],
+        freshness: {},
+        provenance: {
+          source: "Fixture",
+          sourceUrl: "https://example.com",
+          via: "test",
+          viaUrl: "https://example.com",
+          collectedAt: "2026-10-27",
+        },
+        data: {
+          total: 1,
+          rows: [{ id: "fixture", lists: [], published: {}, title: "[x](http://[) <script>" }],
+        },
+      },
+    };
+    expect(buildPublicMarkdown(hostile, "")["/papers/"]).toContain(String.raw`\[x\]\(http://\[\) \<script\>`);
   });
   it("negotiates by quality and preserves HTML variation", async () => {
     for (const accept of ["*/*", "text/markdown;q=0", "text/markdown;q=0.5,text/html;q=1", "text/markdown,text/html"])

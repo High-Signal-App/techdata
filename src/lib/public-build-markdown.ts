@@ -23,7 +23,7 @@ import { formatDate } from "./url-state";
 /** Read only the existing cell presentation result; never render/scrape HTML or run hooks. */
 function cellText(node: ReactNode): string {
   if (node == null || typeof node === "boolean") return "";
-  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (typeof node === "string" || typeof node === "number") return safe(String(node));
   if (Array.isArray(node)) return node.map(cellText).join("");
   if (
     isValidElement<{ children?: ReactNode; href?: string; hidden?: boolean; "aria-hidden"?: boolean | string }>(node)
@@ -45,7 +45,7 @@ const defaultValue = (value: unknown) =>
           ? "yes"
           : "no"
         : String(value);
-const safe = (value: string) => value.replaceAll("|", "\\|").replace(/\s*\n\s*/g, " ");
+const safe = (value: string) => value.replace(/[\\[\]()*_`<>|]/g, "\\$&").replace(/\s*\n\s*/g, " ");
 function table<T>(rows: T[], columns: DataColumn<T>[]) {
   const visible = columns.filter((column) => !column.hidden);
   return [
@@ -55,7 +55,7 @@ function table<T>(rows: T[], columns: DataColumn<T>[]) {
       (row) =>
         "| " +
         visible
-          .map((column) => safe(column.cell ? cellText(column.cell(row)) : defaultValue(column.value(row))))
+          .map((column) => (column.cell ? cellText(column.cell(row)) : safe(defaultValue(column.value(row)))))
           .join(" | ") +
         " |",
     ),
