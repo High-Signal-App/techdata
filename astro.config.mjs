@@ -11,6 +11,9 @@ export default defineConfig({
   output: "static",
   site: process.env.PUBLIC_SITE_URL || undefined,
   trailingSlash: "ignore",
+  // Deliver the Console styles with the document instead of delaying first paint
+  // behind another round trip on mobile connections.
+  build: { inlineStylesheets: "always" },
   adapter: cloudflare({ imageService: "passthrough" }),
   session: false,
   integrations: [react(), searchHydration()],
