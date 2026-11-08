@@ -1,0 +1,17 @@
+---
+import { PH_META } from "../../../adapters/ph/meta";
+import Console from "../../../layouts/Console.astro";
+import { phPublication } from "../../../lib/ph-publication";
+
+export const prerender = true;
+const pages = Array.from({ length: phPublication.catalogPages }, (_, i) => i + 1);
+---
+<Console title="Product catalog directory" heading="Product catalog directory" description={`Browse all ${phPublication.products.toLocaleString("en-US")} source-backed product descriptions through ${pages.length} linked catalog pages.`} nav="ph-products" breadcrumbs={[{ label: "PH Catalog", href: "/ph/" }, { label: "catalog directory" }]}>
+  <div class="max-w-4xl space-y-6">
+    <p class="text-sm text-muted-foreground">Every reading-catalog page is linked below. These {phPublication.products.toLocaleString("en-US")} listings have a source description, categories and an original Product Hunt link. They are a qualified subset of the {PH_META.coverageLabel}. Exported <time datetime={PH_META.exportedAt}>{PH_META.exportedAt}</time>.</p>
+    <a class="inline-block underline" href="/ph/">Search and filter the full source workbench</a>
+    <nav aria-label="All product catalog pages">
+      <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{pages.map(page => <li><a class="underline underline-offset-4" href={`/ph/catalog/${page}/`}>Page {page} · products {((page - 1) * 100 + 1).toLocaleString("en-US")}–{Math.min(page * 100, phPublication.products).toLocaleString("en-US")}</a></li>)}</ol>
+    </nav>
+  </div>
+</Console>

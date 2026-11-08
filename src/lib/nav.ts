@@ -41,7 +41,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
       items: [
         item("podcasts-claims", "claims", "/podcasts/claims/"),
         item("podcasts-episodes", "episodes", "/podcasts/"),
-        { label: "episode catalog", href: "/podcasts/catalog/1/" },
+        { label: "episode catalog", href: "/podcasts/catalog/" },
         item("podcasts-people", "people", "/podcasts/people/"),
       ],
     },
@@ -51,7 +51,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
     },
     {
       title: "ph catalog",
-      items: [item("ph-products", "products", "/ph/"), { label: "reading catalog", href: "/ph/catalog/1/" }],
+      items: [item("ph-products", "products", "/ph/"), { label: "reading catalog", href: "/ph/catalog/" }],
     },
     {
       title: "research papers",

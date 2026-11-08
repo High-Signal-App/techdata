@@ -54,7 +54,7 @@ describe("public source-backed documents", () => {
   it("keeps visible source values and the exact captured version", async () => {
     const full = await (await get("/llms-full.txt")).text();
     expect(full.length).toBeLessThan(500000);
-    expect(full).toContain("Included 11 of 13");
+    expect(full).toContain("Included 13 of 15");
     expect(full).toContain(publicBuildSnapshot.capturedAt);
     expect(full).not.toContain("CANARY");
     const papers = await (await get("/papers.md")).text();
