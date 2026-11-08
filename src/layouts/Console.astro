@@ -5,6 +5,7 @@ import geistFont from "@saas-maker/ui/fonts/geist-latin-normal.woff2?url";
 import GlobalSearch from "../components/GlobalSearch";
 import CompareTray from "../components/views/CompareTray";
 import SavedViews from "../components/views/SavedViews";
+import { serializeJsonLd } from "../lib/json-ld";
 import { consoleNav, type NavKey } from "../lib/nav";
 import { type PublicPath, publicPageCopy } from "../lib/public-page-copy";
 import { PUBLIC_ORIGIN, pageCanonical } from "../lib/site";
@@ -37,7 +38,7 @@ const canonical = pageCanonical(Astro.url.pathname, noindex);
     <meta name="color-scheme" content="dark" />
     <link rel="preload" href={geistFont} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={figtreeFont} as="font" type="font/woff2" crossorigin />
-    <script type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: documentTitle, description: metaDescription, ...(canonical ? { url: canonical } : {}) })} />
+    <script type="application/ld+json" set:html={serializeJsonLd({ "@context": "https://schema.org", "@type": "WebPage", name: documentTitle, description: metaDescription, ...(canonical ? { url: canonical } : {}) })} />
     <title>{documentTitle}</title>
     <meta name="description" content={metaDescription} />
     {noindex && <meta name="robots" content="noindex, follow" />}
@@ -48,7 +49,7 @@ const canonical = pageCanonical(Astro.url.pathname, noindex);
     <meta property="og:site_name" content="techdata" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     {publicPage && <><meta name="ai-summary" content={description} /><link rel="alternate" type="text/markdown" href={markdownHref} /></>}
-    {Astro.url.pathname === "/" && <script type="application/ld+json" set:html={JSON.stringify({"@context":"https://schema.org","@type":"WebSite",name:"techdata",url:PUBLIC_ORIGIN})} />}
+    {Astro.url.pathname === "/" && <script type="application/ld+json" set:html={serializeJsonLd({"@context":"https://schema.org","@type":"WebSite",name:"techdata",url:PUBLIC_ORIGIN})} />}
     <script>
       import { APP_HEALTH_PUBLIC_KEY, shouldCollectBrowserAnalytics } from "../lib/app-health-config";
 

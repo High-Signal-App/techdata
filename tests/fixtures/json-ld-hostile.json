@@ -1,0 +1,23 @@
+[
+  {
+    "id": "literal",
+    "rawTitle": "Literal </script><script data-jsonld-canary>window.__jsonLdXss=1</script>",
+    "rawDescription": "Literal description </script><script data-jsonld-canary>window.__jsonLdXss=2</script>",
+    "preparedTitle": "Literal </script><script data-jsonld-canary>window.__jsonLdXss=1</script>",
+    "preparedDescription": "Literal description </script><script data-jsonld-canary>window.__jsonLdXss=2</script>"
+  },
+  {
+    "id": "encoded",
+    "rawTitle": "Encoded &lt;/script&gt;&lt;script data-jsonld-canary&gt;window.__jsonLdXss=3&lt;/script&gt;",
+    "rawDescription": "Encoded description &lt;/script&gt;&lt;script data-jsonld-canary&gt;window.__jsonLdXss=4&lt;/script&gt;",
+    "preparedTitle": "Encoded </script><script data-jsonld-canary>window.__jsonLdXss=3</script>",
+    "preparedDescription": "Encoded description </script><script data-jsonld-canary>window.__jsonLdXss=4</script>"
+  },
+  {
+    "id": "normal",
+    "rawTitle": "Normal quotes & tools",
+    "rawDescription": "Normal detail with quotes, ampersand & and unicode 新しい製品.",
+    "preparedTitle": "Normal quotes & tools",
+    "preparedDescription": "Normal detail with quotes, ampersand & and unicode 新しい製品."
+  }
+]
