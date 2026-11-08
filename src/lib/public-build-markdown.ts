@@ -16,6 +16,7 @@ import { columns as productColumns } from "../components/ph/ProductsView";
 import { columns as episodeColumns } from "../components/podcasts/EpisodesView";
 import { columns as peopleColumns } from "../components/podcasts/PeopleView";
 import { toQuote } from "../components/podcasts/shared";
+import { phPublication } from "./ph-publication";
 import type { PublicBuildSnapshot } from "./public-build-data";
 import { type PublicPath, publicPageCopy } from "./public-page-copy";
 import { formatDate } from "./url-state";
@@ -98,6 +99,15 @@ export function buildPublicMarkdown(snapshot: PublicBuildSnapshot, notes: string
   const preview = phPreview(phSummary);
   body["/ph/"] =
     `Showing ${preview.rows.length} initial products of ${preview.total.toLocaleString("en-US")}. No votes or launch dates.\n\n${table(preview.rows, productColumns)}${provenance(preview.provenance)}\nExported ${preview.provenance.exportedAt} · [source release](${preview.provenance.releaseUrl})\n`;
+  body["/ph/catalog/"] =
+    `${phPublication.products.toLocaleString("en-US")} qualified product descriptions across ${phPublication.catalogPages} pages.\n\n` +
+    Array.from(
+      { length: phPublication.catalogPages },
+      (_, n) => `- [Product catalog page ${n + 1}](/ph/catalog/${n + 1}/)`,
+    ).join("\n");
+  body["/podcasts/catalog/"] = snapshot.episodes
+    ? `${snapshot.episodes.data.total.toLocaleString("en-US")} episodes with published claims in the captured source.\n\n${Array.from({ length: Math.ceil(snapshot.episodes.data.total / 100) }, (_, n) => `- [Episode catalog page ${n + 1}](/podcasts/catalog/${n + 1}/)`).join("\n")}${provenance(snapshot.episodes.provenance)}`
+    : "The Podcasts API did not answer at build time. No directory size is inferred.\n";
   body["/papers/"] = snapshot.papers
     ? rowsBlock(
         { ...snapshot.papers, data: { ...snapshot.papers.data, rows: sortPapers(snapshot.papers.data.rows) } },

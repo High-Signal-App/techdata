@@ -19,7 +19,7 @@ const description = episode
   ? `${episode.showName}: ${episode.title}. ${claims.length} published claims with source attribution and episode context.`
   : "This episode is unavailable from the published podcast collection.";
 ---
-<Console title={episode?.title ?? "Episode unavailable"} heading={episode?.title ?? "Episode unavailable"} description={description} nav="podcasts-episodes" breadcrumbs={[{ label: "podcasts", href: "/podcasts/" }, { label: "episode catalog", href: "/podcasts/catalog/1/" }, { label: "episode" }]} noindex={!episode}>
+<Console title={episode?.title ?? "Episode unavailable"} heading={episode?.title ?? "Episode unavailable"} description={description} nav="podcasts-episodes" breadcrumbs={[{ label: "podcasts", href: "/podcasts/" }, { label: "episode catalog", href: "/podcasts/catalog/" }, { label: "episode" }]} noindex={!episode}>
   {episode && result ? <article class="max-w-3xl space-y-6">
     <section class="rounded-lg border border-border p-5 space-y-3 text-sm">
       <h2 class="text-base font-medium">Episode context</h2>
@@ -33,6 +33,6 @@ const description = episode
       <ol class="divide-y divide-border">{claims.map((claim) => <li class="py-4 space-y-2"><p class="leading-7 break-words">{claim.assertion}</p><p class="text-xs text-muted-foreground">{speakerLabel(claim)} · {claim.claimType}{claim.saidOn ? ` · ${claim.saidOn.slice(0, 10)}` : ""}</p><a class="text-sm underline" href={`/podcasts/claims/?claim=${encodeURIComponent(claim.id)}`}>Read quote and source evidence</a>{safeWebUrl(claim.deepLinkUrl) && <a class="ml-4 text-sm underline" href={safeWebUrl(claim.deepLinkUrl)} rel="noreferrer">Listen at the source</a>}</li>)}</ol>
     </section>
     <section class="space-y-2 text-xs text-muted-foreground"><h2 class="text-base font-medium text-foreground">Source and retrieval</h2><p>High Signal Podcasts public API · retrieved <time datetime={result.provenance.fetchedAt}>{result.provenance.fetchedAt}</time>. This is a live published-only read; withheld shows are excluded by the source. The original transcript collection date is not supplied.</p><a class="underline" href={result.provenance.viaUrl}>Public episode data</a></section>
-    <a class="inline-block underline" href="/podcasts/catalog/1/">Browse more podcast episodes</a>
-  </article> : <div class="space-y-4"><p>{failed ? "The public source could not be verified. Please retry later." : "This episode is not available in the published collection."}</p><a class="underline" href="/podcasts/catalog/1/">Browse published episodes</a></div>}
+    <a class="inline-block underline" href="/podcasts/catalog/">Browse more podcast episodes</a>
+  </article> : <div class="space-y-4"><p>{failed ? "The public source could not be verified. Please retry later." : "This episode is not available in the published collection."}</p><a class="underline" href="/podcasts/catalog/">Browse published episodes</a></div>}
 </Console>

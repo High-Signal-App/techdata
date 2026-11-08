@@ -1,0 +1,26 @@
+---
+import Console from "../../../layouts/Console.astro";
+import { podcastPublication } from "../../../server/podcast-publication";
+
+export const prerender = true;
+let failed = false;
+const result = await podcastPublication.catalog("1").catch(() => {
+  failed = true;
+  return null;
+});
+const total = result?.data.total ?? 0;
+const valid = !failed && Number.isSafeInteger(total) && total > 0 && total <= 100_000;
+if (!valid) throw new Error("Public episode directory source could not be verified; retain the previous release");
+const pages = valid ? Array.from({ length: Math.ceil(total / 100) }, (_, i) => i + 1) : [];
+Astro.response.status = valid ? 200 : 503;
+Astro.response.headers.set("Cache-Control", valid ? "public, max-age=60" : "no-store");
+if (!valid) Astro.response.headers.set("X-Robots-Tag", "noindex");
+---
+<Console title="Podcast episode catalog directory" heading="Podcast episode catalog directory" description="Find every page of published podcast episodes, with source links, dates and claim provenance." nav="podcasts-episodes" breadcrumbs={[{ label: "podcasts", href: "/podcasts/" }, { label: "catalog directory" }]} noindex={!valid}>
+  <div class="max-w-4xl space-y-6">
+    {valid ? <>
+      <p class="text-sm text-muted-foreground">The public source reports {total.toLocaleString("en-US")} episodes with published claims across {pages.length} catalog pages. Retrieved {result?.provenance.fetchedAt}. Withheld shows stay excluded by the source; missing speaker attribution stays unverified.</p>
+      <nav aria-label="All episode catalog pages"><ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{pages.map(page => <li><a class="underline underline-offset-4" href={`/podcasts/catalog/${page}/`}>Page {page} · episodes {((page - 1) * 100 + 1).toLocaleString("en-US")}–{Math.min(page * 100, total).toLocaleString("en-US")}</a></li>)}</ol></nav>
+    </> : <p>The public episode source could not be verified. Please retry later.</p>}
+  </div>
+</Console>

@@ -48,6 +48,17 @@ export const publicPageCopy = {
     heading: "PH Catalog",
     description: `${PH_META.coverageLabel}. Product Hunt metadata: browse the first page immediately, then search and filter the full catalog in your browser. No votes or launch dates.`,
   },
+  "/ph/catalog/": {
+    title: "Product catalog directory",
+    heading: "Product catalog directory",
+    description:
+      "Browse every page of sourced product descriptions, categories and original Product Hunt links in the reading catalog.",
+  },
+  "/podcasts/catalog/": {
+    title: "Podcast episode catalog directory",
+    heading: "Podcast episode catalog directory",
+    description: "Find every page of published podcast episodes, with source links, dates and claim provenance.",
+  },
   "/podcasts/claims/": {
     title: "claims \u00b7 podcasts",
     heading: "claims",

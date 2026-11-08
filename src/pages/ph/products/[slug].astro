@@ -18,7 +18,7 @@ const description = product
   ? `${product.name}: ${product.tagline || product.description?.slice(0, 120)}. Product Hunt catalog metadata, exported ${PH_META.exportedAt}.`
   : "This product is unavailable in the published catalog.";
 ---
-<Console title={product?.name ?? "Product unavailable"} heading={product?.name ?? "Product unavailable"} description={description} nav="ph-products" breadcrumbs={[{ label: "PH Catalog", href: "/ph/" }, { label: "catalog", href: "/ph/catalog/1/" }, { label: product?.name ?? "unavailable" }]} noindex={!product}>
+<Console title={product?.name ?? "Product unavailable"} heading={product?.name ?? "Product unavailable"} description={description} nav="ph-products" breadcrumbs={[{ label: "PH Catalog", href: "/ph/" }, { label: "catalog", href: "/ph/catalog/" }, { label: product?.name ?? "unavailable" }]} noindex={!product}>
   {product ? <article class="max-w-3xl space-y-6">
     <p class="text-lg text-muted-foreground">{product.tagline}</p>
     <section class="rounded-lg border border-border p-5 space-y-3" aria-labelledby="description-heading">
@@ -42,5 +42,5 @@ const description = product
       <ul class="grid gap-3 sm:grid-cols-2">{product.related.map((other) => <li class="rounded-lg border border-border p-4 space-y-1"><a class="underline underline-offset-4 break-words" href={`/ph/products/${other.slug}/`}>{other.name}</a><p class="text-xs text-muted-foreground">{other.category}</p></li>)}</ul>
     </section>}
     <a class="inline-block underline" href={`/ph/catalog/${product.catalogPage}/`}>Return to this part of the product catalog</a>
-  </article> : <div class="space-y-4"><p>{unavailable ? "The publication snapshot could not be read. Please try again later." : "No eligible product matches this address."}</p><a class="underline" href="/ph/catalog/1/">Browse the product catalog</a></div>}
+  </article> : <div class="space-y-4"><p>{unavailable ? "The publication snapshot could not be read. Please try again later." : "No eligible product matches this address."}</p><a class="underline" href="/ph/catalog/">Browse the product catalog</a></div>}
 </Console>

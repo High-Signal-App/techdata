@@ -19,7 +19,7 @@ if (!rows) Astro.response.headers.set("X-Robots-Tag", "noindex");
   <div class="max-w-4xl space-y-6">
     <p class="text-sm text-muted-foreground">This reading catalog includes listings with a source description of at least 160 characters and 25 words, categories and an original listing link. <a class="underline" href="/ph/">Search and filter all 575,479 source records in the workbench.</a> Exported <time datetime={PH_META.exportedAt}>{PH_META.exportedAt}</time>; per-record collection dates are unknown.</p>
     {rows ? <>
-      <nav aria-label="Catalog pages" class="flex flex-wrap items-center gap-4 text-sm">
+      <nav aria-label="Catalog pages" class="flex flex-wrap items-center gap-4 text-sm"><a class="underline" href="/ph/catalog/">All catalog pages</a>
         {page > 1 && <a class="underline" href={`/ph/catalog/${page - 1}/`} rel="prev">Previous</a>}
         <span>Page {page} of {phPublication.catalogPages}</span>
         {page < phPublication.catalogPages && <a class="underline" href={`/ph/catalog/${page + 1}/`} rel="next">Next</a>}
