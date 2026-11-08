@@ -12,4 +12,5 @@ import Console from "../../layouts/Console.astro";
 <Console title={publicPage.title} heading={publicPage.heading} description={publicPage.description} nav="ph-products" breadcrumbs={[{ label: "PH Catalog" }]}>
   <p class="mb-3 text-xs text-muted-foreground">Source: Product Hunt · <a class="underline" href={summary.provenance.releaseUrl}>{summary.provenance.revision}</a> · exported {summary.provenance.exportedAt} · per-record collection dates not recorded.</p>
   <ProductsPreview preview={phPreview(summary)} client:paint />
+  <p class="mt-5 text-sm"><a class="underline underline-offset-4" href="/ph/catalog/1/">Read the product catalog: descriptions, categories and original source links</a></p>
 </Console>

@@ -1,0 +1,46 @@
+---
+import { PH_META } from "../../../adapters/ph/meta";
+import Console from "../../../layouts/Console.astro";
+import { safeWebUrl } from "../../../lib/ph-publication";
+import { publication } from "../../../server/publication";
+
+export const prerender = false;
+let unavailable = false;
+const product = await publication.product(Astro.params.slug ?? "").catch(() => {
+  unavailable = true;
+  return null;
+});
+Astro.response.status = unavailable ? 503 : product ? 200 : 404;
+Astro.response.headers.set("Cache-Control", product ? "public, max-age=3600" : "no-store");
+if (!product) Astro.response.headers.set("X-Robots-Tag", "noindex");
+const website = safeWebUrl(product?.website_url ?? null);
+const description = product
+  ? `${product.name}: ${product.tagline || product.description?.slice(0, 120)}. Product Hunt catalog metadata, exported ${PH_META.exportedAt}.`
+  : "This product is unavailable in the published catalog.";
+---
+<Console title={product?.name ?? "Product unavailable"} heading={product?.name ?? "Product unavailable"} description={description} nav="ph-products" breadcrumbs={[{ label: "PH Catalog", href: "/ph/" }, { label: "catalog", href: "/ph/catalog/1/" }, { label: product?.name ?? "unavailable" }]} noindex={!product}>
+  {product ? <article class="max-w-3xl space-y-6">
+    <p class="text-lg text-muted-foreground">{product.tagline}</p>
+    <section class="rounded-lg border border-border p-5 space-y-3" aria-labelledby="description-heading">
+      <h2 id="description-heading" class="text-base font-medium">What the product does</h2>
+      <p class="whitespace-pre-line break-words leading-7">{product.description}</p>
+      <p class="text-xs text-muted-foreground">{product.descriptionExcerpt ? "Excerpt from the source product description." : "Description supplied by the source product listing."} Features and availability reflect this saved listing, not a current endorsement.</p>
+    </section>
+    <section class="space-y-3" aria-labelledby="categories-heading">
+      <h2 id="categories-heading" class="text-base font-medium">Source categories</h2>
+      <ul class="flex flex-wrap gap-2">{product.categories.map((category) => <li class="rounded-md border border-border px-3 py-1 text-sm"><a href={`/ph/?category=${encodeURIComponent(category)}`} class="underline underline-offset-4">{category}</a></li>)}</ul>
+    </section>
+    <section class="space-y-3 text-sm" aria-labelledby="source-heading">
+      <h2 id="source-heading" class="text-base font-medium">Source and snapshot</h2>
+      <p>Product Hunt public product metadata, exported <time datetime={PH_META.exportedAt}>{PH_META.exportedAt}</time>. Per-record collection dates, launch dates and votes are not recorded.</p>
+      <p>Revision: <a class="underline" href={PH_META.releaseUrl}>{PH_META.revision}</a>.</p>
+      <div class="flex flex-wrap gap-4"><a class="underline" href={product.producthunt_url ?? "https://www.producthunt.com/"} rel="noreferrer">Original Product Hunt listing</a>{website && <a class="underline break-all" href={website} rel="noreferrer">Product website</a>}<a class="underline" href={`/ph/?product=${encodeURIComponent(product.slug)}`}>Open in the data workbench</a></div>
+    </section>
+    {product.related.length > 0 && <section class="space-y-3" aria-labelledby="related-heading">
+      <h2 id="related-heading" class="text-base font-medium">Explore the same source categories</h2>
+      <p class="text-xs text-muted-foreground">Other described products in this saved catalog. Shared categories do not imply the same features or quality.</p>
+      <ul class="grid gap-3 sm:grid-cols-2">{product.related.map((other) => <li class="rounded-lg border border-border p-4 space-y-1"><a class="underline underline-offset-4 break-words" href={`/ph/products/${other.slug}/`}>{other.name}</a><p class="text-xs text-muted-foreground">{other.category}</p></li>)}</ul>
+    </section>}
+    <a class="inline-block underline" href={`/ph/catalog/${product.catalogPage}/`}>Return to this part of the product catalog</a>
+  </article> : <div class="space-y-4"><p>{unavailable ? "The publication snapshot could not be read. Please try again later." : "No eligible product matches this address."}</p><a class="underline" href="/ph/catalog/1/">Browse the product catalog</a></div>}
+</Console>

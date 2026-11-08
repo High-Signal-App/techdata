@@ -1,0 +1,35 @@
+---
+import { PH_META } from "../../../adapters/ph/meta";
+import Console from "../../../layouts/Console.astro";
+import { phPublication } from "../../../lib/ph-publication";
+import { publication } from "../../../server/publication";
+
+export const prerender = false;
+let unavailable = false;
+const rows = await publication.catalog(Astro.params.page ?? "").catch(() => {
+  unavailable = true;
+  return null;
+});
+const page = Number(Astro.params.page);
+Astro.response.status = unavailable ? 503 : rows ? 200 : 404;
+Astro.response.headers.set("Cache-Control", rows ? "public, max-age=3600" : "no-store");
+if (!rows) Astro.response.headers.set("X-Robots-Tag", "noindex");
+---
+<Console title={`Product catalog · page ${rows ? page : "unavailable"}`} heading="Product catalog" description={`${phPublication.products.toLocaleString("en-US")} products with source descriptions and categories, from the Product Hunt export of ${PH_META.exportedAt}.`} nav="ph-products" breadcrumbs={[{ label: "PH Catalog", href: "/ph/" }, { label: "catalog" }]} noindex={!rows}>
+  <div class="max-w-4xl space-y-6">
+    <p class="text-sm text-muted-foreground">This reading catalog includes listings with a source description of at least 160 characters and 25 words, categories and an original listing link. <a class="underline" href="/ph/">Search and filter all 575,479 source records in the workbench.</a> Exported <time datetime={PH_META.exportedAt}>{PH_META.exportedAt}</time>; per-record collection dates are unknown.</p>
+    {rows ? <>
+      <nav aria-label="Catalog pages" class="flex flex-wrap items-center gap-4 text-sm">
+        {page > 1 && <a class="underline" href={`/ph/catalog/${page - 1}/`} rel="prev">Previous</a>}
+        <span>Page {page} of {phPublication.catalogPages}</span>
+        {page < phPublication.catalogPages && <a class="underline" href={`/ph/catalog/${page + 1}/`} rel="next">Next</a>}
+      </nav>
+      <ol class="divide-y divide-border" start={(page - 1) * 100 + 1}>{rows.map((product) => <li class="py-5 space-y-2">
+        <h2 class="font-medium"><a class="underline underline-offset-4" href={`/ph/products/${product.slug}/`}>{product.name}</a></h2>
+        {product.tagline && <p class="text-sm text-muted-foreground break-words">{product.tagline}</p>}
+        <p class="text-xs text-muted-foreground">{product.categories.join(" · ")}</p>
+      </li>)}</ol>
+      <nav aria-label="Continue catalog" class="flex flex-wrap gap-4 text-sm">{page > 1 && <a class="underline" href={`/ph/catalog/${page - 1}/`}>Previous page</a>}{page < phPublication.catalogPages && <a class="underline" href={`/ph/catalog/${page + 1}/`}>Next page</a>}</nav>
+    </> : <p>{unavailable ? "The catalog snapshot is temporarily unavailable." : "This catalog page does not exist."} <a class="underline" href="/ph/catalog/1/">Return to the first page.</a></p>}
+  </div>
+</Console>
