@@ -14,7 +14,10 @@ describe("public source-backed documents", () => {
   it("covers exactly public source pages and keeps local comparisons excluded", async () => {
     const expected = readdirSync(new URL("../src/pages/", import.meta.url), { recursive: true })
       .map(String)
-      .filter((path) => path.endsWith(".astro") && !["compare.astro", "nomad/compare.astro"].includes(path))
+      .filter(
+        (path) =>
+          path.endsWith(".astro") && !path.includes("[") && !["compare.astro", "nomad/compare.astro"].includes(path),
+      )
       .map((path) => (path === "index.astro" ? "/" : `/${path.replace(/(?:\/index)?\.astro$/, "")}/`));
     expect([...publicPaths].sort()).toEqual(expected.sort());
     const registry = (await (await get("/api/md/_catalog")).json()) as { path: string }[];

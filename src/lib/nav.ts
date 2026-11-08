@@ -41,6 +41,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
       items: [
         item("podcasts-claims", "claims", "/podcasts/claims/"),
         item("podcasts-episodes", "episodes", "/podcasts/"),
+        { label: "episode catalog", href: "/podcasts/catalog/1/" },
         item("podcasts-people", "people", "/podcasts/people/"),
       ],
     },
@@ -48,7 +49,10 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
       title: "reddit insights",
       items: [item("reddit-communities", "subreddits", "/reddit/"), item("reddit-posts", "threads", "/reddit/posts/")],
     },
-    { title: "ph catalog", items: [item("ph-products", "products", "/ph/")] },
+    {
+      title: "ph catalog",
+      items: [item("ph-products", "products", "/ph/"), { label: "reading catalog", href: "/ph/catalog/1/" }],
+    },
     {
       title: "research papers",
       items: [

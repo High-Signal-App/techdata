@@ -16,18 +16,18 @@ interface Props {
   description: string;
   nav: NavKey;
   breadcrumbs: { label: string; href?: string }[];
+  noindex?: boolean;
 }
 
-const { title, heading, description, nav, breadcrumbs } = Astro.props;
-const metaDescription =
-  description.length > 160
-    ? "Cost of living, internet and everyday-life scores for 1,374 places in 205 countries and territories, from the Nomad Atlas snapshot."
-    : description;
+const { title, heading, description, nav, breadcrumbs, noindex = false } = Astro.props;
+const metaDescription = description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description;
 const documentTitle = `${title} · techdata`;
 const publicPage =
   publicPageCopy[(Astro.url.pathname === "/" ? "/" : Astro.url.pathname.replace(/\/$/, "") + "/") as PublicPath];
 const markdownHref = Astro.url.pathname === "/" ? "/index.md" : Astro.url.pathname.replace(/\/$/, "") + ".md";
-const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const canonicalPath = Astro.url.pathname === "/" ? "/" : Astro.url.pathname.replace(/\/$/, "") + "/";
+const canonicalOrigin = Astro.site ?? (Astro.isPrerendered ? undefined : Astro.url.origin);
+const canonical = !noindex && canonicalOrigin ? new URL(canonicalPath, canonicalOrigin).href : undefined;
 ---
 
 <!doctype html>
@@ -41,6 +41,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <script type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: documentTitle, description: metaDescription, ...(canonical ? { url: canonical } : {}) })} />
     <title>{documentTitle}</title>
     <meta name="description" content={metaDescription} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
     {canonical && <link rel="canonical" href={canonical} />}
     <meta property="og:title" content={documentTitle} />
     <meta property="og:description" content={metaDescription} />
