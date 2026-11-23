@@ -56,6 +56,15 @@ describe("bounded Reddit initial render", () => {
     expect(html).not.toContain(">reported replies<");
     expect(html).not.toContain(snapshot.posts[0].title);
   });
+  it("distinguishes an expired catalog from an empty search", async () => {
+    const afterExpiry = new Date("2026-10-11T00:00:00Z");
+    vi.setSystemTime(afterExpiry);
+    const initial = await redditInitial(new URLSearchParams(), { fetch: read(), now: () => afterExpiry });
+    const html = renderToStaticMarkup(createElement(PostsView, { initialCatalog: initial.catalog }));
+    expect(html).toMatch(/all listed captures have expired\./i);
+    expect(html).not.toMatch(/no captured threads match\./i);
+  });
+
   it("never supplies expired, removed or mismatched pinned data", async () => {
     const expired = await redditInitial(new URLSearchParams(query), {
       fetch: read(),

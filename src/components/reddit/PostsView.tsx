@@ -151,6 +151,7 @@ export default function PostsView({
     catalog.status === "ready"
       ? catalog.value.data.entries.filter((entry) => Date.parse(entry.expiresAt) > Date.now())
       : [];
+  const catalogExpired = catalog.status === "ready" && catalog.value.data.entries.length > 0 && entries.length === 0;
   const community = subreddit ?? entries[0]?.subreddit;
   const dates = [...new Set(entries.filter((e) => e.subreddit === community).map((e) => e.date))].sort().reverse();
   const day = date ?? dates[0];
@@ -339,7 +340,9 @@ export default function PostsView({
           }
           onRowClick={openPost}
           selectedId={postId}
-          empty="No captured threads match."
+          empty={
+            catalogExpired && (!community || !day) ? "All listed captures have expired." : "No captured threads match."
+          }
           toolbar={toolbar}
         />
         <RecordDetail
