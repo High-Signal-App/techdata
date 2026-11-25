@@ -32,7 +32,10 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
     { items: [item("overview", "overview", "/"), item("compare", "compare tray", "/compare/")] },
     {
       title: "food",
-      items: [item("food-products", "packaged foods", "/food/products/"), item("food-recipes", "vegetarian recipes", "/food/recipes/")],
+      items: [
+        item("food-products", "packaged foods", "/food/products/"),
+        item("food-recipes", "vegetarian recipes", "/food/recipes/"),
+      ],
     },
     {
       title: "nomad atlas",

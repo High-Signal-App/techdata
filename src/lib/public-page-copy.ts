@@ -51,12 +51,14 @@ export const publicPageCopy = {
   "/food/products/": {
     title: "packaged foods · food",
     heading: "packaged foods",
-    description: "Compare packaged food nutrition observations with explicit per-100-g measurement basis, verification status and source links. Read-only from Significant Hobbies Food.",
+    description:
+      "Compare packaged food nutrition observations with explicit per-100-g measurement basis, verification status and source links. Read-only from Significant Hobbies Food.",
   },
   "/food/recipes/": {
     title: "vegetarian recipes · food",
     heading: "vegetarian recipes",
-    description: "Discover source-linked vegetarian and vegan recipes with publisher attribution, ingredient notes and the nutrition serving basis preserved. Read-only from Significant Hobbies Food.",
+    description:
+      "Discover source-linked vegetarian and vegan recipes with publisher attribution, ingredient notes and the nutrition serving basis preserved. Read-only from Significant Hobbies Food.",
   },
   "/ph/catalog/": {
     title: "Product catalog directory",

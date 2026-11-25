@@ -73,7 +73,10 @@ export type FoodRecipePage = {
 export type FoodEnvelope<T> = { data: T; provenance: Provenance };
 
 export class FoodUpstreamError extends Error {
-  constructor(readonly status: number, readonly url: string) {
+  constructor(
+    readonly status: number,
+    readonly url: string,
+  ) {
     super(`Food API ${status} for ${url}`);
   }
 }
@@ -84,7 +87,8 @@ const int = (value: string | null | undefined, fallback: number, min: number, ma
   const n = Number(value ?? fallback);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.trunc(n))) : fallback;
 };
-const choices = (value: string | null, allowed: readonly string[]) => (value && allowed.includes(value) ? value : undefined);
+const choices = (value: string | null, allowed: readonly string[]) =>
+  value && allowed.includes(value) ? value : undefined;
 
 export function foodProvenance(apiUrl: string, fetchedAt: string): Provenance {
   return {
@@ -105,8 +109,12 @@ export function createFoodAdapter(opts: { base?: string; fetch?: Fetcher; now?: 
 
   async function get<T>(path: string, params: Record<string, string | number | undefined> = {}) {
     const url = new URL(`${base}${path}`);
-    for (const [key, value] of Object.entries(params)) if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
-    const response = await doFetch(url.toString(), { headers: { accept: "application/json" }, signal: AbortSignal.timeout(8000) });
+    for (const [key, value] of Object.entries(params))
+      if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
+    const response = await doFetch(url.toString(), {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
     if (!response.ok) throw new FoodUpstreamError(response.status, url.toString());
     return { data: (await response.json()) as T, provenance: foodProvenance(url.toString(), now().toISOString()) };
   }
@@ -152,13 +160,18 @@ export function createFoodAdapter(opts: { base?: string; fetch?: Fetcher; now?: 
     },
 
     async summary(): Promise<CollectionSummary> {
-      const { data, provenance } = await get<{ products: number; latestPublishedAt: string; sourceComplete: boolean }>("/health");
+      const { data, provenance } = await get<{ products: number; latestPublishedAt: string; sourceComplete: boolean }>(
+        "/health",
+      );
       return {
         id: "food",
         label: "Significant Hobbies Food",
         description: "Packaged food nutrition observations and source-linked vegetarian recipes.",
         counts: { products: data.products },
-        provenance: { ...provenance, note: `${provenance.note} Latest catalog publication: ${data.latestPublishedAt}.` },
+        provenance: {
+          ...provenance,
+          note: `${provenance.note} Latest catalog publication: ${data.latestPublishedAt}.`,
+        },
         mode: "read-only",
       };
     },

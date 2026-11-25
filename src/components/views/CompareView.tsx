@@ -70,6 +70,7 @@ export function groupLabel(path: string) {
     "/nomad/": "nomad places",
     "/ph/": "ph products",
     "/food/products/": "packaged foods",
+    "/food/recipes/": "vegetarian recipes",
     "/papers/": "papers",
     "/papers/paths/": "reading paths",
     "/papers/cited/": "cited works",

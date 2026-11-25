@@ -25,8 +25,8 @@ const { title, heading, description, nav, breadcrumbs, noindex = false } = Astro
 const metaDescription = description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description;
 const documentTitle = `${title} · techdata`;
 const publicPage =
-  publicPageCopy[(Astro.url.pathname === "/" ? "/" : Astro.url.pathname.replace(/\/$/, "") + "/") as PublicPath];
-const markdownHref = Astro.url.pathname === "/" ? "/index.md" : Astro.url.pathname.replace(/\/$/, "") + ".md";
+  publicPageCopy[(Astro.url.pathname === "/" ? "/" : `${Astro.url.pathname.replace(/\/$/, "")}/`) as PublicPath];
+const markdownHref = Astro.url.pathname === "/" ? "/index.md" : `${Astro.url.pathname.replace(/\/$/, "")}.md`;
 const canonical = pageCanonical(Astro.url.pathname, noindex);
 ---
 

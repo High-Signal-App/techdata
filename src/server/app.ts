@@ -3,10 +3,10 @@
  * route is read-only and wraps data with its provenance.
  */
 import { Hono } from "hono";
+import { createFoodAdapter, type FoodAdapter, FoodUpstreamError } from "../adapters/food";
 import { nomadProvenance, nomadSummary } from "../adapters/nomad/meta";
 import { type Dataset, explorable, type Place, queryPlaces, readPlacesQuery } from "../adapters/nomad/places";
 import { createPapersAdapter, type PapersAdapter } from "../adapters/papers";
-import { createFoodAdapter, type FoodAdapter, FoodUpstreamError } from "../adapters/food";
 import { phAdapter } from "../adapters/ph";
 import { createPodcastsAdapter, type PodcastsAdapter, UpstreamError } from "../adapters/podcasts";
 import { createRedditAdapter, type RedditAdapter, UpstreamError as RedditUpstreamError } from "../adapters/reddit";
@@ -80,16 +80,18 @@ export function createApp(deps: AppDeps) {
       return adapter;
     });
   const foodAdapters = new Map<string, FoodAdapter>();
-  const foodFor = deps.food ?? ((env: Env) => {
-    const base = env?.FOOD_API_BASE ?? undefined;
-    const key = base ?? "default";
-    let adapter = foodAdapters.get(key);
-    if (!adapter) {
-      adapter = createFoodAdapter({ base });
-      foodAdapters.set(key, adapter);
-    }
-    return adapter;
-  });
+  const foodFor =
+    deps.food ??
+    ((env: Env) => {
+      const base = env?.FOOD_API_BASE ?? undefined;
+      const key = base ?? "default";
+      let adapter = foodAdapters.get(key);
+      if (!adapter) {
+        adapter = createFoodAdapter({ base });
+        foodAdapters.set(key, adapter);
+      }
+      return adapter;
+    });
   let placesCache: Promise<Place[]> | null = null;
   const places = () => {
     placesCache ??= deps.nomad().then((d) => explorable(d.cities));
@@ -197,6 +199,9 @@ export function createApp(deps: AppDeps) {
 
   app.get("/collections", async (c) => {
     const collections: (CollectionSummary | { id: string; error: string })[] = [nomadSummary];
+    const foodSummary = foodFor(c.env)
+      .summary()
+      .catch(() => ({ id: "food", error: "The Food public API did not answer." }) as const);
     try {
       collections.push(await podcastsFor(c.env).summary());
     } catch {
@@ -213,11 +218,7 @@ export function createApp(deps: AppDeps) {
     } catch {
       collections.push({ id: "papers", error: "The Research Papers public exports did not answer." });
     }
-    try {
-      collections.push(await foodFor(c.env).summary());
-    } catch {
-      collections.push({ id: "food", error: "The Food public API did not answer." });
-    }
+    collections.push(await foodSummary);
     return c.json({ collections });
   });
 
@@ -340,8 +341,19 @@ export function createApp(deps: AppDeps) {
       },
       {
         id: "food",
-        search: (onPartial) => foodFor(c.env).search(q, COLLECTION_CAP).then((hits) => { onPartial(hits); return hits; }),
-        provenance: source("Significant Hobbies Food", "https://food.significanthobbies.com", "public API", `${c.env?.FOOD_API_BASE ?? "https://food.significanthobbies.com/api"}/products`),
+        search: (onPartial) =>
+          foodFor(c.env)
+            .search(q, COLLECTION_CAP)
+            .then((hits) => {
+              onPartial(hits);
+              return hits;
+            }),
+        provenance: source(
+          "Significant Hobbies Food",
+          "https://food.significanthobbies.com",
+          "public API",
+          `${c.env?.FOOD_API_BASE ?? "https://food.significanthobbies.com/api"}/products`,
+        ),
       },
     ];
     const results = await Promise.all(
