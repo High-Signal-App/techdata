@@ -6,6 +6,8 @@ export type NavKey =
   | "reddit-communities"
   | "reddit-posts"
   | "ph-products"
+  | "food-products"
+  | "food-recipes"
   | "overview"
   | "nomad-places"
   | "nomad-compare"
@@ -28,6 +30,10 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
   });
   return [
     { items: [item("overview", "overview", "/"), item("compare", "compare tray", "/compare/")] },
+    {
+      title: "food",
+      items: [item("food-products", "packaged foods", "/food/products/"), item("food-recipes", "vegetarian recipes", "/food/recipes/")],
+    },
     {
       title: "nomad atlas",
       items: [
@@ -69,6 +75,7 @@ export function consoleNav(active: NavKey): ConsolePageProps["nav"] {
         { label: "nomad atlas", href: "https://nomad.significanthobbies.com/", external: true },
         { label: "research papers", href: "https://papers.highsignal.app/", external: true },
         { label: "high signal podcasts", href: "https://podcasts.highsignal.app/", external: true },
+        { label: "food", href: "https://food.significanthobbies.com/", external: true },
       ],
     },
   ];
