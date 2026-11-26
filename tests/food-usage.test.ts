@@ -35,6 +35,29 @@ describe("Food usage", () => {
     expect(track).not.toHaveBeenCalled();
   });
 
+  it("cannot arm a superseded draft after a newer keystroke", () => {
+    const track = browser();
+    const usage = createFoodUsageRequest("food.products_search_succeeded");
+    usage.noteInput("first draft", "");
+    usage.noteInput("newer draft", "first draft");
+    usage.expectForInput("first draft", "/products?q=first");
+    usage.complete("/products?q=first");
+    expect(track).not.toHaveBeenCalled();
+    usage.expectForInput("newer draft", "/products?q=newer");
+    usage.complete("/products?q=newer");
+    expect(track.mock.calls).toEqual([["food.products_search_succeeded"]]);
+  });
+
+  it("does not cancel a matching pending request for a whitespace-only edit", () => {
+    const track = browser();
+    const usage = createFoodUsageRequest("food.recipes_search_succeeded");
+    usage.noteInput("lentil", "");
+    usage.expectForInput("lentil", "/recipes?q=lentil");
+    usage.noteInput("lentil ", "lentil");
+    usage.complete("/recipes?q=lentil");
+    expect(track.mock.calls).toEqual([["food.recipes_search_succeeded"]]);
+  });
+
   it.each([
     "https://data.highsignal.app/food/recipes/?fleet_qa=1",
     "https://preview.highsignal.app/food/recipes/",

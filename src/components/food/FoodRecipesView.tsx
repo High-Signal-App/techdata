@@ -30,7 +30,7 @@ export default function FoodRecipesView() {
       const nextQuery = draft.trim() || null;
       if (nextQuery !== (q || null)) {
         if (nextQuery !== (q?.trim() || null)) {
-          searchUsage.expect(nextQuery || dietary ? recipesUrl(nextQuery, dietary) : null);
+          searchUsage.expectForInput(draft, nextQuery || dietary ? recipesUrl(nextQuery, dietary) : null);
         }
         setRecipeId(null);
         setQ(nextQuery);
@@ -61,7 +61,12 @@ export default function FoodRecipesView() {
       <FilterBar>
         <SaveView />
         {/* Cancel before the shared search input's debounced change callback. */}
-        <div className="contents" onInputCapture={() => searchUsage.expect(null)}>
+        <div
+          className="contents"
+          onInputCapture={(event) => {
+            if (event.target instanceof HTMLInputElement) searchUsage.noteInput(event.target.value, draft);
+          }}
+        >
           <FilterSearch value={draft} onChange={setDraft} placeholder="Recipe, ingredient, or publisher…" />
         </div>
         <fieldset className="flex gap-1" aria-label="Dietary filter">

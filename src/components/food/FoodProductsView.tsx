@@ -90,7 +90,7 @@ export default function FoodProductsView() {
       const nextQuery = draft.trim() || null;
       if (nextQuery !== (q || null)) {
         if (nextQuery !== (q?.trim() || null)) {
-          searchUsage.expect(nextQuery || category ? productsUrl(nextQuery, category) : null);
+          searchUsage.expectForInput(draft, nextQuery || category ? productsUrl(nextQuery, category) : null);
         }
         setQ(nextQuery);
         setPage(null);
@@ -149,7 +149,12 @@ export default function FoodProductsView() {
       <FilterBar>
         <SaveView />
         {/* Cancel before the shared search input's debounced change callback. */}
-        <div className="contents" onInputCapture={() => searchUsage.expect(null)}>
+        <div
+          className="contents"
+          onInputCapture={(event) => {
+            if (event.target instanceof HTMLInputElement) searchUsage.noteInput(event.target.value, draft);
+          }}
+        >
           <FilterSearch value={draft} onChange={setDraft} placeholder="Product or brand…" />
         </div>
         <Select

@@ -19,9 +19,25 @@ export function trackFoodUsage(event: FoodUsageEvent) {
 
 export function createFoodUsageRequest(event: FoodUsageEvent) {
   let pending: string | null = null;
+  let latestInput: string | undefined;
   return {
     expect(request: string | null) {
       pending = request;
+    },
+    noteInput(value: string, draft: string) {
+      const trimmed = value.trim();
+      if (trimmed === (latestInput ?? draft.trim())) return;
+      latestInput = trimmed;
+      pending = null;
+    },
+    expectForInput(value: string, request: string | null) {
+      if (value.trim() !== latestInput) return;
+      latestInput = undefined;
+      pending = request;
+    },
+    cancel() {
+      latestInput = undefined;
+      pending = null;
     },
     complete(request: string) {
       if (request !== pending) return;
@@ -34,7 +50,7 @@ export function createFoodUsageRequest(event: FoodUsageEvent) {
 export function useFoodUsageRequest(event: FoodUsageEvent) {
   const usage = useMemo(() => createFoodUsageRequest(event), [event]);
   useEffect(() => {
-    const cancel = () => usage.expect(null);
+    const { cancel } = usage;
     window.addEventListener("popstate", cancel);
     return () => {
       cancel();
