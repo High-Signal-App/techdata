@@ -36,7 +36,11 @@ export function useJsonResource<T>(
     url ?? `disabled:${disabled}`,
     async (signal) => {
       const data = await fetchJson<T>(url as string, signal);
-      if (url && !signal.aborted) onLoaded?.(data, url);
+      try {
+        if (url && !signal.aborted) onLoaded?.(data, url);
+      } catch {
+        // A response observer cannot turn successful data into a resource error.
+      }
       return data;
     },
     {

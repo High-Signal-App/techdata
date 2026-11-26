@@ -29,7 +29,9 @@ export default function FoodRecipesView() {
     const timer = setTimeout(() => {
       const nextQuery = draft.trim() || null;
       if (nextQuery !== (q || null)) {
-        searchUsage.expect(nextQuery || dietary ? recipesUrl(nextQuery, dietary) : null);
+        if (nextQuery !== (q?.trim() || null)) {
+          searchUsage.expect(nextQuery || dietary ? recipesUrl(nextQuery, dietary) : null);
+        }
         setRecipeId(null);
         setQ(nextQuery);
       }
@@ -117,8 +119,7 @@ export default function FoodRecipesView() {
                       if (
                         recipe.id !== recipeId &&
                         resource.status === "success" &&
-                        !resource.isRevalidating &&
-                        draft.trim() === (q ?? "")
+                        draft.trim() === (q?.trim() ?? "")
                       ) {
                         trackFoodUsage("food.recipe_lookup_succeeded");
                       }

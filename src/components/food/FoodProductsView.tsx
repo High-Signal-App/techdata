@@ -89,7 +89,9 @@ export default function FoodProductsView() {
     const timer = setTimeout(() => {
       const nextQuery = draft.trim() || null;
       if (nextQuery !== (q || null)) {
-        searchUsage.expect(nextQuery || category ? productsUrl(nextQuery, category) : null);
+        if (nextQuery !== (q?.trim() || null)) {
+          searchUsage.expect(nextQuery || category ? productsUrl(nextQuery, category) : null);
+        }
         setQ(nextQuery);
         setPage(null);
       }
