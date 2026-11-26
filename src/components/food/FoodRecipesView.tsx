@@ -5,15 +5,17 @@ import { EmptyState } from "@saas-maker/ui/components/empty-state";
 import { ErrorState } from "@saas-maker/ui/components/error-state";
 import * as React from "react";
 import type { FoodEnvelope, FoodRecipe, FoodRecipePage } from "../../adapters/food";
+import { trackFoodUsage, useFoodUsageRequest } from "../../lib/food-usage";
 import { useJsonResource } from "../../lib/resource";
 import { useUrlParam } from "../../lib/url-state";
 import SaveView from "../views/SaveView";
 
-function recipeQuery(q: string | null, dietary: string | null) {
+function recipesUrl(q: string | null, dietary: string | null) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (dietary) params.set("dietary", dietary);
-  return params.toString();
+  const search = params.toString();
+  return `/api/food/recipes${search ? `?${search}` : ""}`;
 }
 
 export default function FoodRecipesView() {
@@ -21,20 +23,30 @@ export default function FoodRecipesView() {
   const [dietary, setDietary] = useUrlParam("dietary");
   const [recipeId, setRecipeId] = useUrlParam("recipe");
   const [draft, setDraft] = React.useState(q ?? "");
+  const searchUsage = useFoodUsageRequest("food.recipes_search_succeeded");
   React.useEffect(() => setDraft(q ?? ""), [q]);
   React.useEffect(() => {
     const timer = setTimeout(() => {
       const nextQuery = draft.trim() || null;
       if (nextQuery !== (q || null)) {
+        if (nextQuery !== (q?.trim() || null)) {
+          searchUsage.expectForInput(draft, nextQuery || dietary ? recipesUrl(nextQuery, dietary) : null);
+        }
         setRecipeId(null);
         setQ(nextQuery);
       }
     }, 250);
     return () => clearTimeout(timer);
-  }, [draft, q, setQ, setRecipeId]);
+  }, [draft, q, dietary, setQ, setRecipeId, searchUsage]);
 
-  const search = recipeQuery(q, dietary);
-  const resource = useJsonResource<FoodEnvelope<FoodRecipePage>>(`/api/food/recipes${search ? `?${search}` : ""}`);
+  const resource = useJsonResource<FoodEnvelope<FoodRecipePage>>(
+    recipesUrl(q, dietary),
+    undefined,
+    true,
+    (response, url) => {
+      if (Array.isArray(response?.data?.recipes)) searchUsage.complete(url);
+    },
+  );
   const page = resource.data?.data;
   const recipes = page?.recipes ?? [];
   const selected = recipes.find((recipe) => recipe.id === recipeId);
@@ -48,7 +60,15 @@ export default function FoodRecipesView() {
       </p>
       <FilterBar>
         <SaveView />
-        <FilterSearch value={draft} onChange={setDraft} placeholder="Recipe, ingredient, or publisher…" />
+        {/* Cancel before the shared search input's debounced change callback. */}
+        <div
+          className="contents"
+          onInputCapture={(event) => {
+            if (event.target instanceof HTMLInputElement) searchUsage.noteInput(event.target.value, draft);
+          }}
+        >
+          <FilterSearch value={draft} onChange={setDraft} placeholder="Recipe, ingredient, or publisher…" />
+        </div>
         <fieldset className="flex gap-1" aria-label="Dietary filter">
           <legend className="sr-only">Dietary filter</legend>
           {([null, "vegetarian", "vegan"] as const).map((value) => (
@@ -59,6 +79,7 @@ export default function FoodRecipesView() {
               className="rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted aria-pressed:bg-secondary aria-pressed:text-foreground"
               onClick={() => {
                 if ((dietary || null) === value) return;
+                searchUsage.expect(q || value ? recipesUrl(q, value) : null);
                 setRecipeId(null);
                 setDietary(value);
               }}
@@ -99,7 +120,16 @@ export default function FoodRecipesView() {
                     type="button"
                     className="grid w-full gap-1 py-3 text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
                     aria-pressed={recipeId === recipe.id}
-                    onClick={() => setRecipeId(recipe.id)}
+                    onClick={() => {
+                      if (
+                        recipe.id !== recipeId &&
+                        resource.status === "success" &&
+                        draft.trim() === (q?.trim() ?? "")
+                      ) {
+                        trackFoodUsage("food.recipe_lookup_succeeded");
+                      }
+                      setRecipeId(recipe.id);
+                    }}
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{recipe.title}</span>
