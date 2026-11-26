@@ -17,10 +17,10 @@ describe("Food public adapter", () => {
     const r = recorder({ products: [], pagination: { page: 1, pageSize: 50, total: 0, pages: 0 } });
     const adapter = createFoodAdapter({ base: "https://food.example/api", fetch: r.fetch });
     await adapter.products(
-      new URLSearchParams("q=tofu&category=protein_powder&page=999999&pageSize=999&sort=drop&admin=1"),
+      new URLSearchParams("q=tofu&category=ready_to_drink&scope=protein&page=999999&pageSize=999&sort=carbs&admin=1"),
     );
     expect(r.calls[0]).toBe(
-      "https://food.example/api/products?q=tofu&category=protein_powder&minCompleteness=0&page=100000&pageSize=50",
+      "https://food.example/api/products?q=tofu&category=ready_to_drink&scope=protein&minCompleteness=0&sort=carbs&page=100000&pageSize=50",
     );
   });
 
@@ -34,6 +34,7 @@ describe("Food public adapter", () => {
           url: "https://example.com/recipe",
           nutrition: { protein: 20, calories: null, servingBasis: "1 bowl", sourceNote: "estimate" },
         },
+        { id: "blocked-link", title: "Unsafe source fixture", url: "data:text/plain,fixture" },
       ],
     });
     const adapter = createFoodAdapter({
@@ -48,6 +49,7 @@ describe("Food public adapter", () => {
     expect(url.searchParams.get("dietary")).toBe("vegan");
     expect(url.searchParams.has("secret")).toBe(false);
     expect(result.data.recipes[0]?.nutrition?.servingBasis).toBe("1 bowl");
+    expect(result.data.recipes[1]?.url).toBeNull();
     expect(result.provenance).toMatchObject({
       source: "Significant Hobbies Food",
       collectedAt: "2026-08-15T00:00:00.000Z",
@@ -72,5 +74,23 @@ describe("Food public adapter", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     const writeResponse = await Promise.resolve(app.request("/api/food/write", { method: "POST" }, {}));
     expect(writeResponse.status).toBe(404);
+  });
+
+  it("preserves deterministic input errors and normalizes failed network reads", async () => {
+    const nomad = async () => ({ cities: [] }) as unknown as Dataset;
+    const badInput = createApp({
+      nomad,
+      food: () => createFoodAdapter({ fetch: recorder({}, 400).fetch }),
+    });
+    const invalid = await badInput.request("/api/food/products?category=unknown", {}, {});
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toMatchObject({ error: "invalid_food_query" });
+    const offline = createApp({
+      nomad,
+      food: () => createFoodAdapter({ fetch: async () => Promise.reject(new TypeError("network")) }),
+    });
+    const response = await offline.request("/api/food/recipes", {}, {});
+    expect(response.status).toBe(502);
+    expect(response.headers.get("cache-control")).toBe("no-store");
   });
 });

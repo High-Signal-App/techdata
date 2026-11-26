@@ -31,13 +31,10 @@ export default function FoodRecipesView() {
 
   const search = recipeQuery(q, dietary);
   const resource = useJsonResource<FoodEnvelope<FoodRecipePage>>(`/api/food/recipes${search ? `?${search}` : ""}`);
-  const recipes = resource.data?.data.recipes ?? [];
+  const page = resource.data?.data;
+  const recipes = page?.recipes ?? [];
   const selected = recipes.find((recipe) => recipe.id === recipeId);
-
-  if (resource.status === "loading" && !resource.data)
-    return <RecordDetailSkeleton fields={6} className="max-w-none" />;
-  if (resource.status === "error" && !resource.data)
-    return <ErrorState title="the Food public API did not answer." description={null} onRetry={resource.retry} />;
+  const firstLoad = resource.status === "loading" && !page;
 
   return (
     <>
@@ -65,14 +62,26 @@ export default function FoodRecipesView() {
       </FilterBar>
       <RecordLayout className="mt-3">
         <section aria-label="vegetarian recipe results" className="min-w-0 flex-1">
+          {firstLoad && <RecordDetailSkeleton fields={6} className="max-w-none" />}
           {resource.status === "error" && (
             <ErrorState
-              title="recipes could not refresh."
-              description="The last results remain available."
+              title="recipes could not load."
+              description={
+                resource.error?.message === "invalid_food_query"
+                  ? "Change the search or dietary filter."
+                  : page
+                    ? "The last results remain available."
+                    : null
+              }
               onRetry={resource.retry}
             />
           )}
-          {!recipes.length && resource.status !== "error" ? (
+          {page?.total != null && page.total > recipes.length && (
+            <p className="mb-2 text-xs text-muted-foreground">
+              Showing {recipes.length} of {page.total} matching recipes.
+            </p>
+          )}
+          {page && !recipes.length && resource.status !== "error" ? (
             <EmptyState title="no recipes match." description="Try a broader ingredient or clear the dietary filter." />
           ) : (
             <ul className="divide-y divide-border border-y border-border">
@@ -94,7 +103,7 @@ export default function FoodRecipesView() {
                     <span className="text-xs tabular-nums text-muted-foreground">
                       {recipe.nutrition?.protein == null
                         ? "protein not recorded"
-                        : `${recipe.nutrition.protein} g protein`}{" "}
+                        : `${recipe.nutrition.proteinQualifier ?? ""}${recipe.nutrition.protein} g protein`}{" "}
                       {recipe.nutrition?.servingBasis ? `· ${recipe.nutrition.servingBasis}` : ""}
                     </span>
                   </button>
@@ -111,6 +120,9 @@ export default function FoodRecipesView() {
           className="lg:w-[28rem]"
         >
           {selected && resource.data && <RecipeDetail recipe={selected} info={resource.data.provenance} />}
+          {page && !selected && (
+            <EmptyState title="recipe not in these results" description="Change the filters to find it again." />
+          )}
         </RecordDetail>
       </RecordLayout>
     </>
@@ -133,29 +145,34 @@ function RecipeDetail({ recipe, info }: { recipe: FoodRecipe; info: FoodEnvelope
           {
             label: "protein",
             value:
-              recipe.nutrition?.protein == null ? "not recorded" : `${recipe.nutrition.protein} g per stated serving`,
+              recipe.nutrition?.protein == null
+                ? "not recorded"
+                : `${recipe.nutrition.proteinQualifier ?? ""}${recipe.nutrition.protein} g per stated serving`,
           },
           {
             label: "calories",
             value:
               recipe.nutrition?.calories == null
                 ? "not recorded"
-                : `${recipe.nutrition.calories} kcal per stated serving`,
+                : `${recipe.nutrition.calorieQualifier ?? ""}${recipe.nutrition.calories} kcal per stated serving`,
           },
           { label: "serving basis", value: recipe.nutrition?.servingBasis ?? "not recorded" },
           { label: "nutrition note", value: recipe.nutrition?.sourceNote ?? "not recorded" },
         ]}
       />
       {recipe.indiaFitNote && <p className="text-sm text-muted-foreground">{recipe.indiaFitNote}</p>}
-      <a className="text-sm underline underline-offset-4" href={recipe.url} target="_blank" rel="noopener noreferrer">
-        open publisher recipe
-      </a>
+      {recipe.url && (
+        <a className="text-sm underline underline-offset-4" href={recipe.url} target="_blank" rel="noopener noreferrer">
+          open publisher recipe
+        </a>
+      )}
       <Provenance
         info={{
           source: "Significant Hobbies Food",
-          url: recipe.url,
+          url: recipe.url ?? info.sourceUrl,
           via: "public read-only API",
           viaUrl: info.viaUrl,
+          collectedAt: info.collectedAt ?? undefined,
           readAt: info.fetchedAt,
           note: info.note,
         }}

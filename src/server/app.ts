@@ -118,7 +118,9 @@ export function createApp(deps: AppDeps) {
     }
     if (err instanceof FoodUpstreamError) {
       c.header("cache-control", "no-store");
-      return c.json({ error: "upstream", status: err.status }, err.status === 404 ? 404 : 502);
+      if (err.status === 400) return c.json({ error: "invalid_food_query", status: 400 }, 400);
+      const status = err.status === 404 ? 404 : err.status === 504 ? 504 : 502;
+      return c.json({ error: "upstream", status: err.status }, status);
     }
     console.error(err);
     return c.json({ error: "internal" }, 500);

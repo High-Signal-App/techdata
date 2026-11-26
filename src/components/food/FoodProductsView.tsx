@@ -6,7 +6,13 @@ import type { DataColumn } from "@saas-maker/ui/components/data-table";
 import { ErrorState } from "@saas-maker/ui/components/error-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@saas-maker/ui/components/select";
 import * as React from "react";
-import { FOOD_SITE, type FoodEnvelope, type FoodProduct, type FoodProductPage } from "../../adapters/food";
+import {
+  FOOD_CATEGORIES,
+  FOOD_SITE,
+  type FoodEnvelope,
+  type FoodProduct,
+  type FoodProductPage,
+} from "../../adapters/food";
 import { pinFromColumns } from "../../lib/compare";
 import { useJsonResource } from "../../lib/resource";
 import { today, useUrlParam } from "../../lib/url-state";
@@ -42,13 +48,14 @@ export const foodProductColumns: DataColumn<FoodProduct>[] = [
   {
     id: "protein",
     header: "protein / basis",
-    value: (p) => perBasis(p.nutrition?.proteinGrams, "g", p.nutrition?.basis),
+    value: (p) =>
+      p.nutrition?.proteinGrams == null ? null : perBasis(p.nutrition.proteinGrams, "g", p.nutrition.basis),
     cell: (p) => perBasis(p.nutrition?.proteinGrams, "g", p.nutrition?.basis),
   },
   {
     id: "calories",
     header: "energy / basis",
-    value: (p) => perBasis(p.nutrition?.calories, "kcal", p.nutrition?.basis),
+    value: (p) => (p.nutrition?.calories == null ? null : perBasis(p.nutrition.calories, "kcal", p.nutrition.basis)),
     cell: (p) => perBasis(p.nutrition?.calories, "kcal", p.nutrition?.basis),
   },
   {
@@ -88,7 +95,8 @@ export default function FoodProductsView() {
   const products = data?.products ?? [];
   const selected = products.find((p) => p.id === productId) ?? detailResource.data?.data;
   const pagination = data?.pagination;
-  const provenance = detailResource.data?.provenance ?? resource.data?.provenance;
+  const listProvenance = resource.data?.provenance;
+  const detail = detailResource.data;
   const pin = React.useCallback(
     (product: FoodProduct) =>
       pinFromColumns(
@@ -97,12 +105,12 @@ export default function FoodProductsView() {
         product.name,
         product,
         foodProductColumns,
-        provenance,
+        detail?.data.id === product.id ? detail.provenance : listProvenance,
         "product",
         {},
         `${FOOD_SITE}/products/${encodeURIComponent(product.id)}`,
       ),
-    [provenance],
+    [detail, listProvenance],
   );
   const selectedPin = selected ? pin(selected) : null;
 
@@ -128,9 +136,11 @@ export default function FoodProductsView() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">all categories</SelectItem>
-            <SelectItem value="protein_powder">protein powder</SelectItem>
-            <SelectItem value="protein_bar">protein bar</SelectItem>
-            <SelectItem value="protein_drink">protein drink</SelectItem>
+            {FOOD_CATEGORIES.map((value) => (
+              <SelectItem key={value} value={value}>
+                {value.replaceAll("_", " ")}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </FilterBar>
@@ -143,7 +153,11 @@ export default function FoodProductsView() {
           columns={foodProductColumns}
           getRowId={(p) => p.id}
           status={resource.status === "error" ? "error" : resource.status === "loading" ? "loading" : "ready"}
-          error="The Food public API did not answer."
+          error={
+            resource.error?.message === "invalid_food_query"
+              ? "Try a shorter search or select a supported filter."
+              : "The Food public API did not answer."
+          }
           onRetry={resource.retry}
           empty="No packaged foods match these filters."
           onRowClick={(p) => setProductId(p.id)}

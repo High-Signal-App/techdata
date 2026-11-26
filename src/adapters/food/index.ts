@@ -2,6 +2,18 @@ import type { CollectionSummary, Provenance, SearchHit } from "../types";
 
 export const FOOD_SITE = "https://food.significanthobbies.com";
 export const FOOD_API_BASE = `${FOOD_SITE}/api`;
+export const FOOD_CATEGORIES = [
+  "protein_powder",
+  "protein_bar",
+  "protein_snack",
+  "soy_product",
+  "dairy",
+  "plant_dairy",
+  "ready_to_drink",
+  "breakfast",
+  "spread",
+  "other",
+] as const;
 
 export type FoodNutrition = {
   calories: number | null;
@@ -46,7 +58,7 @@ export type FoodRecipe = {
   id: string;
   title: string;
   publisher: string | null;
-  url: string;
+  url: string | null;
   sourceType: string | null;
   format: string | null;
   indiaFit: string | null;
@@ -57,6 +69,8 @@ export type FoodRecipe = {
   nutrition: {
     protein: number | null;
     calories: number | null;
+    proteinQualifier?: string;
+    calorieQualifier?: string;
     servingBasis: string | null;
     sourceNote: string | null;
   } | null;
@@ -87,8 +101,20 @@ const int = (value: string | null | undefined, fallback: number, min: number, ma
   const n = Number(value ?? fallback);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.trunc(n))) : fallback;
 };
-const choices = (value: string | null, allowed: readonly string[]) =>
-  value && allowed.includes(value) ? value : undefined;
+export function publicFoodUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+const safeProduct = (product: FoodProduct): FoodProduct => ({
+  ...product,
+  nutritionEvidenceUrl: publicFoodUrl(product.nutritionEvidenceUrl),
+});
 
 export function foodProvenance(apiUrl: string, fetchedAt: string): Provenance {
   return {
@@ -111,36 +137,46 @@ export function createFoodAdapter(opts: { base?: string; fetch?: Fetcher; now?: 
     const url = new URL(`${base}${path}`);
     for (const [key, value] of Object.entries(params))
       if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
-    const response = await doFetch(url.toString(), {
-      headers: { accept: "application/json" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!response.ok) throw new FoodUpstreamError(response.status, url.toString());
-    return { data: (await response.json()) as T, provenance: foodProvenance(url.toString(), now().toISOString()) };
+    const signal = AbortSignal.timeout(8000);
+    const apiUrl = url.toString();
+    try {
+      const response = await doFetch(apiUrl, { headers: { accept: "application/json" }, signal });
+      if (!response.ok) throw new FoodUpstreamError(response.status, apiUrl);
+      return { data: (await response.json()) as T, provenance: foodProvenance(apiUrl, now().toISOString()) };
+    } catch (error) {
+      if (error instanceof FoodUpstreamError) throw error;
+      throw new FoodUpstreamError(signal.aborted ? 504 : 502, apiUrl);
+    }
   }
 
-  const products = (q: URLSearchParams) =>
-    get<FoodProductPage>("/products", {
-      q: boundedText(q.get("q"), 120),
-      category: choices(q.get("category"), ["all", "protein_powder", "protein_bar", "protein_drink", "snack", "food"]),
-      trust: choices(q.get("trust"), ["all", "trusted"]),
-      marketed: choices(q.get("marketed"), ["all", "protein"]),
-      dense: choices(q.get("dense"), ["all", "yes"]),
-      verification: choices(q.get("verification"), ["all", "verified", "unverified"]),
-      ingredientVerification: choices(q.get("ingredientVerification"), ["all", "verified", "unverified"]),
-      scope: choices(q.get("scope"), ["all", "india"]),
+  const products = async (q: URLSearchParams) => {
+    const query = q.get("q")?.trim();
+    if (query && query.length > 200) throw new FoodUpstreamError(400, `${base}/products`);
+    const result = await get<FoodProductPage>("/products", {
+      q: query,
+      category: boundedText(q.get("category"), 80),
+      trust: boundedText(q.get("trust"), 80),
+      marketed: boundedText(q.get("marketed"), 80),
+      dense: boundedText(q.get("dense"), 80),
+      verification: boundedText(q.get("verification"), 80),
+      ingredientVerification: boundedText(q.get("ingredientVerification"), 80),
+      scope: boundedText(q.get("scope"), 80),
       minCompleteness: int(q.get("minCompleteness"), 0, 0, 100),
-      sort: choices(q.get("sort"), ["protein_density", "protein", "calories", "completeness", "name"]),
-      order: choices(q.get("order"), ["asc", "desc"]),
+      sort: boundedText(q.get("sort"), 80),
+      order: boundedText(q.get("order"), 80),
       page: int(q.get("page"), 1, 1, 100_000),
       pageSize: int(q.get("pageSize"), 24, 1, 50),
     });
+    if (!Array.isArray(result.data?.products) || !result.data.pagination) {
+      throw new FoodUpstreamError(502, `${base}/products`);
+    }
+    return { ...result, data: { ...result.data, products: result.data.products.map(safeProduct) } };
+  };
 
   const recipes = (q: URLSearchParams) => {
-    const dietary = choices(q.get("dietary"), ["all", "vegetarian", "vegan"]);
     return get<FoodRecipePage>("/recipes", {
       q: boundedText(q.get("q"), 120),
-      dietary: dietary === "all" ? undefined : dietary,
+      dietary: boundedText(q.get("dietary"), 80),
     });
   };
 
@@ -148,30 +184,38 @@ export function createFoodAdapter(opts: { base?: string; fetch?: Fetcher; now?: 
     products,
     async recipes(q: URLSearchParams) {
       const result = await recipes(q);
+      if (!Array.isArray(result.data?.recipes)) throw new FoodUpstreamError(502, `${base}/recipes`);
       return {
         ...result,
-        data: { ...result.data, recipes: result.data.recipes.slice(0, 50) },
+        data: {
+          ...result.data,
+          recipes: result.data.recipes.slice(0, 50).map((recipe) => ({ ...recipe, url: publicFoodUrl(recipe.url) })),
+        },
         provenance: { ...result.provenance, collectedAt: result.data.collectedAt ?? null },
       };
     },
 
-    product(id: string) {
-      return get<FoodProduct>(`/products/${encodeURIComponent(id.slice(0, 120))}`);
+    async product(id: string) {
+      if (!/^[A-Za-z0-9_-]{1,120}$/.test(id)) throw new FoodUpstreamError(404, `${base}/products`);
+      const result = await get<FoodProduct>(`/products/${id}`);
+      if (result.data?.id !== id) throw new FoodUpstreamError(502, `${base}/products/${id}`);
+      return { ...result, data: safeProduct(result.data) };
     },
 
     async summary(): Promise<CollectionSummary> {
-      const { data, provenance } = await get<{ products: number; latestPublishedAt: string; sourceComplete: boolean }>(
-        "/health",
-      );
+      const { data, provenance } = await get<{
+        products: number;
+        latestPublishedAt: string | null;
+        sourceComplete: boolean;
+      }>("/health");
       return {
         id: "food",
         label: "Significant Hobbies Food",
         description: "Packaged food nutrition observations and source-linked vegetarian recipes.",
         counts: { products: data.products },
-        provenance: {
-          ...provenance,
-          note: `${provenance.note} Latest catalog publication: ${data.latestPublishedAt}.`,
-        },
+        provenance: data.latestPublishedAt
+          ? { ...provenance, note: `${provenance.note} Latest catalog publication: ${data.latestPublishedAt}.` }
+          : provenance,
         mode: "read-only",
       };
     },
