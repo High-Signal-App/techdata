@@ -14,6 +14,7 @@ import {
   type FoodProductPage,
 } from "../../adapters/food";
 import { pinFromColumns } from "../../lib/compare";
+import { useFoodUsageRequest } from "../../lib/food-usage";
 import { useJsonResource } from "../../lib/resource";
 import { today, useUrlParam } from "../../lib/url-state";
 import PinButton from "../views/PinButton";
@@ -21,6 +22,15 @@ import SaveView from "../views/SaveView";
 import DataTable from "../views/ViewTable";
 
 const PAGE_SIZE = 24;
+function productsUrl(q: string | null, category: string | null, page = 1) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+  if (q) params.set("q", q);
+  if (category) params.set("category", category);
+  return `/api/food/products?${params}`;
+}
+
+const productUrl = (id: string) => `/api/food/products/${encodeURIComponent(id)}`;
+
 const amount = (value: number | null | undefined, unit: string) =>
   value == null ? null : `${value.toLocaleString("en-US", { maximumFractionDigits: 1 })} ${unit}`;
 const basisLabel = (basis: string | null | undefined) =>
@@ -72,24 +82,37 @@ export default function FoodProductsView() {
   const [pageParam, setPage] = useUrlParam("page");
   const [productId, setProductId] = useUrlParam("product");
   const [draft, setDraft] = React.useState(q ?? "");
+  const searchUsage = useFoodUsageRequest("food.products_search_succeeded");
+  const lookupUsage = useFoodUsageRequest("food.product_lookup_succeeded");
   React.useEffect(() => setDraft(q ?? ""), [q]);
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      if ((draft.trim() || null) !== (q || null)) {
-        setQ(draft.trim() || null);
+      const nextQuery = draft.trim() || null;
+      if (nextQuery !== (q || null)) {
+        searchUsage.expect(nextQuery || category ? productsUrl(nextQuery, category) : null);
+        setQ(nextQuery);
         setPage(null);
       }
     }, 250);
     return () => clearTimeout(timer);
-  }, [draft, q, setQ, setPage]);
+  }, [draft, q, category, setQ, setPage, searchUsage]);
 
   const requested = Math.max(1, Number(pageParam ?? 1) || 1);
-  const params = new URLSearchParams({ page: String(requested), pageSize: String(PAGE_SIZE) });
-  if (q) params.set("q", q);
-  if (category) params.set("category", category);
-  const resource = useJsonResource<FoodEnvelope<FoodProductPage>>(`/api/food/products?${params}`);
+  const resource = useJsonResource<FoodEnvelope<FoodProductPage>>(
+    productsUrl(q, category, requested),
+    undefined,
+    true,
+    (response, url) => {
+      if (Array.isArray(response?.data?.products)) searchUsage.complete(url);
+    },
+  );
   const detailResource = useJsonResource<FoodEnvelope<FoodProduct>>(
-    productId ? `/api/food/products/${encodeURIComponent(productId)}` : null,
+    productId ? productUrl(productId) : null,
+    undefined,
+    true,
+    (response, url) => {
+      if (typeof response?.data?.id === "string" && productUrl(response.data.id) === url) lookupUsage.complete(url);
+    },
   );
   const data = resource.data?.data;
   const products = data?.products ?? [];
@@ -123,11 +146,22 @@ export default function FoodProductsView() {
       </div>
       <FilterBar>
         <SaveView />
-        <FilterSearch value={draft} onChange={setDraft} placeholder="Product or brand…" />
+        <FilterSearch
+          value={draft}
+          onChange={(value) => {
+            if (value.trim() !== (q ?? "")) searchUsage.expect(null);
+            setDraft(value);
+          }}
+          placeholder="Product or brand…"
+        />
         <Select
           value={category ?? "all"}
           onValueChange={(v) => {
-            setCategory(v === "all" ? null : v);
+            const nextCategory = v === "all" ? null : v;
+            if (nextCategory !== category) {
+              searchUsage.expect(q || nextCategory ? productsUrl(q, nextCategory) : null);
+            }
+            setCategory(nextCategory);
             setPage(null);
           }}
         >
@@ -160,13 +194,19 @@ export default function FoodProductsView() {
           }
           onRetry={resource.retry}
           empty="No packaged foods match these filters."
-          onRowClick={(p) => setProductId(p.id)}
+          onRowClick={(p) => {
+            if (p.id !== productId) lookupUsage.expect(productUrl(p.id));
+            setProductId(p.id);
+          }}
           selectedId={productId}
           pageSize={PAGE_SIZE}
           manual={{
             rowCount: pagination?.total ?? 0,
             page: requested - 1,
-            onPageChange: (n) => setPage(n ? String(n + 1) : null),
+            onPageChange: (n) => {
+              searchUsage.expect(null);
+              setPage(n ? String(n + 1) : null);
+            },
           }}
           toolbar={() => (
             <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
@@ -193,7 +233,11 @@ export default function FoodProductsView() {
         />
         <RecordDetail
           open={!!productId}
-          onOpenChange={(open) => !open && setProductId(null)}
+          onOpenChange={(open) => {
+            if (open) return;
+            lookupUsage.expect(null);
+            setProductId(null);
+          }}
           title={selected?.name ?? "packaged food"}
           subtitle={selected?.brand ?? undefined}
           className="lg:w-[28rem]"

@@ -16,8 +16,13 @@ export async function fetchJson<T>(url: string, signal: AbortSignal): Promise<T>
   return response.json() as Promise<T>;
 }
 
-/** Null skips a dependent request; server renders use an isolated cache. */
-export function useJsonResource<T>(url: string | null, initialData?: T, persist = true) {
+/** Null skips a dependent request; onLoaded observes fresh responses, never persisted cache entries. */
+export function useJsonResource<T>(
+  url: string | null,
+  initialData?: T,
+  persist = true,
+  onLoaded?: (data: T, url: string) => void,
+) {
   const disabled = useId();
   const isolated = useMemo(createResourceClient, []);
   const client = typeof window === "undefined" || url === null ? isolated : resourceClient;
@@ -27,10 +32,18 @@ export function useJsonResource<T>(url: string | null, initialData?: T, persist 
     const entry = client.entry<T>(url, { persist: { ttl: 300_000 } });
     if (entry.snapshot.data === undefined && initialData !== undefined) client.mutate(url, initialData);
   }
-  return useResource<T>(url ?? `disabled:${disabled}`, (signal) => fetchJson<T>(url as string, signal), {
-    initialData,
-    client,
-    staleTime: url === null ? Infinity : 0,
-    ...(persist && url !== null ? { persist: { ttl: 300_000 } } : {}),
-  });
+  return useResource<T>(
+    url ?? `disabled:${disabled}`,
+    async (signal) => {
+      const data = await fetchJson<T>(url as string, signal);
+      if (url && !signal.aborted) onLoaded?.(data, url);
+      return data;
+    },
+    {
+      initialData,
+      client,
+      staleTime: url === null ? Infinity : 0,
+      ...(persist && url !== null ? { persist: { ttl: 300_000 } } : {}),
+    },
+  );
 }
