@@ -99,6 +99,10 @@ export function buildPublicMarkdown(snapshot: PublicBuildSnapshot, notes: string
   const preview = phPreview(phSummary);
   body["/ph/"] =
     `Showing ${preview.rows.length} initial products of ${preview.total.toLocaleString("en-US")}. No votes or launch dates.\n\n${table(preview.rows, productColumns)}${provenance(preview.provenance)}\nExported ${preview.provenance.exportedAt} · [source release](${preview.provenance.releaseUrl})\n`;
+  body["/food/products/"] =
+    "Packaged food records are read live from the [Food public products API](https://food.significanthobbies.com/api/products). Search and category filters return bounded pages. Nutrition keeps its source basis (per 100 g, per 100 ml, or per serving), observation date and verification state; missing values remain unknown.\n";
+  body["/food/recipes/"] =
+    "Vegetarian and vegan recipes are read live from the [Food public recipes API](https://food.significanthobbies.com/api/recipes). Results retain publisher links, ingredient notes, collection date and each recipe's stated serving basis.\n";
   body["/ph/catalog/"] =
     `${phPublication.products.toLocaleString("en-US")} qualified product descriptions across ${phPublication.catalogPages} pages.\n\n` +
     Array.from(
@@ -134,6 +138,8 @@ export function buildPublicMarkdown(snapshot: PublicBuildSnapshot, notes: string
         .join("\n\n") +
       provenance(snapshot.claims.provenance)
     : "The Podcasts API did not answer at build time.\n";
+  body["/"] +=
+    "\n\n## Significant Hobbies Food\n\nRead-only packaged food comparisons and source-linked vegetarian recipes from [Food](https://food.significanthobbies.com).\n\n- [Packaged foods](/food/products/)\n- [Vegetarian recipes](/food/recipes/)\n";
   const documents: Partial<Record<PublicPath, string>> = {};
   for (const [path, value] of Object.entries(body)) {
     const page = publicPageCopy[path as PublicPath];

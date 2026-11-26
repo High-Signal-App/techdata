@@ -3,6 +3,8 @@ export const MAX_VIEWS = 50;
 export const VIEW_PATHS = [
   "/nomad/",
   "/ph/",
+  "/food/products/",
+  "/food/recipes/",
   "/papers/",
   "/papers/paths/",
   "/papers/cited/",

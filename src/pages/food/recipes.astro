@@ -1,0 +1,11 @@
+---
+import FoodRecipesView from "../../components/food/FoodRecipesView";
+import Console from "../../layouts/Console.astro";
+import { publicPageCopy } from "../../lib/public-page-copy";
+
+const page = publicPageCopy["/food/recipes/"];
+---
+
+<Console title={page.title} heading={page.heading} description={page.description} nav="food-recipes" breadcrumbs={[{ label: "food", href: "/food/products/" }, { label: "vegetarian recipes" }]}>
+  <FoodRecipesView client:load />
+</Console>

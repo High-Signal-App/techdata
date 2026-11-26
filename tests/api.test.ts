@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
+import { createFoodAdapter } from "../src/adapters/food";
 import type { Dataset } from "../src/adapters/nomad/places";
 import { createPapersAdapter } from "../src/adapters/papers";
 import { createPodcastsAdapter } from "../src/adapters/podcasts";
@@ -37,11 +38,21 @@ const upstream = async (url: string) => {
   return Response.json({ error: "not_found" }, { status: 404 });
 };
 
+const foodAdapter = () =>
+  createFoodAdapter({
+    base: "https://food.example/api",
+    fetch: async (url) =>
+      new URL(url).pathname.endsWith("/health")
+        ? Response.json({ products: 1, latestPublishedAt: "2026-11-12T13:55:16.220Z", sourceComplete: true })
+        : Response.json({ products: [], pagination: { page: 1, pageSize: 24, total: 0, pages: 0 } }),
+  });
+
 const app = createApp({
   nomad: async () => dataset,
   papers: () => createPapersAdapter({ fetch: async () => new Response(null, { status: 404 }) }),
   reddit: () => createRedditAdapter({ fetch: async () => Response.json(redditCatalog) }),
   podcasts: () => createPodcastsAdapter({ base: "https://api.example/api", fetch: upstream }),
+  food: () => foodAdapter(),
 });
 const get = async (path: string) => {
   const res = await app.request(path);
@@ -255,10 +266,11 @@ describe("api", () => {
   it("lists all collections with provenance", async () => {
     const { body } = await get("/api/collections");
     const list = body.collections as { id: string; counts: Record<string, number> }[];
-    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit", "ph", "papers"]);
+    expect(list.map((c) => c.id)).toEqual(["nomad", "podcasts", "reddit", "ph", "papers", "food"]);
     expect(list[0]?.counts.places).toBe(1374);
     expect(list[1]?.counts.claims).toBe(10);
     expect(list[3]?.counts.products).toBe(575479);
+    expect(list[5]?.counts.products).toBe(1);
     expect((await get("/api/ph/summary")).body.provenance).toMatchObject({
       source: "Product Hunt",
       revision: "catalog-state-2026-10-10",
@@ -326,6 +338,7 @@ describe("api", () => {
           return [];
         },
       }),
+      food: () => foodAdapter(),
     });
     const request = parallel.request("/api/search?q=lisbon&limit=1");
     await vi.waitFor(() => expect(calls).toHaveLength(4));
@@ -333,7 +346,13 @@ describe("api", () => {
     const response = await request;
     const body = (await response.json()) as SearchResponse;
     expect(body.hits).toHaveLength(1);
-    expect(body.collections.map((c: { id: string }) => c.id)).toEqual(["nomad", "podcasts", "reddit", "papers"]);
+    expect(body.collections.map((c: { id: string }) => c.id)).toEqual([
+      "nomad",
+      "podcasts",
+      "reddit",
+      "papers",
+      "food",
+    ]);
     expect(body.collections.every((c: { ok: boolean; ms: number }) => c.ok && c.ms >= 0)).toBe(true);
     expect(body.collections.reduce((n: number, c: { count: number }) => n + c.count, 0)).toBe(1);
     expect(body.provenance.nomad).toMatchObject({ source: "Nomads.com", collectedAt: "2026-09-07" });
@@ -360,6 +379,7 @@ describe("api", () => {
         }),
         reddit: () => createRedditAdapter({ fetch: async () => Response.json(redditCatalog) }),
         papers: () => createPapersAdapter({ fetch: async () => new Response(null, { status: 404 }) }),
+        food: () => foodAdapter(),
       });
       const request = isolated.request("/api/search?q=lisbon");
       await vi.advanceTimersByTimeAsync(25);

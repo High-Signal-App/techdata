@@ -7,7 +7,7 @@ export const publicPageCopy = {
     title: "overview",
     heading: "collections",
     description:
-      "Search and compare five public data collections in one read-only workbench, with source provenance kept in view.",
+      "Search and compare six public data collections in one read-only workbench, with source provenance kept in view.",
   },
   "/nomad/": {
     title: "places \u00b7 nomad atlas",
@@ -47,6 +47,18 @@ export const publicPageCopy = {
     title: "PH Catalog",
     heading: "PH Catalog",
     description: `${PH_META.coverageLabel}. Product Hunt metadata: browse the first page immediately, then search and filter the full catalog in your browser. No votes or launch dates.`,
+  },
+  "/food/products/": {
+    title: "packaged foods · food",
+    heading: "packaged foods",
+    description:
+      "Compare packaged food nutrition with its measurement basis, verification status and source links. Read-only from Significant Hobbies Food.",
+  },
+  "/food/recipes/": {
+    title: "vegetarian recipes · food",
+    heading: "vegetarian recipes",
+    description:
+      "Discover source-linked vegetarian and vegan recipes with publisher attribution, ingredient notes and the nutrition serving basis preserved. Read-only from Significant Hobbies Food.",
   },
   "/ph/catalog/": {
     title: "Product catalog directory",

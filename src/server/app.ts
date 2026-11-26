@@ -3,6 +3,7 @@
  * route is read-only and wraps data with its provenance.
  */
 import { Hono } from "hono";
+import { createFoodAdapter, type FoodAdapter, FoodUpstreamError } from "../adapters/food";
 import { nomadProvenance, nomadSummary } from "../adapters/nomad/meta";
 import { type Dataset, explorable, type Place, queryPlaces, readPlacesQuery } from "../adapters/nomad/places";
 import { createPapersAdapter, type PapersAdapter } from "../adapters/papers";
@@ -17,6 +18,7 @@ export type Env = {
   PODCASTS_API_BASE?: string;
   REDDIT_INSIGHTS_API_BASE?: string;
   RESEARCH_PAPERS_BASE?: string;
+  FOOD_API_BASE?: string;
   DATA?: R2Bucket;
 };
 
@@ -26,6 +28,7 @@ export type AppDeps = {
   podcasts?: (env: Env) => PodcastsAdapter;
   reddit?: (env: Env) => RedditAdapter;
   papers?: (env: Env) => PapersAdapter;
+  food?: (env: Env) => FoodAdapter;
   /** Per-adapter search deadline; does not change adapter fetch behaviour. */
   searchTimeoutMs?: number;
 };
@@ -76,6 +79,19 @@ export function createApp(deps: AppDeps) {
       }
       return adapter;
     });
+  const foodAdapters = new Map<string, FoodAdapter>();
+  const foodFor =
+    deps.food ??
+    ((env: Env) => {
+      const base = env?.FOOD_API_BASE ?? undefined;
+      const key = base ?? "default";
+      let adapter = foodAdapters.get(key);
+      if (!adapter) {
+        adapter = createFoodAdapter({ base });
+        foodAdapters.set(key, adapter);
+      }
+      return adapter;
+    });
   let placesCache: Promise<Place[]> | null = null;
   const places = () => {
     placesCache ??= deps.nomad().then((d) => explorable(d.cities));
@@ -99,6 +115,12 @@ export function createApp(deps: AppDeps) {
     }
     if (err instanceof UpstreamError) {
       return c.json({ error: "upstream", status: err.status }, err.status === 404 ? 404 : 502);
+    }
+    if (err instanceof FoodUpstreamError) {
+      c.header("cache-control", "no-store");
+      if (err.status === 400) return c.json({ error: "invalid_food_query", status: 400 }, 400);
+      const status = err.status === 404 ? 404 : err.status === 504 ? 504 : 502;
+      return c.json({ error: "upstream", status: err.status }, status);
     }
     console.error(err);
     return c.json({ error: "internal" }, 500);
@@ -179,6 +201,9 @@ export function createApp(deps: AppDeps) {
 
   app.get("/collections", async (c) => {
     const collections: (CollectionSummary | { id: string; error: string })[] = [nomadSummary];
+    const foodSummary = foodFor(c.env)
+      .summary()
+      .catch(() => ({ id: "food", error: "The Food public API did not answer." }) as const);
     try {
       collections.push(await podcastsFor(c.env).summary());
     } catch {
@@ -195,6 +220,7 @@ export function createApp(deps: AppDeps) {
     } catch {
       collections.push({ id: "papers", error: "The Research Papers public exports did not answer." });
     }
+    collections.push(await foodSummary);
     return c.json({ collections });
   });
 
@@ -257,6 +283,11 @@ export function createApp(deps: AppDeps) {
   app.get("/papers/cited-works", async (c) => c.json(await papersFor(c.env).citedWorks()));
   app.get("/papers/authors", async (c) => c.json(await papersFor(c.env).authors()));
 
+  /* Food: bounded, read-only pass-through of published product and recipe records. */
+  app.get("/food/products", async (c) => c.json(await foodFor(c.env).products(new URL(c.req.url).searchParams)));
+  app.get("/food/products/:id", async (c) => c.json(await foodFor(c.env).product(c.req.param("id"))));
+  app.get("/food/recipes", async (c) => c.json(await foodFor(c.env).recipes(new URL(c.req.url).searchParams)));
+
   /* ⌘K: parallel bounded reads; PH stays in the browser. */
   app.get("/search", async (c) => {
     const q = (c.req.query("q") ?? "").trim().slice(0, 120);
@@ -308,6 +339,22 @@ export function createApp(deps: AppDeps) {
           "https://papers.highsignal.app",
           "public JSON exports",
           c.env?.RESEARCH_PAPERS_BASE ?? "https://papers.highsignal.app",
+        ),
+      },
+      {
+        id: "food",
+        search: (onPartial) =>
+          foodFor(c.env)
+            .search(q, COLLECTION_CAP)
+            .then((hits) => {
+              onPartial(hits);
+              return hits;
+            }),
+        provenance: source(
+          "Significant Hobbies Food",
+          "https://food.significanthobbies.com",
+          "public API",
+          `${c.env?.FOOD_API_BASE ?? "https://food.significanthobbies.com/api"}/products`,
         ),
       },
     ];
