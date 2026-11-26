@@ -52,7 +52,7 @@ export const publicPageCopy = {
     title: "packaged foods · food",
     heading: "packaged foods",
     description:
-      "Compare packaged food nutrition observations with explicit per-100-g measurement basis, verification status and source links. Read-only from Significant Hobbies Food.",
+      "Compare packaged food nutrition with its measurement basis, verification status and source links. Read-only from Significant Hobbies Food.",
   },
   "/food/recipes/": {
     title: "vegetarian recipes · food",
