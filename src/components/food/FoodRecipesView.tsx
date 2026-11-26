@@ -24,10 +24,14 @@ export default function FoodRecipesView() {
   React.useEffect(() => setDraft(q ?? ""), [q]);
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      if ((draft.trim() || null) !== (q || null)) setQ(draft.trim() || null);
+      const nextQuery = draft.trim() || null;
+      if (nextQuery !== (q || null)) {
+        setRecipeId(null);
+        setQ(nextQuery);
+      }
     }, 250);
     return () => clearTimeout(timer);
-  }, [draft, q, setQ]);
+  }, [draft, q, setQ, setRecipeId]);
 
   const search = recipeQuery(q, dietary);
   const resource = useJsonResource<FoodEnvelope<FoodRecipePage>>(`/api/food/recipes${search ? `?${search}` : ""}`);
@@ -53,7 +57,11 @@ export default function FoodRecipesView() {
               type="button"
               aria-pressed={(dietary || null) === value}
               className="rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted aria-pressed:bg-secondary aria-pressed:text-foreground"
-              onClick={() => setDietary(value)}
+              onClick={() => {
+                if ((dietary || null) === value) return;
+                setRecipeId(null);
+                setDietary(value);
+              }}
             >
               {value ?? "all recipes"}
             </button>
