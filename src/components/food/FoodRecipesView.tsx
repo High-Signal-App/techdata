@@ -58,14 +58,10 @@ export default function FoodRecipesView() {
       </p>
       <FilterBar>
         <SaveView />
-        <FilterSearch
-          value={draft}
-          onChange={(value) => {
-            if (value.trim() !== (q ?? "")) searchUsage.expect(null);
-            setDraft(value);
-          }}
-          placeholder="Recipe, ingredient, or publisher…"
-        />
+        {/* Cancel before the shared search input's debounced change callback. */}
+        <div className="contents" onInputCapture={() => searchUsage.expect(null)}>
+          <FilterSearch value={draft} onChange={setDraft} placeholder="Recipe, ingredient, or publisher…" />
+        </div>
         <fieldset className="flex gap-1" aria-label="Dietary filter">
           <legend className="sr-only">Dietary filter</legend>
           {([null, "vegetarian", "vegan"] as const).map((value) => (

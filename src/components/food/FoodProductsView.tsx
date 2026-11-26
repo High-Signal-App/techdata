@@ -146,14 +146,10 @@ export default function FoodProductsView() {
       </div>
       <FilterBar>
         <SaveView />
-        <FilterSearch
-          value={draft}
-          onChange={(value) => {
-            if (value.trim() !== (q ?? "")) searchUsage.expect(null);
-            setDraft(value);
-          }}
-          placeholder="Product or brand…"
-        />
+        {/* Cancel before the shared search input's debounced change callback. */}
+        <div className="contents" onInputCapture={() => searchUsage.expect(null)}>
+          <FilterSearch value={draft} onChange={setDraft} placeholder="Product or brand…" />
+        </div>
         <Select
           value={category ?? "all"}
           onValueChange={(v) => {
