@@ -93,10 +93,10 @@ export default function FoodProductsView() {
   );
   const data = resource.data?.data;
   const products = data?.products ?? [];
-  const selected = products.find((p) => p.id === productId) ?? detailResource.data?.data;
+  const detail = detailResource.data?.data.id === productId ? detailResource.data : undefined;
+  const selected = detail?.data ?? products.find((p) => p.id === productId);
   const pagination = data?.pagination;
   const listProvenance = resource.data?.provenance;
-  const detail = detailResource.data;
   const pin = React.useCallback(
     (product: FoodProduct) =>
       pinFromColumns(

@@ -113,7 +113,7 @@ export default function FoodRecipesView() {
           )}
         </section>
         <RecordDetail
-          open={!!recipeId}
+          open={!!recipeId && !!page}
           onOpenChange={(open) => !open && setRecipeId(null)}
           title={selected?.title ?? "recipe"}
           subtitle={selected?.publisher ?? undefined}

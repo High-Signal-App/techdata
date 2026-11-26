@@ -97,6 +97,11 @@ export class FoodUpstreamError extends Error {
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 const boundedText = (value: string | null | undefined, max: number) => value?.trim().slice(0, max) || undefined;
+const queryText = (value: string | null, url: string) => {
+  const query = value?.trim();
+  if (query && query.length > 200) throw new FoodUpstreamError(400, url);
+  return query;
+};
 const int = (value: string | null | undefined, fallback: number, min: number, max: number) => {
   const n = Number(value ?? fallback);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.trunc(n))) : fallback;
@@ -150,10 +155,8 @@ export function createFoodAdapter(opts: { base?: string; fetch?: Fetcher; now?: 
   }
 
   const products = async (q: URLSearchParams) => {
-    const query = q.get("q")?.trim();
-    if (query && query.length > 200) throw new FoodUpstreamError(400, `${base}/products`);
     const result = await get<FoodProductPage>("/products", {
-      q: query,
+      q: queryText(q.get("q"), `${base}/products`),
       category: boundedText(q.get("category"), 80),
       trust: boundedText(q.get("trust"), 80),
       marketed: boundedText(q.get("marketed"), 80),
@@ -173,9 +176,9 @@ export function createFoodAdapter(opts: { base?: string; fetch?: Fetcher; now?: 
     return { ...result, data: { ...result.data, products: result.data.products.map(safeProduct) } };
   };
 
-  const recipes = (q: URLSearchParams) => {
+  const recipes = async (q: URLSearchParams) => {
     return get<FoodRecipePage>("/recipes", {
-      q: boundedText(q.get("q"), 120),
+      q: queryText(q.get("q"), `${base}/recipes`),
       dietary: boundedText(q.get("dietary"), 80),
     });
   };

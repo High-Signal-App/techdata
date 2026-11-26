@@ -13,7 +13,7 @@ function recorder(body: unknown = {}, status = 200) {
 }
 
 describe("Food public adapter", () => {
-  it("sends only bounded, recognized product filters", async () => {
+  it("forwards supported filter keys and bounds product pagination", async () => {
     const r = recorder({ products: [], pagination: { page: 1, pageSize: 50, total: 0, pages: 0 } });
     const adapter = createFoodAdapter({ base: "https://food.example/api", fetch: r.fetch });
     await adapter.products(
@@ -24,7 +24,7 @@ describe("Food public adapter", () => {
     );
   });
 
-  it("preserves recipe serving basis and provenance, and caps search text", async () => {
+  it("preserves recipe serving basis, provenance and valid search text", async () => {
     const r = recorder({
       collectedAt: "2026-08-15T00:00:00.000Z",
       recipes: [
@@ -45,7 +45,7 @@ describe("Food public adapter", () => {
     const result = await adapter.recipes(new URLSearchParams(`q=${"x".repeat(140)}&dietary=vegan&secret=1`));
     const url = new URL(r.calls[0]);
     expect(url.pathname).toBe("/api/recipes");
-    expect(url.searchParams.get("q")).toHaveLength(120);
+    expect(url.searchParams.get("q")).toHaveLength(140);
     expect(url.searchParams.get("dietary")).toBe("vegan");
     expect(url.searchParams.has("secret")).toBe(false);
     expect(result.data.recipes[0]?.nutrition?.servingBasis).toBe("1 bowl");
@@ -92,5 +92,13 @@ describe("Food public adapter", () => {
     const response = await offline.request("/api/food/recipes", {}, {});
     expect(response.status).toBe(502);
     expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("rejects oversize recipe search and invalid product IDs before fetching", async () => {
+    const r = recorder();
+    const adapter = createFoodAdapter({ fetch: r.fetch });
+    await expect(adapter.recipes(new URLSearchParams({ q: "x".repeat(201) }))).rejects.toMatchObject({ status: 400 });
+    await expect(adapter.product("..")).rejects.toMatchObject({ status: 404 });
+    expect(r.calls).toEqual([]);
   });
 });
